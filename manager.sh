@@ -45,6 +45,8 @@ setup_env() {
                     cat > "$env_file" << 'EOF'
 DOMAIN=dm-home.de
 TZ=Europe/Berlin
+TRAEFIK_DASHBOARD_USER=admin
+TRAEFIK_DASHBOARD_PASS=MySecretPass123
 EOF
                     ;;
                 vaultwarden)
@@ -94,12 +96,41 @@ EOF
 OPENCLAW_ALLOWED_ORIGINS=*
 EOF
                     ;;
-                *)
-                    ;;
             esac
             echo "Created $env_file"
         fi
     done
+    
+    # Generate Traefik basic auth from .env
+    if [ -f "$SCRIPT_DIR/proxy/.env" ]; then
+        set -a
+        source "$SCRIPT_DIR/proxy/.env"
+        set +a
+        if [ -n "$TRAEFIK_DASHBOARD_PASS" ]; then
+            local hash=$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")
+            cat > "$SCRIPT_DIR/proxy/dynamic/auth.yml" << AUTHEOF
+http:
+  routers:
+    dashboard:
+      rule: "Host(\`traefik.dm-home.de\`)"
+      service: api@internal
+      entryPoints:
+        - websecure
+      middlewares:
+        - auth_basic
+        - security-headers
+      tls:
+        certresolver: letsencrypt
+
+  middlewares:
+    auth_basic:
+      basicAuth:
+        users:
+          - "${TRAEFIK_DASHBOARD_USER}:${hash}"
+AUTHEOF
+            echo "Generated proxy/dynamic/auth.yml"
+        fi
+    fi
 }
 
 usage() {

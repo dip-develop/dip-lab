@@ -11,8 +11,15 @@ services:
       - /srv/proxy/dynamic:/etc/traefik/dynamic:ro
       - /srv/proxy/acme.json:/etc/traefik/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/proxy/logs:/var/log/traefik
     networks:
       - web
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 networks:
   web:

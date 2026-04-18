@@ -1,0 +1,18 @@
+http:
+  middlewares:
+    admin-auth:
+      basicAuth:
+        users:
+          - "admin:$$apr1$$H6uskkkW$$IgXLP6.QXM4D5q3uK4J8zF1"
+
+  routers:
+    dashboard:
+      rule: "Host(`traefik.dm-home.de`)"
+      service: api@internal
+      entryPoints:
+        - websecure
+      middlewares:
+        - admin-auth
+        - security-headers
+      tls:
+        certresolver: letsencrypt

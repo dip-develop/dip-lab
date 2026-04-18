@@ -11,7 +11,7 @@ dm-home.de/
 ├── nextcloud/       # File cloud
 ├── n8n/            # Automation
 ├── immich/          # Photo gallery
-├── llm/            # LLM API (vLLM)
+├── llm/            # LLM API (vLLM, CPU)
 └── openclaw/       # AI gateway
 ```
 
@@ -26,7 +26,7 @@ dm-home.de/
 | Nextcloud | cloud.dm-home.de | 80 | Файловый хостинг |
 | n8n | flow.dm-home.de | 5678 | Автоматизация |
 | Immich | photos.dm-home.de | 2283 | Фото |
-| LLM | - | 8000 | OpenAI-compatible API |
+| LLM | - | 8000 | OpenAI-compatible API (CPU) |
 | OpenCLAW | ai.dm-home.de | 18789 | AI gateway |
 
 ## Команды
@@ -78,3 +78,15 @@ dm-home.de/
 - Все сервисы за Traefik работают через HTTPS
 - Zero Trust Cloudflare для веб-доступа
 - LLM API доступен без Zero Trust по внутренней сети
+- Basic Auth для dashboard Traefik в `proxy/dynamic/auth.yml`
+- Логи в `/srv/proxy/logs/`
+
+## Health Checks
+
+Все сервисы имеют health check через 30s интервал.
+
+## Логирование
+
+- Traefik access логи: `/srv/proxy/logs/access.log`
+- Traefik error логи: `/srv/proxy/logs/traefik.log`
+- Формат: JSON

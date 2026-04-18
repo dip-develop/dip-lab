@@ -1,8 +1,27 @@
 api:
   dashboard: true
+  insecure: false
 
 log:
   level: INFO
+  filePath: /var/log/traefik/traefik.log
+  format: json
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+  format: json
+  bufferingSize: 100
+  filters:
+    statusCodes:
+      - "400-599"
+  fields:
+    defaultMode: keep
+    headers:
+      defaultMode: drop
+      X-Api-Key:
+        mode: redact
+      X-Auth-Token:
+        mode: redact
 
 entryPoints:
   web:

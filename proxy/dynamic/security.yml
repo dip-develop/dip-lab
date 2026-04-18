@@ -18,3 +18,7 @@ http:
         average: 100
         burst: 50
         period: 1s
+    auth_basic:
+      basicAuth:
+        users:
+          - "admin:$apr1$bkrbnV00$ea6PPfIrvTFjnZCzjdyDq1"
