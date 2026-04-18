@@ -21,7 +21,6 @@ services:
     volumes:
       - ./data:/home/node/.n8n
     networks:
-      - n8n_internal
       - web
       - internal
     depends_on:
@@ -46,8 +45,7 @@ services:
       - POSTGRES_PASSWORD=${N8N_DB_PASSWORD}
     volumes:
       - ./db:/var/lib/postgresql/data
-    networks:
-      - n8n_internal
+    networks: []
 
 networks:
   web:

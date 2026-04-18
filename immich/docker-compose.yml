@@ -21,8 +21,7 @@ services:
       - /srv/immich/profile:/usr/src/app/upload/profile
       - /srv/immich/ml-cache:/cache
 
-    networks:
-      - immich_internal
+networks:
       - web
       - internal
     depends_on:
@@ -36,7 +35,7 @@ services:
       - "traefik.http.routers.immich.tls.certresolver=letsencrypt"
       - "traefik.http.services.immich.loadbalancer.server.port=2283"
       - "traefik.http.middlewares.immich-upload.buffering.maxRequestBodyBytes=0"
-      - "traefik.http.middlewares.immich-upload.buffering.memRequestBodyBytes=0"
+      - "traefik.http.middlewares.immich-upload.memRequestBodyBytes=0"
       - "traefik.http.routers.immich.middlewares=immich-upload"
       - "traefik.http.routers.immich.middlewares=large-upload@file"
 
@@ -46,8 +45,6 @@ services:
     restart: always
     volumes:
       - ./ml-cache:/cache
-    networks:
-      - immich_internal
 
   immich-db:
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
@@ -61,18 +58,16 @@ services:
       - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
     volumes:
       - ./db:/var/lib/postgresql/data
-    networks:
-      - immich_internal
 
   immich-redis:
     image: redis:alpine
     container_name: immich-redis
     restart: always
-    networks:
-      - immich_internal
 
-networks:
-  web:
-    external: true
+  networks:
+    web:
+      external: true
+    internal:
+      external: true
   internal:
     external: true

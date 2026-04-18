@@ -94,6 +94,8 @@ EOF
 OPENCLAW_ALLOWED_ORIGINS=*
 EOF
                     ;;
+                *)
+                    ;;
             esac
             echo "Created $env_file"
         fi
