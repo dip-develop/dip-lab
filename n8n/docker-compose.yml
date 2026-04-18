@@ -52,5 +52,5 @@ services:
 networks:
   web:
     external: true
-  n8n_internal:
-    driver: bridge
+  internal:
+    external: true

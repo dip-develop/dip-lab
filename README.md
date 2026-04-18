@@ -56,6 +56,8 @@ dm-home.de/
 | `update` | Обновить (pull) все или конкретный сервис |
 | `logs` | Логи сервиса (follow) |
 | `status` | Статус всех сервисов |
+| `perm` | Выставить права и владельца |
+| `setup` | Создать сети и .env файлы |
 
 ### Примеры
 
@@ -67,6 +69,7 @@ dm-home.de/
 ./manager.sh update immich     # обновить immich
 ./manager.sh logs nextcloud   # логи nextcloud
 ./manager.sh status          # статус всех
+./manager.sh perm           # выставить права
 ```
 
 ## Notes

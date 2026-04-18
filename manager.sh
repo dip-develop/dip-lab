@@ -12,8 +12,93 @@ SERVICES=(
     "openclaw"
 )
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ACTION=$1
 shift
+
+PERMISSIONS=(
+    "proxy:1000:1000"
+    "portainer:1000:1000"
+    "vaultwarden:1000:1000"
+    "paperless:1000:1000"
+    "nextcloud:1000:1000"
+    "n8n:1000:1000"
+    "immich:1000:1000"
+    "llm:1000:1000"
+    "openclaw:1000:1000"
+    "proxy/traefik.yml:600:1000"
+    "proxy/acme.json:600:1000"
+    "proxy/dynamic:755:1000"
+)
+
+setup_nets() {
+    docker network create web 2>/dev/null || true
+    docker network create internal 2>/dev/null || true
+}
+
+setup_env() {
+    for svc in "${SERVICES[@]}"; do
+        local env_file="$SCRIPT_DIR/$svc/.env"
+        if [ ! -f "$env_file" ]; then
+            case $svc in
+                proxy)
+                    cat > "$env_file" << 'EOF'
+DOMAIN=dm-home.de
+TZ=Europe/Berlin
+EOF
+                    ;;
+                vaultwarden)
+                    cat > "$env_file" << 'EOF'
+DOMAIN=dm-home.de
+VAULTWARDEN_SIGNUPS_ALLOWED=false
+VAULTWARDEN_ADMIN_TOKEN=
+EOF
+                    ;;
+                portainer)
+                    cat > "$env_file" << 'EOF'
+PORTAINER_ADMIN_PASSWORD=
+EOF
+                    ;;
+                nextcloud)
+                    cat > "$env_file" << 'EOF'
+NEXTCLOUD_DB_PASSWORD=
+NEXTCLOUD_REDIS_PASSWORD=
+TZ=Europe/Berlin
+EOF
+                    ;;
+                paperless)
+                    cat > "$env_file" << 'EOF'
+PAPERLESS_DB_PASSWORD=
+PAPERLESS_SECRET_KEY=
+TZ=Europe/Berlin
+EOF
+                    ;;
+                n8n)
+                    cat > "$env_file" << 'EOF'
+DOMAIN=dm-home.de
+N8N_DB_PASSWORD=
+N8N_ENCRYPTION_KEY=
+TZ=Europe/Berlin
+EOF
+                    ;;
+                immich)
+                    cat > "$env_file" << 'EOF'
+IMMICH_DB_PASSWORD=
+TZ=Europe/Berlin
+EOF
+                    ;;
+                llm)
+                    ;;
+                openclaw)
+                    cat > "$env_file" << 'EOF'
+OPENCLAW_ALLOWED_ORIGINS=*
+EOF
+                    ;;
+            esac
+            echo "Created $env_file"
+        fi
+    done
+}
 
 usage() {
     echo "Usage: $0 <command> [service]"
@@ -25,6 +110,8 @@ usage() {
     echo "  update [svc]  - Update (pull) all or specific service"
     echo "  logs [svc]    - Show logs for service"
     echo "  status        - Show status of all services"
+    echo "  perm          - Set permissions and ownership"
+    echo "  setup         - Setup networks and .env files"
     echo ""
     echo "Services:"
     echo "  ${SERVICES[*]}"
@@ -58,6 +145,8 @@ run_one() {
 
 case $ACTION in
     start)
+        setup_nets
+        setup_env
         if [ -z "$1" ]; then
             run_all "up -d"
         else
@@ -103,6 +192,20 @@ case $ACTION in
             docker compose -f "$svc/docker-compose.yml" ps 2>/dev/null || echo "not found"
             echo ""
         done
+        ;;
+    perm)
+        for entry in "${PERMISSIONS[@]}"; do
+            IFS=':' read -r path uid gid <<< "$entry"
+            if [ -e "$path" ]; then
+                chown "$uid:$gid" "$path"
+                chmod "$gid" "$path"
+                echo "Set $path -> $uid:$gid $gid"
+            fi
+        done
+        ;;
+    setup)
+        setup_nets
+        setup_env
         ;;
     *)
         usage

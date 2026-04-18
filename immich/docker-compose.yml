@@ -74,5 +74,5 @@ services:
 networks:
   web:
     external: true
-  immich_internal:
-    driver: bridge
+  internal:
+    external: true
