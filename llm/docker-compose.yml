@@ -1,0 +1,22 @@
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: vllm
+    command: >
+      --model google/gemma-4-E4B-it
+      --dtype bfloat16
+      --max-model-len 4096
+      --tensor-parallel-size 1
+      --cpu-offload
+    expose:
+      - "8000"
+    volumes:
+      - ./vllm-models:/root/.cache/huggingface
+    environment:
+      - VLLM_CPU_KVCACHE_SPACE=3
+    networks:
+      - llm_internal
+
+networks:
+  llm_internal:
+    external: true

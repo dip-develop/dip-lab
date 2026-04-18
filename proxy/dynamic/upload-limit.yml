@@ -1,0 +1,6 @@
+http:
+  middlewares:
+    large-upload:
+      buffering:
+        maxRequestBodyBytes: 0
+        memRequestBodyBytes: 10485760

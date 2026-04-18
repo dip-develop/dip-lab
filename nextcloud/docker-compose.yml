@@ -1,0 +1,52 @@
+services:
+  nextcloud:
+    image: nextcloud:32-apache
+    container_name: nextcloud
+    restart: always
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=yourpassword
+      - REDIS_HOST=redis
+    volumes:
+      - ./app:/var/www/html
+      - ./data:/var/www/html/data
+      - /mnt/object-storage/data/nextcloud:/mnt/object-storage
+      - /mnt/object-storage/data/immich:/mnt/immich:ro
+    networks:
+      - nextcloud_internal
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.nextcloud.rule=Host(`cloud.dm-home.de`)"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+
+  db:
+    image: postgres:16
+    container_name: nextcloud-db
+    restart: always
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=yourpassword
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - nextcloud_internal
+
+  redis:
+    image: redis:alpine
+    container_name: nextcloud-redis
+    restart: always
+    networks:
+      - nextcloud_internal
+
+networks:
+  web:
+    external: true
+  nextcloud_internal:
+    driver: bridge

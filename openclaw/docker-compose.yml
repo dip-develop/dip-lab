@@ -1,0 +1,28 @@
+services:
+  openclaw:
+    image: alpine/openclaw:latest
+    container_name: openclaw
+    restart: always
+    environment:
+      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=https://ai.dm-home.de,https://ai.dm-home.de/*
+    volumes:
+      - openclaw_data:/home/node/.openclaw
+    networks:
+      - web
+      - llm_internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.openclaw.rule=Host(`ai.dm-home.de`)"
+      - "traefik.http.routers.openclaw.entrypoints=websecure"
+      - "traefik.http.routers.openclaw.tls.certresolver=letsencrypt"
+      - "traefik.http.services.openclaw.loadbalancer.server.port=18789"
+
+networks:
+  web:
+    external: true
+  llm_internal:
+    external: true
+
+volumes:
+  openclaw_data:

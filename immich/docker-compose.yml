@@ -1,0 +1,73 @@
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich-server
+    restart: always
+    environment:
+      - DB_HOSTNAME=immich-db
+      - DB_USERNAME=immich
+      - DB_PASSWORD=immichpassword
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOSTNAME=immich-redis
+      - UPLOAD_LOCATION=/mnt/object-storage
+    volumes:
+      - /mnt/object-storage/data/immich/library:/usr/src/app/upload/library
+      - /mnt/object-storage/data/immich/upload:/usr/src/app/upload/upload
+      - /mnt/object-storage/data/immich/encoded-video:/usr/src/app/upload/encoded-video
+      - /mnt/object-storage/data/immich/backups:/usr/src/app/upload/backups
+      - /srv/immich/thumbs:/usr/src/app/upload/thumbs
+      - /srv/immich/profile:/usr/src/app/upload/profile
+      - /srv/immich/ml-cache:/cache
+
+    networks:
+      - immich_internal
+      - web
+    depends_on:
+      - immich-db
+      - immich-redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.immich.rule=Host(`photos.dm-home.de`)"
+      - "traefik.http.routers.immich.entrypoints=websecure"
+      - "traefik.http.routers.immich.tls.certresolver=letsencrypt"
+      - "traefik.http.services.immich.loadbalancer.server.port=2283"
+      - "traefik.http.middlewares.immich-upload.buffering.maxRequestBodyBytes=0"
+      - "traefik.http.middlewares.immich-upload.buffering.memRequestBodyBytes=0"
+      - "traefik.http.routers.immich.middlewares=immich-upload"
+      - "traefik.http.routers.immich.middlewares=large-upload@file"
+
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    container_name: immich-ml
+    restart: always
+    volumes:
+      - ./ml-cache:/cache
+    networks:
+      - immich_internal
+
+  immich-db:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
+    container_name: immich-db
+    restart: always
+    environment:
+      - POSTGRES_DB=immich
+      - POSTGRES_USER=immich
+      - POSTGRES_PASSWORD=immichpassword
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - immich_internal
+
+  immich-redis:
+    image: redis:alpine
+    container_name: immich-redis
+    restart: always
+    networks:
+      - immich_internal
+
+networks:
+  web:
+    external: true
+  immich_internal:
+    driver: bridge

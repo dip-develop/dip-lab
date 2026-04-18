@@ -1,0 +1,8 @@
+immich/encoded-video/**
+immich/thumbs/**
+immich/ml-cache/**
+immich/profile/**
+nextcloud/app/**
+openclaw/data/**
+vaultwarden/data/**
+paperless/data/**

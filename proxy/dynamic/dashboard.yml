@@ -1,0 +1,9 @@
+http:
+  routers:
+    traefik:
+      rule: Host(`traefik.dm-home.de`)
+      service: api@internal
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
