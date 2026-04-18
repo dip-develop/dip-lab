@@ -3,13 +3,15 @@ services:
     image: alpine/openclaw:latest
     container_name: openclaw
     restart: always
+    env_file:
+      - .env
     environment:
-      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=https://ai.dm-home.de,https://ai.dm-home.de/*
+      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=${OPENCLAW_ALLOWED_ORIGINS}
     volumes:
       - openclaw_data:/home/node/.openclaw
     networks:
       - web
-      - llm_internal
+      - internal
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"

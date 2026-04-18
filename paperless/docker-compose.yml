@@ -3,15 +3,17 @@ services:
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
     container_name: paperless
     restart: always
+    env_file:
+      - .env
     environment:
       - PAPERLESS_REDIS=redis://paperless-redis:6379
       - PAPERLESS_DBHOST=paperless-db
       - PAPERLESS_DBNAME=paperless
       - PAPERLESS_DBUSER=paperless
-      - PAPERLESS_DBPASS=paperlesspassword
+      - PAPERLESS_DBPASS=${PAPERLESS_DB_PASSWORD}
       - PAPERLESS_URL=https://docs.dm-home.de
-      - PAPERLESS_SECRET_KEY=EWk02GJNAjmBIt1FdkXFz0qks0+6Rc8aD92q10fcP5o=
-      - PAPERLESS_TIME_ZONE=Europe/Berlin
+      - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
+      - PAPERLESS_TIME_ZONE=${TZ}
       - PAPERLESS_OCR_LANGUAGE=eng
       - PAPERLESS_TIKA_ENABLED=1
       - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://paperless-gotenberg:3000
@@ -39,10 +41,12 @@ services:
     image: postgres:16
     container_name: paperless-db
     restart: always
+    env_file:
+      - .env
     environment:
       - POSTGRES_DB=paperless
       - POSTGRES_USER=paperless
-      - POSTGRES_PASSWORD=paperlesspassword
+      - POSTGRES_PASSWORD=${PAPERLESS_DB_PASSWORD}
     volumes:
       - ./db:/var/lib/postgresql/data
     networks:

@@ -3,10 +3,14 @@ services:
     image: vaultwarden/server:latest
     container_name: vaultwarden
     restart: always
+    env_file:
+      - .env
     environment:
-      - DOMAIN=https://vault.dm-home.de
-      - SIGNUPS_ALLOWED=true
-      - ADMIN_TOKEN=VOWagVvQWBQcPu71C1mC/1OiXcbYILpFOYK2arn6FEBd6yzxqRraNfr5j2bcywmx
+      - DOMAIN=https://vault.${DOMAIN}
+      - SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}
+      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+      - RATE_LIMIT_SECONDS=3
+      - RATE_LIMIT_BURST=10
     volumes:
       - ./data:/data
     networks:

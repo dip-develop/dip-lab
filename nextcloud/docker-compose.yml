@@ -3,12 +3,15 @@ services:
     image: nextcloud:32-apache
     container_name: nextcloud
     restart: always
+    env_file:
+      - .env
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_DB=nextcloud
       - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=yourpassword
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${NEXTCLOUD_REDIS_PASSWORD}
     volumes:
       - ./app:/var/www/html
       - ./data:/var/www/html/data
@@ -29,10 +32,12 @@ services:
     image: postgres:16
     container_name: nextcloud-db
     restart: always
+    env_file:
+      - .env
     environment:
       - POSTGRES_DB=nextcloud
       - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=yourpassword
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
     volumes:
       - ./db:/var/lib/postgresql/data
     networks:

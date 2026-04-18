@@ -1,0 +1,110 @@
+#!/bin/bash
+
+SERVICES=(
+    "proxy"
+    "vaultwarden"
+    "portainer"
+    "nextcloud"
+    "paperless"
+    "n8n"
+    "immich"
+    "llm"
+    "openclaw"
+)
+
+ACTION=$1
+shift
+
+usage() {
+    echo "Usage: $0 <command> [service]"
+    echo ""
+    echo "Commands:"
+    echo "  start [svc]     - Start all or specific service"
+    echo "  stop [svc]     - Stop all or specific service"
+    echo "  restart [svc]  - Restart all or specific service"
+    echo "  update [svc]  - Update (pull) all or specific service"
+    echo "  logs [svc]    - Show logs for service"
+    echo "  status        - Show status of all services"
+    echo ""
+    echo "Services:"
+    echo "  ${SERVICES[*]}"
+    echo "  all           - all services"
+    echo ""
+    echo "Examples:"
+    echo "  $0 start                # start all"
+    echo "  $0 start proxy         # start proxy only"
+    echo "  $0 start nextcloud    # start nextcloud only"
+    echo "  $0 restart all        # restart all"
+    echo "  $0 logs immich         # follow logs"
+}
+
+run_all() {
+    local cmd=$1
+    for svc in "${SERVICES[@]}"; do
+        docker compose -f "$svc/docker-compose.yml" $cmd
+    done
+}
+
+run_one() {
+    local svc=$1
+    local cmd=$2
+    if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
+        docker compose -f "$svc/docker-compose.yml" $cmd
+    else
+        echo "Service '$svc' not found"
+        exit 1
+    fi
+}
+
+case $ACTION in
+    start)
+        if [ -z "$1" ]; then
+            run_all "up -d"
+        else
+            run_one "$1" "up -d"
+        fi
+        ;;
+    stop)
+        reversed=("${SERVICES[@]}")
+        for svc in $(printf '%s\n' "${reversed[@]}" | tac); do
+            docker compose -f "$svc/docker-compose.yml" down 2>/dev/null || true
+        done
+        ;;
+    restart)
+        if [ -z "$1" ]; then
+            for svc in "${SERVICES[@]}"; do
+                docker compose -f "$svc/docker-compose.yml" restart
+            done
+        else
+            run_one "$1" "restart"
+        fi
+        ;;
+    update)
+        if [ -z "$1" ]; then
+            for svc in "${SERVICES[@]}"; do
+                docker compose -f "$svc/docker-compose.yml" pull
+                docker compose -f "$svc/docker-compose.yml" up -d
+            done
+        else
+            run_one "$1" "pull"
+            run_one "$1" "up -d"
+        fi
+        ;;
+    logs)
+        if [ -z "$1" ]; then
+            echo "Service required: $0 logs <service>"
+            exit 1
+        fi
+        run_one "$1" "logs -f"
+        ;;
+    status)
+        for svc in "${SERVICES[@]}"; do
+            echo "=== $svc ==="
+            docker compose -f "$svc/docker-compose.yml" ps 2>/dev/null || echo "not found"
+            echo ""
+        done
+        ;;
+    *)
+        usage
+        ;;
+esac

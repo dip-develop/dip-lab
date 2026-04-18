@@ -4,17 +4,25 @@ services:
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
-    command: -H unix:///var/run/docker.sock
+    restart: always
+    command: --http-enabled --http-bind-port 9000 --https-enabled --https-bind-port 9443 --ssl --ssl-cert /certs/server.crt --ssl-key /certs/server.key
+    env_file:
+      - .env
+    environment:
+      - PORTAINER_ADMIN_PASSWORD=${PORTAINER_ADMIN_PASSWORD}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/data
+      - ./certs:/certs:ro
     networks:
       - web
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.example.com`)"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.portainer.rule=Host(`admin.${DOMAIN}`)"
       - "traefik.http.routers.portainer.entrypoints=websecure"
-      - "traefik.http.routers.portainer.tls.certresolver=le"
+      - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9443"
 
 networks:
   web:

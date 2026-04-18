@@ -3,10 +3,12 @@ services:
     image: ghcr.io/immich-app/immich-server:release
     container_name: immich-server
     restart: always
+    env_file:
+      - .env
     environment:
       - DB_HOSTNAME=immich-db
       - DB_USERNAME=immich
-      - DB_PASSWORD=immichpassword
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
       - DB_DATABASE_NAME=immich
       - REDIS_HOSTNAME=immich-redis
       - UPLOAD_LOCATION=/mnt/object-storage
@@ -22,6 +24,7 @@ services:
     networks:
       - immich_internal
       - web
+      - internal
     depends_on:
       - immich-db
       - immich-redis
@@ -50,10 +53,12 @@ services:
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
     container_name: immich-db
     restart: always
+    env_file:
+      - .env
     environment:
       - POSTGRES_DB=immich
       - POSTGRES_USER=immich
-      - POSTGRES_PASSWORD=immichpassword
+      - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
     volumes:
       - ./db:/var/lib/postgresql/data
     networks:

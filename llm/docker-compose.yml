@@ -2,12 +2,13 @@ services:
   vllm:
     image: vllm/vllm-openai:latest
     container_name: vllm
+    restart: always
     command: >
       --model google/gemma-4-E4B-it
       --dtype bfloat16
       --max-model-len 4096
       --tensor-parallel-size 1
-      --cpu-offload
+      --cpu-offload-gem
     expose:
       - "8000"
     volumes:
@@ -15,8 +16,8 @@ services:
     environment:
       - VLLM_CPU_KVCACHE_SPACE=3
     networks:
-      - llm_internal
+      - internal
 
 networks:
-  llm_internal:
+  internal:
     external: true

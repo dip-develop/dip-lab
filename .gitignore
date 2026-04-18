@@ -6,3 +6,4 @@ nextcloud/app/**
 openclaw/data/**
 vaultwarden/data/**
 paperless/data/**
+.env
