@@ -43,7 +43,7 @@ setup_env() {
 
     for svc in "${SERVICES[@]}"; do
         local env_file="$SCRIPT_DIR/$svc/.env"
-        if [ ! -f "$env_file" ]; then
+        if [ ! -f "$env_file" ] || [ ! -s "$env_file" ]; then
             case $svc in
                 proxy)
                     cat > "$env_file" << EOF
@@ -102,8 +102,6 @@ OPENCLAW_ALLOWED_ORIGINS=${OPENCLAW_ALLOWED_ORIGINS:-*}
 EOF
                     ;;
             esac
-            chown 1000:1000 "$env_file" 2>/dev/null || true
-            chmod 640 "$env_file" 2>/dev/null || true
             echo "Created $env_file"
         fi
     done

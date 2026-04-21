@@ -15,4 +15,4 @@ http:
     auth_basic:
       basicAuth:
         users:
-          - "admin:$apr1$QYVWRsvX$Pfe8XZqw3QXdvUhNq0Rje/"
+          - "admin:$apr1$MRfYsEPI$iJgpGkZoJxvKGoXmINehu/"
