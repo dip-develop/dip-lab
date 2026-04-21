@@ -23,13 +23,12 @@ services:
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
       - "traefik.http.services.portainer.loadbalancer.server.port=9443"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   web:
     external: true
-
-healthcheck:
-  test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/api/system/status"]
-  interval: 30s
-  timeout: 10s
-  retries: 3

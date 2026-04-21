@@ -20,8 +20,7 @@ services:
       - /srv/immich/thumbs:/usr/src/app/upload/thumbs
       - /srv/immich/profile:/usr/src/app/upload/profile
       - /srv/immich/ml-cache:/cache
-
-networks:
+    networks:
       - web
       - internal
     depends_on:
@@ -64,10 +63,8 @@ networks:
     container_name: immich-redis
     restart: always
 
-  networks:
-    web:
-      external: true
-    internal:
-      external: true
+networks:
+  web:
+    external: true
   internal:
     external: true
