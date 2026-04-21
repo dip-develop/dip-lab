@@ -37,63 +37,68 @@ setup_nets() {
 }
 
 setup_env() {
+    set -a
+    source "$SCRIPT_DIR/.env"
+    set +a
+
     for svc in "${SERVICES[@]}"; do
         local env_file="$SCRIPT_DIR/$svc/.env"
         if [ ! -f "$env_file" ]; then
             case $svc in
                 proxy)
-                    cat > "$env_file" << 'EOF'
-DOMAIN=dm-home.de
-TZ=Europe/Berlin
+                    cat > "$env_file" << EOF
+DOMAIN=${DOMAIN}
+TZ=${TZ}
 TRAEFIK_DASHBOARD_USER=admin
-TRAEFIK_DASHBOARD_PASS=MySecretPass123
+TRAEFIK_DASHBOARD_PASS=${TRAEFIK_DASHBOARD_PASS:-}
 EOF
                     ;;
                 vaultwarden)
-                    cat > "$env_file" << 'EOF'
-DOMAIN=dm-home.de
-VAULTWARDEN_SIGNUPS_ALLOWED=false
-VAULTWARDEN_ADMIN_TOKEN=
+                    cat > "$env_file" << EOF
+DOMAIN=${DOMAIN}
+VAULTWARDEN_SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED:-false}
+VAULTWARDEN_ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN:-}
 EOF
                     ;;
                 portainer)
-                    cat > "$env_file" << 'EOF'
-PORTAINER_ADMIN_PASSWORD=
+                    cat > "$env_file" << EOF
+PORTAINER_ADMIN_PASSWORD=${PORTAINER_ADMIN_PASSWORD:-}
 EOF
                     ;;
                 nextcloud)
-                    cat > "$env_file" << 'EOF'
-NEXTCLOUD_DB_PASSWORD=
-NEXTCLOUD_REDIS_PASSWORD=
-TZ=Europe/Berlin
+                    cat > "$env_file" << EOF
+NEXTCLOUD_DB_PASSWORD=${NEXTCLOUD_DB_PASSWORD:-}
+NEXTCLOUD_REDIS_PASSWORD=${NEXTCLOUD_REDIS_PASSWORD:-}
+TZ=${TZ}
 EOF
                     ;;
                 paperless)
-                    cat > "$env_file" << 'EOF'
-PAPERLESS_DB_PASSWORD=
-PAPERLESS_SECRET_KEY=
-TZ=Europe/Berlin
+                    cat > "$env_file" << EOF
+PAPERLESS_DB_PASSWORD=${PAPERLESS_DB_PASSWORD:-}
+PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY:-}
+TZ=${TZ}
 EOF
                     ;;
                 n8n)
-                    cat > "$env_file" << 'EOF'
-DOMAIN=dm-home.de
-N8N_DB_PASSWORD=
-N8N_ENCRYPTION_KEY=
-TZ=Europe/Berlin
+                    cat > "$env_file" << EOF
+DOMAIN=${DOMAIN}
+N8N_DB_PASSWORD=${N8N_DB_PASSWORD:-}
+N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-}
+TZ=${TZ}
 EOF
                     ;;
                 immich)
-                    cat > "$env_file" << 'EOF'
-IMMICH_DB_PASSWORD=
-TZ=Europe/Berlin
+                    cat > "$env_file" << EOF
+IMMICH_DB_PASSWORD=${IMMICH_DB_PASSWORD:-}
+TZ=${TZ}
 EOF
                     ;;
                 llm)
+                    touch "$env_file"
                     ;;
                 openclaw)
-                    cat > "$env_file" << 'EOF'
-OPENCLAW_ALLOWED_ORIGINS=*
+                    cat > "$env_file" << EOF
+OPENCLAW_ALLOWED_ORIGINS=${OPENCLAW_ALLOWED_ORIGINS:-*}
 EOF
                     ;;
             esac
