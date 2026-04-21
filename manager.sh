@@ -97,10 +97,12 @@ OPENCLAW_ALLOWED_ORIGINS=*
 EOF
                     ;;
             esac
+            chown 1000:1000 "$env_file" 2>/dev/null || true
+            chmod 640 "$env_file" 2>/dev/null || true
             echo "Created $env_file"
         fi
     done
-    
+
     # Generate Traefik basic auth from .env
     if [ -f "$SCRIPT_DIR/proxy/.env" ]; then
         set -a
