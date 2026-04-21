@@ -36,108 +36,6 @@ setup_nets() {
     docker network create internal 2>/dev/null || true
 }
 
-setup_env() {
-    set -a
-    source "$SCRIPT_DIR/.env"
-    set +a
-
-    for svc in "${SERVICES[@]}"; do
-        local env_file="$SCRIPT_DIR/$svc/.env"
-        if [ ! -f "$env_file" ] || [ ! -s "$env_file" ]; then
-            case $svc in
-                proxy)
-                    cat > "$env_file" << EOF
-DOMAIN=${DOMAIN}
-TZ=${TZ}
-TRAEFIK_DASHBOARD_USER=admin
-TRAEFIK_DASHBOARD_PASS=${TRAEFIK_DASHBOARD_PASS:-}
-EOF
-                    ;;
-                vaultwarden)
-                    cat > "$env_file" << EOF
-DOMAIN=${DOMAIN}
-VAULTWARDEN_SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED:-false}
-VAULTWARDEN_ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN:-}
-EOF
-                    ;;
-                portainer)
-                    cat > "$env_file" << EOF
-PORTAINER_ADMIN_PASSWORD=${PORTAINER_ADMIN_PASSWORD:-}
-EOF
-                    ;;
-                nextcloud)
-                    cat > "$env_file" << EOF
-NEXTCLOUD_DB_PASSWORD=${NEXTCLOUD_DB_PASSWORD:-}
-NEXTCLOUD_REDIS_PASSWORD=${NEXTCLOUD_REDIS_PASSWORD:-}
-TZ=${TZ}
-EOF
-                    ;;
-                paperless)
-                    cat > "$env_file" << EOF
-PAPERLESS_DB_PASSWORD=${PAPERLESS_DB_PASSWORD:-}
-PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY:-}
-TZ=${TZ}
-EOF
-                    ;;
-                n8n)
-                    cat > "$env_file" << EOF
-DOMAIN=${DOMAIN}
-N8N_DB_PASSWORD=${N8N_DB_PASSWORD:-}
-N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-}
-TZ=${TZ}
-EOF
-                    ;;
-                immich)
-                    cat > "$env_file" << EOF
-IMMICH_DB_PASSWORD=${IMMICH_DB_PASSWORD:-}
-TZ=${TZ}
-EOF
-                    ;;
-                llm)
-                    touch "$env_file"
-                    ;;
-                openclaw)
-                    cat > "$env_file" << EOF
-OPENCLAW_ALLOWED_ORIGINS=${OPENCLAW_ALLOWED_ORIGINS:-*}
-EOF
-                    ;;
-            esac
-            echo "Created $env_file"
-        fi
-    done
-
-    # Generate Traefik basic auth from .env
-    if [ -f "$SCRIPT_DIR/proxy/.env" ]; then
-        set -a
-        source "$SCRIPT_DIR/proxy/.env"
-        set +a
-        if [ -n "$TRAEFIK_DASHBOARD_PASS" ]; then
-            local hash=$(openssl passwd -apr1 "$TRAEFIK_DASHBOARD_PASS")
-            cat > "$SCRIPT_DIR/proxy/dynamic/auth.yml" << AUTHEOF
-http:
-  routers:
-    dashboard:
-      rule: "Host(\`traefik.dm-home.de\`)"
-      service: api@internal
-      entryPoints:
-        - websecure
-      middlewares:
-        - auth_basic
-        - security-headers
-      tls:
-        certresolver: letsencrypt
-
-  middlewares:
-    auth_basic:
-      basicAuth:
-        users:
-          - "${TRAEFIK_DASHBOARD_USER}:${hash}"
-AUTHEOF
-            echo "Generated proxy/dynamic/auth.yml"
-        fi
-    fi
-}
-
 usage() {
     echo "Usage: $0 <command> [service]"
     echo ""
@@ -149,7 +47,7 @@ usage() {
     echo "  logs [svc]    - Show logs for service"
     echo "  status        - Show status of all services"
     echo "  perm          - Set permissions and ownership"
-    echo "  setup         - Setup networks and .env files"
+    echo "  setup         - Setup networks"
     echo ""
     echo "Services:"
     echo "  ${SERVICES[*]}"
@@ -187,7 +85,6 @@ run_one() {
 case $ACTION in
     start)
         setup_nets
-        setup_env
         if [ -z "$1" ]; then
             run_all "up -d"
         else
@@ -246,7 +143,6 @@ case $ACTION in
         ;;
     setup)
         setup_nets
-        setup_env
         ;;
     *)
         usage
