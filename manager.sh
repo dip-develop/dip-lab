@@ -168,6 +168,9 @@ run_all() {
 run_one() {
     local svc=$1
     local cmd=$2
+    if [ "$svc" = "docs" ]; then
+        svc="paperless"
+    fi
     if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
         docker compose -f "$svc/docker-compose.yml" $cmd
     else

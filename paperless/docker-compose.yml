@@ -36,6 +36,11 @@ services:
       - "traefik.http.routers.paperless.entrypoints=websecure"
       - "traefik.http.routers.paperless.tls.certresolver=letsencrypt"
       - "traefik.http.services.paperless.loadbalancer.server.port=8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   paperless-db:
     image: postgres:16
@@ -78,9 +83,3 @@ networks:
     external: true
   paperless_internal:
     driver: bridge
-
-healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
-  interval: 30s
-  timeout: 10s
-  retries: 3
