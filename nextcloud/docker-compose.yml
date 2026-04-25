@@ -12,11 +12,13 @@ services:
       - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${NEXTCLOUD_REDIS_PASSWORD}
+      - NEXTCLOUD_TRUSTED_DOMAINS=cloud.dm-home.de
+      - OVERWRITEHOST=cloud.dm-home.de
+      - OVERWRITEPROTOCOL=https
     volumes:
-      - ./app:/var/www/html
-      - ./data:/var/www/html/data
-      - /mnt/object-storage/data/nextcloud:/mnt/object-storage
-      - /mnt/object-storage/data/immich:/mnt/immich:ro
+      - /srv/nextcloud/app:/var/www/html
+      - /srv/nextcloud/data:/var/www/html/data
+      - /mnt/object-storage/data/nextcloud:/mnt/object-storage:ro
     networks:
       - nextcloud_internal
       - web
@@ -27,6 +29,12 @@ services:
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      - "traefik.http.routers.nextcloud.middlewares=nextcloud-header"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/status.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   db:
     image: postgres:16
@@ -39,9 +47,14 @@ services:
       - POSTGRES_USER=nextcloud
       - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - /srv/nextcloud/db:/var/lib/postgresql/data
     networks:
       - nextcloud_internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "nextcloud"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   redis:
     image: redis:alpine
@@ -49,9 +62,15 @@ services:
     restart: always
     networks:
       - nextcloud_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   web:
     external: true
   nextcloud_internal:
     driver: bridge
+    name: nextcloud_internal

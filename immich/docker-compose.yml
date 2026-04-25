@@ -11,21 +11,20 @@ services:
       - DB_PASSWORD=${IMMICH_DB_PASSWORD}
       - DB_DATABASE_NAME=immich
       - REDIS_HOSTNAME=immich-redis
-      - UPLOAD_LOCATION=/mnt/object-storage
+      - UPLOAD_LOCATION=/data/upload
     volumes:
-      - /mnt/object-storage/data/immich/library:/usr/src/app/upload/library
-      - /mnt/object-storage/data/immich/upload:/usr/src/app/upload/upload
-      - /mnt/object-storage/data/immich/encoded-video:/usr/src/app/upload/encoded-video
-      - /mnt/object-storage/data/immich/backups:/usr/src/app/upload/backups
-      - /srv/immich/thumbs:/usr/src/app/upload/thumbs
-      - /srv/immich/profile:/usr/src/app/upload/profile
-      - /srv/immich/ml-cache:/cache
+      - /srv/immich/upload:/data/upload
+      - /srv/immich/thumbs:/data/thumbs
+      - /srv/immich/profile:/data/profile
+      - /mnt/object-storage/data/immich/library:/mnt/object-storage/library:ro
     networks:
       - web
       - internal
     depends_on:
-      - immich-db
-      - immich-redis
+      immich-db:
+        condition: service_healthy
+      immich-redis:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -33,17 +32,26 @@ services:
       - "traefik.http.routers.immich.entrypoints=websecure"
       - "traefik.http.routers.immich.tls.certresolver=letsencrypt"
       - "traefik.http.services.immich.loadbalancer.server.port=2283"
-      - "traefik.http.middlewares.immich-upload.buffering.maxRequestBodyBytes=0"
-      - "traefik.http.middlewares.immich-upload.memRequestBodyBytes=0"
-      - "traefik.http.routers.immich.middlewares=immich-upload"
-      - "traefik.http.routers.immich.middlewares=large-upload@file"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:2283/api/server-info/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   immich-machine-learning:
     image: ghcr.io/immich-app/immich-machine-learning:release
     container_name: immich-ml
     restart: always
     volumes:
-      - ./ml-cache:/cache
+      - /srv/immich/ml-cache:/cache
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   immich-db:
     image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
@@ -56,12 +64,27 @@ services:
       - POSTGRES_USER=immich
       - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - /srv/immich/db:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "immich", "-d", "immich"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   immich-redis:
     image: redis:alpine
     container_name: immich-redis
     restart: always
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
 
 networks:
   web:

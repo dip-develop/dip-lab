@@ -1,44 +1,61 @@
-# Home Lab
+# Home Lab - dipdev.de
 
 ## Структура
 
 ```
-dm-home.de/
+dipdev.de/
 ├── proxy/           # Traefik (reverse proxy)
-├── vaultwarden/     # Password manager
-├── paperless/      # Document management
-├── portainer/       # Docker management
-├── nextcloud/       # File cloud
-├── n8n/            # Automation
+├── vaultwarden/      # Password manager (Business)
+├── paperless/       # Document management
+├── portainer/       # Docker management UI
+├── nextcloud/       # File cloud (Personal & Business)
+├── n8n/             # Automation
 ├── immich/          # Photo gallery
-├── llm/            # LLM API (vLLM, CPU)
-└── openclaw/       # AI gateway
+├── llm/             # LLM API (vLLM)
+├── openclaw/        # AI gateway
+├── mailcow/        # Corporate mail (Business)
+└── databases/      # Shared PostgreSQL, MySQL, Redis
 ```
 
-## Порты и домены
+## Ресурсы сервера
 
-| Сервис | Домен | Порт | Описание |
-|--------|-------|------|----------|
-| Traefik | - | 4080 (http), 4443 (https) | Reverse proxy |
-| Vaultwarden | vault.dm-home.de | 8200 | Менеджер паролей |
-| Paperless | docs.dm-home.de | 8000 | Документы |
-| Portainer | admin.dm-home.de | 9000/9443 | Docker UI |
-| Nextcloud | cloud.dm-home.de | 80 | Файловый хостинг |
-| n8n | flow.dm-home.de | 5678 | Автоматизация |
-| Immich | photos.dm-home.de | 2283 | Фото |
-| LLM | - | 8000 | OpenAI-compatible API (CPU) |
-| OpenCLAW | ai.dm-home.de | 18789 | AI gateway |
+- **RAM**: 12 GB
+- **NVMe**: 100 GB (для баз данных и быстрых операций)
+- **Object Storage**: /mnt/object-storage (ограниченная скорость, лимит на права)
 
-## Команды
+## Хранение данных
 
-```bash
-./manager.sh <command> [service]
-```
+| Сервис | Путь | Описание |
+|--------|-----|-----------|
+| Базы данных | `/srv/database/` | PostgreSQL, MySQL, Redis |
+| Фото | `/srv/immich/` | thumbnails, profiles |
+| Документы | `/srv/paperless/` | OCR,全文搜索 |
+| Файлы | `/mnt/object-storage/` | большие файлы, медленнее |
+| Почта | `/srv/mailcow/` | корппочта |
 
 ## Сети
 
-- `web` - внешняя сеть для Traefik
-- `internal` - внутренняя сеть для LLM
+- `web` - внешняя (Traefik)
+- `internal` - LLM, n8n, OpenCLAW
+- `database` - общие БД
+- `paperless_internal` - paperless
+- `nextcloud_internal` - nextcloud
+- `mailcow` - почтовый сервер
+
+## Домены и порты
+
+| Сервис | Домен | Порт | Описание |
+|--------|-------|------|--------|
+| Traefik | - | 4080 (http), 4443 (https) | Reverse proxy |
+| Vaultwarden | vault.dipdev.de | 8200 | Менеджер паролей |
+| Paperless | docs.dipdev.de | 8000 | Документы |
+| Portainer | admin.dipdev.de | 9000/9443 | Docker UI |
+| Nextcloud | cloud.dipdev.de | 80 | Файловый хостинг |
+| n8n | flow.dipdev.de | 5678 | Автоматизация |
+| Immich | photos.dipdev.de | 2283 | Фото |
+| OpenCLAW | ai.dipdev.de | 18789 | AI gateway |
+| Mailcow | mail.dipdev.de | 80/443 | Корппочта |
+| LLM | - | 8000 | OpenAI-compatible API |
 
 ## Управление
 
@@ -50,43 +67,60 @@ dm-home.de/
 
 | Команда | Описание |
 |---------|-----------|
-| `start` | Запустить все или конкретный сервис |
+| `start [svc]` | Запустить все или конкретный сервис |
 | `stop` | Остановить все сервисы |
-| `restart` | Перезапустить все или конкретный сервис |
-| `update` | Обновить (pull) все или конкретный сервис |
-| `logs` | Логи сервиса (follow) |
+| `restart [svc]` | Перезапустить |
+| `update [svc]` | Обновить (pull) |
+| `logs svc` | Логи сервиса |
 | `status` | Статус всех сервисов |
-| `perm` | Выставить права и владельца |
-| `setup` | Создать сети и .env файлы |
+| `setup` | Создать сети и /srv/ директории |
+| `perm` | Исправить права |
 
 ### Примеры
 
 ```bash
-./manager.sh start                # запустить все
-./manager.sh start proxy        # запустить только proxy
-./manager.sh stop              # остановить все
-./manager.sh restart all       # перезапустить все
-./manager.sh update immich     # обновить immich
-./manager.sh logs nextcloud   # логи nextcloud
-./manager.sh status          # статус всех
-./manager.sh perm           # выставить права
+./manager.sh setup           # создать сети и папки
+./manager.sh start          # запустить все
+./manager.sh start proxy  # запустить только proxy
+./manager.sh logs immich   # логи immich
+./manager.sh status       # статус
+./manager.sh update      # обновить все
+```
+
+## Безопасность
+
+- Все сервисы работают через HTTPS (Traefik)
+- TLS 1.2+ с безопасными cipher suites
+- Strict-Transport-Security заголовки
+- Rate limiting на Traefik
+- Vaultwarden для паролей
+- Пароли не в git (используйте .env)
+- Strict permissions на sensitive данные
+
+## Развертывание с нуля
+
+```bash
+# 1. Клонировать репозиторий
+git clone https://github.com/your-repo/dipdev.de.git
+cd dipdev.de
+
+# 2. Настроить .env файл (скопировать из .env.example)
+cp .env.example .env
+# Отредактировать .env с вашими паролями
+
+# 3. Создать сети и директории
+./manager.sh setup
+
+# 4. Исправить права
+./manager.sh perm
+
+# 5. Запустить сервисы
+./manager.sh start
 ```
 
 ## Notes
 
-- Traefik слушает на нестандартных портах 4080/4443 (вместо 80/443)
+- Traefik слушает на портах 4080/4443 (т.к. 80/443 могут быть заняты)
 - Все сервисы за Traefik работают через HTTPS
 - Zero Trust Cloudflare для веб-доступа
-- LLM API доступен без Zero Trust по внутренней сети
-- Basic Auth для dashboard Traefik в `proxy/dynamic/auth.yml`
 - Логи в `/srv/proxy/logs/`
-
-## Health Checks
-
-Все сервисы имеют health check через 30s интервал.
-
-## Логирование
-
-- Traefik access логи: `/srv/proxy/logs/access.log`
-- Traefik error логи: `/srv/proxy/logs/traefik.log`
-- Формат: JSON

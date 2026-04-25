@@ -1,16 +1,22 @@
 services:
   openclaw:
-    image: alpine/openclaw:latest
+    image: openclawk/openclaw:latest
     container_name: openclaw
     restart: always
     env_file:
       - .env
     environment:
       - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=${OPENCLAW_ALLOWED_ORIGINS}
+      - OPENCLAW_TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - OPENCLAW_DEEPseek_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENCLAW_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENCLAW_OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
-      - openclaw_data:/home/node/.openclaw
+      - /srv/openclaw/data:/data
+      - /srv/openclaw/workspace:/workspace
     networks:
       - web
+      - internal
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -18,12 +24,14 @@ services:
       - "traefik.http.routers.openclaw.entrypoints=websecure"
       - "traefik.http.routers.openclaw.tls.certresolver=letsencrypt"
       - "traefik.http.services.openclaw.loadbalancer.server.port=18789"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   web:
     external: true
   internal:
     external: true
-
-volumes:
-  openclaw_data:

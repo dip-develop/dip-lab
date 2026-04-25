@@ -7,9 +7,9 @@ services:
       - "4080:80"
       - "4443:443"
     volumes:
-      - /srv/proxy/traefik.yml:/etc/traefik/traefik.yml:ro
-      - /srv/proxy/dynamic:/etc/traefik/dynamic:ro
-      - /srv/proxy/acme.json:/etc/traefik/acme.json
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - ./acme.json:/etc/traefik/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /srv/proxy/logs:/var/log/traefik
     networks:
@@ -20,6 +20,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
 networks:
   web:

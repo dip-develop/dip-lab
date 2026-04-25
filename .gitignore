@@ -1,9 +1,78 @@
-immich/encoded-video/**
-immich/thumbs/**
-immich/ml-cache/**
-immich/profile/**
-nextcloud/app/**
-openclaw/data/**
-vaultwarden/data/**
-paperless/data/**
+# Data directories (never commit)
 .env
+*/*.env
+/srv/
+*.log
+
+# Immich
+immich/db/
+immich/redis/
+immich/thumbs/
+immich/profile/
+immich/ml-cache/
+
+# Nextcloud
+nextcloud/app/
+nextcloud/db/
+nextcloud/redis/
+
+# Paperless
+paperless/data/
+paperless/db/
+paperless/redis/
+
+# n8n
+n8n/data/
+n8n/db/
+
+# Portainer
+portainer/data/
+portainer/certs/
+
+# Vaultwarden
+vaultwarden/data/
+
+# OpenCLAW
+openclaw/workspace/
+
+# LLM
+llm/models/
+
+# Mailcow
+mailcow/data/
+mailcow/mail/
+mailcow/postfix/
+mailcow/dovecot/
+mailcow/redis/
+mailcow/filter/
+mailcow/solr/
+mailcow/mysql/
+
+# Database services
+databases/postgres/
+databases/mysql/
+databases/redis/
+
+# Proxy (sensitive)
+proxy/acme.json
+proxy/logs/
+proxy/certs/
+
+# Docker
+*.sock
+*.pid
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+*.bak
+*.backup
+*.old

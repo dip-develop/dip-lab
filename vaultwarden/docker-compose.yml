@@ -6,13 +6,16 @@ services:
     env_file:
       - .env
     environment:
-      - DOMAIN=https://vault.${DOMAIN}
+      - DOMAIN=https://vault.dm-home.de
       - SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}
       - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
       - RATE_LIMIT_SECONDS=3
       - RATE_LIMIT_BURST=10
+      - YUBICO_CLIENT_ID=${YUBICO_CLIENT_ID}
+      - YUBICO_SECRET_KEY=${YUBICO_SECRET_KEY}
+      - YUBICO_SERVER=${YUBICO_SERVER}
     volumes:
-      - ./data:/data
+      - /srv/vaultwarden/data:/data
     networks:
       - web
     labels:

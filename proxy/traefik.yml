@@ -22,6 +22,8 @@ accessLog:
         mode: redact
       X-Auth-Token:
         mode: redact
+      Authorization:
+        mode: redact
 
 entryPoints:
   web:
@@ -45,6 +47,7 @@ entryPoints:
           - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
           - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
           - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        honorCipherOrder: true
 
 providers:
   docker:
@@ -62,3 +65,4 @@ certificatesResolvers:
       storage: /etc/traefik/acme.json
       httpChallenge:
         entryPoint: web
+      tlsChallenge: true

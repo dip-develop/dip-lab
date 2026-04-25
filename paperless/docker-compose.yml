@@ -13,16 +13,16 @@ services:
       - PAPERLESS_DBPASS=${PAPERLESS_DB_PASSWORD}
       - PAPERLESS_URL=https://docs.dm-home.de
       - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
-      - PAPERLESS_TIME_ZONE=${TZ}
-      - PAPERLESS_OCR_LANGUAGE=eng
+      - PAPERLESS_TIME_ZONE=Europe/Kiev
+      - PAPERLESS_OCR_LANGUAGE=ukr,eng
       - PAPERLESS_TIKA_ENABLED=1
       - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://paperless-gotenberg:3000
       - PAPERLESS_TIKA_ENDPOINT=http://paperless-tika:9998
     volumes:
-      - ./data:/usr/src/paperless/data
-      - /mnt/object-storage/data/paperless/media:/usr/src/paperless/media
-      - ./export:/usr/src/paperless/export
-      - ./consume:/usr/src/paperless/consume
+      - /srv/paperless/data:/usr/src/paperless/data
+      - /mnt/object-storage/data/paperless/media:/usr/src/paperless/media:ro
+      - /srv/paperless/export:/usr/src/paperless/export
+      - /srv/paperless/consume:/usr/src/paperless/consume
     networks:
       - paperless_internal
       - web
@@ -53,9 +53,14 @@ services:
       - POSTGRES_USER=paperless
       - POSTGRES_PASSWORD=${PAPERLESS_DB_PASSWORD}
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - /srv/paperless/db:/var/lib/postgresql/data
     networks:
       - paperless_internal
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "paperless"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   paperless-redis:
     image: redis:alpine
@@ -63,6 +68,11 @@ services:
     restart: always
     networks:
       - paperless_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   paperless-gotenberg:
     image: gotenberg/gotenberg:8
@@ -70,6 +80,11 @@ services:
     restart: always
     networks:
       - paperless_internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   paperless-tika:
     image: apache/tika:latest
@@ -77,9 +92,15 @@ services:
     restart: always
     networks:
       - paperless_internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9998/tika"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   web:
     external: true
   paperless_internal:
     driver: bridge
+    name: paperless_internal

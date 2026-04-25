@@ -1,7 +1,7 @@
 http:
   routers:
     dashboard:
-      rule: "Host(`traefik.dm-home.de`)"
+      rule: "Host(`traefik.dipdev.de`)"
       service: api@internal
       entryPoints:
         - websecure

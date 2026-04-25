@@ -13,12 +13,18 @@ http:
         custom_frame_options_value: "SAMEORIGIN"
         custom_response_headers:
           X-Robots-Tag: "noindex, nofollow, noarchive"
+          X-Content-Type-Options: "nosniff"
     rate-limit:
       rate_limit:
         average: 100
         burst: 50
         period: 1s
-    auth_basic:
-      basicAuth:
-        users:
-          - "admin:$apr1$bkrbnV00$ea6PPfIrvTFjnZCzjdyDq1"
+    large-upload:
+      buffering:
+        maxRequestBodyBytes: 104857600
+        memRequestBodyBytes: 20971520
+    strip-trailing-slash:
+      redirect:
+        regex: ^/(.*)/$
+        replacement: /${1}
+        permanent: true

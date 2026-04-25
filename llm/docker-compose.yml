@@ -8,15 +8,24 @@ services:
       --dtype bfloat16
       --max-model-len 4096
       --tensor-parallel-size 1
-      --cpu-offload-gem
     expose:
       - "8000"
     volumes:
-      - ./vllm-models:/root/.cache/huggingface
+      - /srv/llm/models:/root/.cache/huggingface
     environment:
       - VLLM_CPU_KVCACHE_SPACE=3
+      - VLLM_LOG_LEVEL=INFO
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 6G
 
 networks:
   internal:
