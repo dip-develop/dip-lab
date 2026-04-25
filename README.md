@@ -1,14 +1,14 @@
-# Home Lab - dipdev.de
+# Home Lab - dm-home.de
 
 ## Структура
 
 ```
-dipdev.de/
+dm-home.de/
 ├── proxy/           # Traefik (reverse proxy)
-├── vaultwarden/      # Password manager (Business)
+├── vaultwarden/      # Password manager
 ├── paperless/       # Document management
 ├── portainer/       # Docker management UI
-├── nextcloud/       # File cloud (Personal & Business)
+├── nextcloud/       # File cloud (Personal)
 ├── n8n/             # Automation
 ├── immich/          # Photo gallery
 ├── llm/             # LLM API (vLLM)
@@ -29,7 +29,7 @@ dipdev.de/
 |--------|-----|-----------|
 | Базы данных | `/srv/database/` | PostgreSQL, MySQL, Redis |
 | Фото | `/srv/immich/` | thumbnails, profiles |
-| Документы | `/srv/paperless/` | OCR,全文搜索 |
+| Документы | `/srv/paperless/` | OCR, полнотекстовый поиск |
 | Файлы | `/mnt/object-storage/` | большие файлы, медленнее |
 | Почта | `/srv/mailcow/` | корппочта |
 
@@ -47,13 +47,13 @@ dipdev.de/
 | Сервис | Домен | Порт | Описание |
 |--------|-------|------|--------|
 | Traefik | - | 4080 (http), 4443 (https) | Reverse proxy |
-| Vaultwarden | vault.dipdev.de | 8200 | Менеджер паролей |
-| Paperless | docs.dipdev.de | 8000 | Документы |
-| Portainer | admin.dipdev.de | 9000/9443 | Docker UI |
-| Nextcloud | cloud.dipdev.de | 80 | Файловый хостинг |
-| n8n | flow.dipdev.de | 5678 | Автоматизация |
-| Immich | photos.dipdev.de | 2283 | Фото |
-| OpenCLAW | ai.dipdev.de | 18789 | AI gateway |
+| Vaultwarden | vault.dm-home.de | 8200 | Менеджер паролей |
+| Paperless | docs.dm-home.de | 8000 | Документы |
+| Portainer | admin.dm-home.de | 9000/9443 | Docker UI |
+| Nextcloud | cloud.dm-home.de | 80 | Файловый хостинг |
+| n8n | flow.dm-home.de | 5678 | Автоматизация |
+| Immich | photos.dm-home.de | 2283 | Фото |
+| OpenCLAW | ai.dm-home.de | 18789 | AI gateway |
 | Mailcow | mail.dipdev.de | 80/443 | Корппочта |
 | LLM | - | 8000 | OpenAI-compatible API |
 
@@ -101,8 +101,8 @@ dipdev.de/
 
 ```bash
 # 1. Клонировать репозиторий
-git clone https://github.com/your-repo/dipdev.de.git
-cd dipdev.de
+git clone https://github.com/your-repo/dm-home.de.git
+cd dm-home.de
 
 # 2. Настроить .env файл (скопировать из .env.example)
 cp .env.example .env
