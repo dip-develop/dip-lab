@@ -1,6 +1,6 @@
 services:
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:2.40.0
     container_name: portainer
     restart: always
     command: --http-enabled --http-bind-port 9000 --https-enabled --https-bind-port 9443 --ssl --ssl-cert /certs/server.crt --ssl-key /certs/server.key

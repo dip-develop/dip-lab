@@ -1,6 +1,6 @@
 services:
   immich-server:
-    image: ghcr.io/immich-app/immich-server:release
+    image: ghcr.io/immich-app/immich-server:1.30.3
     container_name: immich-server
     restart: always
     env_file:
@@ -40,7 +40,7 @@ services:
       start_period: 30s
 
   immich-machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:release
+    image: ghcr.io/immich-app/immich-machine-learning:1.30.3
     container_name: immich-ml
     restart: always
     volumes:
@@ -54,7 +54,7 @@ services:
       retries: 3
 
   immich-db:
-    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.5.3
     container_name: immich-db
     restart: always
     env_file:

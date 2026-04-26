@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mailcow-dockerized:
-    image: mailcow/dockerized:2024-06a
+    image: mailcow/dockerized:2026-03b
     container_name: mailcow
     restart: always
     ports:

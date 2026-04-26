@@ -1,6 +1,6 @@
 services:
   openclaw:
-    image: openclawk/openclaw:latest
+    image: openclawk/openclaw:2026.4.23
     container_name: openclaw
     restart: always
     env_file:

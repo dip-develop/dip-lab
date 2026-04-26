@@ -1,6 +1,6 @@
 services:
   paperless:
-    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    image: paperlessngx/paperless-ngx:2.20.13
     container_name: paperless
     restart: always
     env_file:
@@ -75,7 +75,7 @@ services:
       retries: 3
 
   paperless-gotenberg:
-    image: gotenberg/gotenberg:8
+    image: gotenberg/gotenberg:8.30.0
     container_name: paperless-gotenberg
     restart: always
     networks:
@@ -87,7 +87,7 @@ services:
       retries: 3
 
   paperless-tika:
-    image: apache/tika:latest
+    image: apache/tika:3.2.3.0
     container_name: paperless-tika
     restart: always
     networks:
