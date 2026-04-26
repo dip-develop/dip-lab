@@ -1,31 +1,19 @@
 services:
-  vllm:
-    image: vllm/vllm-openai:v0.8.5
-    container_name: vllm
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
     restart: always
-    command: >
-      --model google/gemma-4-E4B-it
-      --dtype bfloat16
-      --max-model-len 4096
-      --tensor-parallel-size 1
-    expose:
-      - "8000"
     volumes:
-      - ./data/llm/models:/root/.cache/huggingface
+      - ./data/llm/models:/root/.ollama
     environment:
-      - VLLM_CPU_KVCACHE_SPACE=3
-      - VLLM_LOG_LEVEL=INFO
+      - OLLAMA_HOST=0.0.0.0:11434
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 30s
       timeout: 10s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 6G
 
 networks:
   internal:
