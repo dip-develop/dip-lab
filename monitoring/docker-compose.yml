@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:v3.2.1
+    image: prom/prometheus:v3.1.0
     container_name: prometheus
     restart: always
     env_file:
@@ -22,7 +22,7 @@ services:
       retries: 3
 
   grafana:
-    image: grafana/grafana:11.8.0
+    image: grafana/grafana:11.4.0
     container_name: grafana
     restart: always
     env_file:
@@ -53,7 +53,7 @@ services:
       retries: 3
 
   loki:
-    image: grafana/loki:3.4.0
+    image: grafana/loki:3.3.0
     container_name: loki
     restart: always
     env_file:
@@ -71,7 +71,7 @@ services:
       retries: 3
 
   promtail:
-    image: grafana/promtail:3.4.0
+    image: grafana/promtail:3.3.0
     container_name: promtail
     restart: always
     env_file:
@@ -86,7 +86,7 @@ services:
     command: -config.file=/etc/promtail/config.yml
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.51.0
+    image: gcr.io/cadvisor/cadvisor:v0.50.0
     container_name: cadvisor
     restart: always
     privileged: true
@@ -101,7 +101,7 @@ services:
     command: --store_container_labels=false --disable_metrics=percpu,sched,tcp,udp,disk,diskIO,referenced_memory,resctrl
 
   node-exporter:
-    image: prom/node-exporter:v1.9.0
+    image: prom/node-exporter:v1.8.2
     container_name: node-exporter
     restart: always
     command:
