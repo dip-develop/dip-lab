@@ -1,13 +1,4 @@
 http:
-  routers:
-    dashboard:
-      rule: "Host(`traefik.dm-home.de`)"
-      service: api@internal
-      entryPoints:
-        - websecure
-      middlewares:
-        - security-headers
-
   middlewares:
     security-headers:
       headers:
