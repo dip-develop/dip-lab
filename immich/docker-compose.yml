@@ -1,11 +1,10 @@
 services:
   immich-server:
-    image: ghcr.io/immich-app/immich-server:1.30.3
+    image: ghcr.io/immich-app/immich-server:release
     container_name: immich-server
     restart: always
     env_file:
       - .env
-      - ../databases/.env
     environment:
       - DB_HOSTNAME=postgres
       - DB_USERNAME=${POSTGRES_USER}
@@ -37,7 +36,7 @@ services:
       start_period: 30s
 
   immich-machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:1.30.3
+    image: ghcr.io/immich-app/immich-machine-learning:release
     container_name: immich-ml
     restart: always
     volumes:

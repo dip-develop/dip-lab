@@ -5,7 +5,6 @@ services:
     restart: always
     env_file:
       - .env
-      - ../databases/.env
     environment:
       - N8N_HOST=flow.dm-home.de
       - N8N_PORT=5678

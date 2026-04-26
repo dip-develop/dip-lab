@@ -5,7 +5,6 @@ services:
     restart: always
     env_file:
       - .env
-      - ../databases/.env
     environment:
       - PAPERLESS_REDIS=redis://redis:6379
       - PAPERLESS_DBHOST=postgres
