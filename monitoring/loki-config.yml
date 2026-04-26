@@ -5,12 +5,16 @@ server:
   grpc_listen_port: 9096
 
 common:
-  compactor_address: http://loki:3100
-
-storage:
-  type: filesystem
-  filesystem:
-    directory: /loki/chunks
+  path_prefix: /loki
+  storage:
+    type: filesystem
+    filesystem:
+      directory: /loki/chunks
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
 
 schema_config:
   configs:
@@ -25,3 +29,5 @@ schema_config:
 limits_config:
   reject_old_samples: true
   reject_old_samples_max_age: 168h
+
+ingle_tenant_mode: true

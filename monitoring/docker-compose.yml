@@ -3,6 +3,7 @@ services:
     image: prom/prometheus:v3.1.0
     container_name: prometheus
     restart: always
+    user: "0"
     env_file:
       - .env
     command:
@@ -25,6 +26,7 @@ services:
     image: grafana/grafana:11.4.0
     container_name: grafana
     restart: always
+    user: "0"
     env_file:
       - .env
     environment:
@@ -58,7 +60,7 @@ services:
     restart: always
     env_file:
       - .env
-    command: -config.file=/etc/loki/local-config.yaml
+    command: -config.expand-env=true -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml:ro
       - ./data/loki:/loki
