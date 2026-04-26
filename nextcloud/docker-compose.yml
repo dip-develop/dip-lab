@@ -5,6 +5,7 @@ services:
     restart: always
     env_file:
       - .env
+      - ../databases/.env
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${NEXTCLOUD_DB_NAME}
@@ -22,11 +23,6 @@ services:
     networks:
       - web
       - database
-    depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"

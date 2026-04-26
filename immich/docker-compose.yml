@@ -5,6 +5,7 @@ services:
     restart: always
     env_file:
       - .env
+      - ../databases/.env
     environment:
       - DB_HOSTNAME=postgres
       - DB_USERNAME=${POSTGRES_USER}
@@ -21,11 +22,6 @@ services:
     networks:
       - web
       - database
-    depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"

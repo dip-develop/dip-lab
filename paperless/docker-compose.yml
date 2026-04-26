@@ -5,6 +5,7 @@ services:
     restart: always
     env_file:
       - .env
+      - ../databases/.env
     environment:
       - PAPERLESS_REDIS=redis://redis:6379
       - PAPERLESS_DBHOST=postgres
@@ -25,11 +26,6 @@ services:
     networks:
       - web
       - database
-    depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
