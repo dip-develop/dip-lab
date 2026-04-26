@@ -1,3 +1,8 @@
+# Monitoring data
+monitoring/prometheus/
+monitoring/grafana/
+monitoring/loki/
+
 # .env files
 .env
 .env.*

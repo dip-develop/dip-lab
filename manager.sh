@@ -5,6 +5,7 @@ set -e
 SERVICES=(
     "databases"
     "proxy"
+    "monitoring"
     "vaultwarden"
     "portainer"
     "nextcloud"

@@ -6,6 +6,7 @@
 dm-home.de/
 ├── databases/      # Shared PostgreSQL, MySQL, Redis
 ├── proxy/           # Traefik (reverse proxy)
+├── monitoring/      # Grafana, Prometheus, Loki
 ├── vaultwarden/      # Password manager
 ├── paperless/       # Document management
 ├── portainer/       # Docker management UI
@@ -43,7 +44,8 @@ dm-home.de/
 
 | Сервис | Домен | Порт | Описание |
 |--------|-------|------|----------|
-| Traefik | - | 80 (http), 443 (https) | Reverse proxy |
+| Traefik | - | 4080 (http), 4443 (https) | Reverse proxy |
+| Grafana | monitor.dm-home.de | 3000 | Мониторинг и логи |
 | Vaultwarden | vault.dm-home.de | 8200 | Менеджер паролей |
 | Paperless | docs.dm-home.de | 8000 | Документы |
 | Portainer | admin.dm-home.de | 9000/9443 | Docker UI |
