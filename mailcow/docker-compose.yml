@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mailcow-dockerized:
-    image: mailcow/dockerized:2026-03b
+    image: mailcow/mailcow-dockerized:2026-03
     container_name: mailcow
     restart: always
     ports:
@@ -28,7 +28,7 @@ services:
       - ./data/mailcow/solr:/var/lib/solr
       - ./data/mailcow/mysql:/var/lib/mysql
     env_file:
-      - mailcow.env
+      - ./mailcow.env
     dns:
       - 127.0.0.1
     networks:
