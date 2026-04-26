@@ -25,6 +25,8 @@ services:
       - max_connections=200
       - -c
       - shared_buffers=256MB
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   mysql:
     image: mysql:8.0

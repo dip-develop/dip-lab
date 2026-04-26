@@ -6,7 +6,7 @@ services:
     env_file:
       - .env
     environment:
-      - PAPERLESS_REDIS=redis://redis:6379
+      - PAPERLESS_REDIS=redis://:${REDIS_PASSWORD}@redis:6379
       - PAPERLESS_DBHOST=postgres
       - PAPERLESS_DBNAME=${PAPERLESS_DB_NAME}
       - PAPERLESS_DBUSER=${POSTGRES_USER}
