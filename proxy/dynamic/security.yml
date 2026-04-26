@@ -24,7 +24,7 @@ http:
         maxRequestBodyBytes: 104857600
         memRequestBodyBytes: 20971520
     strip-trailing-slash:
-      redirect:
+      redirectRegex:
         regex: ^/(.*)/$
         replacement: /${1}
         permanent: true

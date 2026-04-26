@@ -7,8 +7,6 @@ http:
         - websecure
       middlewares:
         - security-headers
-      tls:
-        certresolver: letsencrypt
 
   middlewares:
     security-headers:
@@ -25,7 +23,7 @@ http:
         customResponseHeaders:
           X-Robots-Tag: "noindex, nofollow, noarchive"
           X-Content-Type-Options: "nosniff"
-    rate-limit:
+    ratelimit:
       rateLimit:
         average: 100
         burst: 50
