@@ -14,7 +14,7 @@ scrape_configs:
       - targets: [localhost]
         labels:
           job: traefik
-          __path__: /srv/proxy/logs/*.log
+          __path__: ./proxy/logs/*.log
 
   - job_name: 'system-logs'
     static_configs:

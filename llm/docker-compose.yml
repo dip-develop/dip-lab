@@ -11,7 +11,7 @@ services:
     expose:
       - "8000"
     volumes:
-      - /srv/llm/models:/root/.cache/huggingface
+      - ./data/llm/models:/root/.cache/huggingface
     environment:
       - VLLM_CPU_KVCACHE_SPACE=3
       - VLLM_LOG_LEVEL=INFO

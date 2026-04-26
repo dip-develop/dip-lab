@@ -30,27 +30,21 @@ setup_nets() {
 }
 
 setup_directories() {
-    echo "[*] Creating directory structure in /srv..."
+    echo "[*] Creating data directories..."
     
-    mkdir -p /srv/{proxy,portainer,vaultwarden,nextcloud,paperless,n8n,immich,llm,openclaw,mailcow,database}
-    mkdir -p /srv/proxy/{logs,dynamic,certs}
-    mkdir -p /srv/portainer/{data,certs}
-    mkdir -p /srv/vaultwarden/data
-    mkdir -p /srv/nextcloud/{app,data,db,redis}
-    mkdir -p /srv/paperless/{data,db,redis,export,consume}
-    mkdir -p /srv/n8n/{data,db}
-    mkdir -p /srv/immich/{db,redis,thumbs,profile,ml-cache}
-    mkdir -p /srv/llm/models
-    mkdir -p /srv/openclaw/{data,workspace}
-    mkdir -p /srv/mailcow/{data,mail,postfix,dovecot,redis,filter,solr,mysql}
-    mkdir -p /srv/database/{postgres,mysql,redis}
+    for svc in "${SERVICES[@]}"; do
+        if [ -f "$svc/docker-compose.yml" ]; then
+            mkdir -p "$svc/data"
+        fi
+    done
     
-    chown -R "${UID_DOCKER}:${GID_DOCKER}" /srv
-    chmod -R 755 /srv
-    chmod -R 700 /srv/vaultwarden 2>/dev/null || true
-    chmod -R 700 /srv/mailcow 2>/dev/null || true
+    mkdir -p proxy/dynamic proxy/logs proxy/certs
+    mkdir -p databases/data
+    mkdir -p monitoring/data
     
-    echo "[*] Directories created"
+    chmod -R 755 */data 2>/dev/null || true
+    
+    echo "[*] Data directories created"
 }
 
 fix_permissions() {

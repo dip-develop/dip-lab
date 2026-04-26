@@ -19,14 +19,14 @@ services:
       - "${DOVEVOT_PORT}:9993"
       - "${MYSQL_PORT}:3306"
     volumes:
-      - /srv/mailcow/data:/var/lib/docker
-      - /srv/mailcow/mail:/var/mail
-      - /srv/mailcow/postfix:/var/spool/postfix
-      - /srv/mailcow/dovecot:/var/lib/dovecot
-      - /srv/mailcow/redis:/var/lib/redis
-      - /srv/mailcow/filter:/var/milterd
-      - /srv/mailcow/solr:/var/lib/solr
-      - /srv/mailcow/mysql:/var/lib/mysql
+      - ./data/mailcow/data:/var/lib/docker
+      - ./data/mailcow/mail:/var/mail
+      - ./data/mailcow/postfix:/var/spool/postfix
+      - ./data/mailcow/dovecot:/var/lib/dovecot
+      - ./data/mailcow/redis:/var/lib/redis
+      - ./data/mailcow/filter:/var/milterd
+      - ./data/mailcow/solr:/var/lib/solr
+      - ./data/mailcow/mysql:/var/lib/mysql
     env_file:
       - mailcow.env
     dns:

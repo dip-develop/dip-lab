@@ -14,7 +14,7 @@ http:
   middlewares:
     auth_basic:
       basicAuth:
-        usersFile: /srv/proxy/dynamic/.htpasswd
+        usersFile: ./dynamic/.htpasswd
     security-headers:
       headers:
         sslRedirect: true

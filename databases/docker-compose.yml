@@ -11,7 +11,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=C
     volumes:
-      - /srv/database/postgres:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     networks:
       - database
     healthcheck:
@@ -25,16 +25,6 @@ services:
       - max_connections=200
       - -c
       - shared_buffers=256MB
-      - -c
-      - effective_cache_size=512MB
-      - -c
-      - work_mem=16MB
-      - -c
-      - maintenance_work_mem=64MB
-      - -c
-      - random_page_cost=1.1
-      - -c
-      - effective_io_concurrency=200
 
   mysql:
     image: mysql:8.0
@@ -48,11 +38,11 @@ services:
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
-      - /srv/database/mysql:/var/lib/mysql
+      - ./data/mysql:/var/lib/mysql
     networks:
       - database
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -60,7 +50,6 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --max-connections=200
-      - --innodb-buffer-pool-size=512M
 
   redis:
     image: redis:7-alpine
@@ -70,7 +59,7 @@ services:
       - .env
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes --loglevel warning
     volumes:
-      - /srv/database/redis:/data
+      - ./data/redis:/data
     networks:
       - database
     healthcheck:

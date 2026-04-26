@@ -12,7 +12,7 @@ services:
       - --web.enable-lifecycle
     volumes:
       - ./prometheus:/etc/prometheus
-      - /srv/monitoring/prometheus:/prometheus
+      - ./data/prometheus:/prometheus
     networks:
       - monitoring
     healthcheck:
@@ -33,7 +33,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=https://monitor.dm-home.de
     volumes:
-      - /srv/monitoring/grafana:/var/lib/grafana
+      - ./data/grafana:/var/lib/grafana
     networks:
       - monitoring
       - web
@@ -61,7 +61,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml:ro
-      - /srv/monitoring/loki:/loki
+      - ./data/loki:/loki
     networks:
       - monitoring
     healthcheck:

@@ -19,18 +19,17 @@ services:
       - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://paperless-gotenberg:3000
       - PAPERLESS_TIKA_ENDPOINT=http://paperless-tika:9998
     volumes:
-      - /srv/paperless/data:/usr/src/paperless/data
-      - /mnt/object-storage/data/paperless/media:/usr/src/paperless/media:ro
-      - /srv/paperless/export:/usr/src/paperless/export
-      - /srv/paperless/consume:/usr/src/paperless/consume
+      - ./data/paperless/data:/usr/src/paperless/data
+      - ./data/paperless/export:/usr/src/paperless/export
+      - ./data/paperless/consume:/usr/src/paperless/consume
     networks:
       - web
       - database
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"

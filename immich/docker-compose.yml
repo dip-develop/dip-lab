@@ -14,18 +14,18 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - UPLOAD_LOCATION=/data/upload
     volumes:
-      - /srv/immich/upload:/data/upload
-      - /srv/immich/thumbs:/data/thumbs
-      - /srv/immich/profile:/data/profile
+      - ./data/immich/upload:/data/upload
+      - ./data/immich/thumbs:/data/thumbs
+      - ./data/immich/profile:/data/profile
       - /mnt/object-storage/data/immich/library:/mnt/object-storage/library:ro
     networks:
       - web
       - database
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -45,7 +45,7 @@ services:
     container_name: immich-ml
     restart: always
     volumes:
-      - /srv/immich/ml-cache:/cache
+      - ./data/immich/ml-cache:/cache
     networks:
       - database
     healthcheck:

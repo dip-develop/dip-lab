@@ -15,7 +15,7 @@ services:
       - YUBICO_SECRET_KEY=${YUBICO_SECRET_KEY}
       - YUBICO_SERVER=${YUBICO_SERVER}
     volumes:
-      - /srv/vaultwarden/data:/data
+      - ./data/vaultwarden:/data
     networks:
       - web
     labels:

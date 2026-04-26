@@ -12,8 +12,8 @@ services:
       - OPENCLAW_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENCLAW_OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
-      - /srv/openclaw/data:/data
-      - /srv/openclaw/workspace:/workspace
+      - ./data/openclaw:/data
+      - ./data/openclaw-workspace:/workspace
     networks:
       - web
       - internal
