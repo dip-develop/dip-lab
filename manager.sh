@@ -14,7 +14,6 @@ SERVICES=(
     "immich"
     "llm"
     "openclaw"
-    "mailcow"
 )
 
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
