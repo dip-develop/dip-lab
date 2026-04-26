@@ -12,10 +12,8 @@ services:
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
       - ./dynamic:/etc/traefik/dynamic:ro
       - ./logs:/var/log/traefik
-      - ./entrypoint.sh:/entrypoint.sh
       - ./acme.json:/etc/traefik/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    entrypoint: ["/entrypoint.sh"]
     command: ["/docker-entrypoint.sh", "--config-file=/etc/traefik/traefik.yml"]
     networks:
       - web
