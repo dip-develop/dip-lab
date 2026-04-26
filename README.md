@@ -4,6 +4,7 @@
 
 ```
 dm-home.de/
+├── databases/      # Shared PostgreSQL, MySQL, Redis
 ├── proxy/           # Traefik (reverse proxy)
 ├── vaultwarden/      # Password manager
 ├── paperless/       # Document management
@@ -13,8 +14,7 @@ dm-home.de/
 ├── immich/          # Photo gallery
 ├── llm/             # LLM API (vLLM)
 ├── openclaw/        # AI gateway
-├── mailcow/        # Corporate mail (Business)
-└── databases/      # Shared PostgreSQL, MySQL, Redis
+└── mailcow/        # Corporate mail (Business)
 ```
 
 ## Ресурсы сервера
@@ -23,29 +23,26 @@ dm-home.de/
 - **NVMe**: 100 GB (для баз данных и быстрых операций)
 - **Object Storage**: /mnt/object-storage (ограниченная скорость, лимит на права)
 
-## Хранение данных
+## База данных
 
-| Сервис | Путь | Описание |
-|--------|-----|-----------|
-| Базы данных | `/srv/database/` | PostgreSQL, MySQL, Redis |
-| Фото | `/srv/immich/` | thumbnails, profiles |
-| Документы | `/srv/paperless/` | OCR, полнотекстовый поиск |
-| Файлы | `/mnt/object-storage/` | большие файлы, медленнее |
-| Почта | `/srv/mailcow/` | корппочта |
+Общая PostgreSQL и Redis для всех сервисов:
+
+| Сервис | База данных | Описание |
+|--------|-------------|----------|
+| databases | PostgreSQL, Redis | Общие БД |
+| mailcow | MySQL (встроенная) | Почта |
 
 ## Сети
 
 - `web` - внешняя (Traefik)
-- `internal` - LLM, n8n, OpenCLAW
-- `database` - общие БД
-- `paperless_internal` - paperless
-- `nextcloud_internal` - nextcloud
+- `internal` - LLM, OpenCLAW
+- `database` - общие PostgreSQL, Redis
 - `mailcow` - почтовый сервер
 
 ## Домены и порты
 
 | Сервис | Домен | Порт | Описание |
-|--------|-------|------|--------|
+|--------|-------|------|----------|
 | Traefik | - | 4080 (http), 4443 (https) | Reverse proxy |
 | Vaultwarden | vault.dm-home.de | 8200 | Менеджер паролей |
 | Paperless | docs.dm-home.de | 8000 | Документы |
@@ -66,7 +63,7 @@ dm-home.de/
 ```
 
 | Команда | Описание |
-|---------|-----------|
+|---------|----------|
 | `start [svc]` | Запустить все или конкретный сервис |
 | `stop` | Остановить все сервисы |
 | `restart [svc]` | Перезапустить |
@@ -104,18 +101,23 @@ dm-home.de/
 git clone https://github.com/your-repo/dm-home.de.git
 cd dm-home.de
 
-# 2. Создать сети, директории и .env файлы
+# 2. Создать сети и директории
 ./manager.sh setup
 
-# 3. Заполнить пароли в каждом .env файле
+# 3. Заполнить пароли в .env файлах
+vim databases/.env
 vim vaultwarden/.env
 vim proxy/.env
-# ... и так далее для каждого сервиса
+vim mailcow/mailcow.env
 
 # 4. Исправить права
 ./manager.sh perm
 
-# 5. Запустить сервисы
+# 5. Запустить БД и proxy первыми
+./manager.sh start databases
+./manager.sh start proxy
+
+# 6. Запустить остальные сервисы
 ./manager.sh start
 ```
 
@@ -125,3 +127,4 @@ vim proxy/.env
 - Все сервисы за Traefik работают через HTTPS
 - Zero Trust Cloudflare для веб-доступа
 - Логи в `/srv/proxy/logs/`
+- databases запускается первым (все сервисы зависят от него)

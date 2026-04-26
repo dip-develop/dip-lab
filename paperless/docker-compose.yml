@@ -6,14 +6,14 @@ services:
     env_file:
       - .env
     environment:
-      - PAPERLESS_REDIS=redis://paperless-redis:6379
-      - PAPERLESS_DBHOST=paperless-db
-      - PAPERLESS_DBNAME=paperless
-      - PAPERLESS_DBUSER=paperless
-      - PAPERLESS_DBPASS=${PAPERLESS_DB_PASSWORD}
+      - PAPERLESS_REDIS=redis://redis:6379
+      - PAPERLESS_DBHOST=postgres
+      - PAPERLESS_DBNAME=${PAPERLESS_DB_NAME}
+      - PAPERLESS_DBUSER=${POSTGRES_USER}
+      - PAPERLESS_DBPASS=${POSTGRES_PASSWORD}
       - PAPERLESS_URL=https://docs.dm-home.de
       - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
-      - PAPERLESS_TIME_ZONE=Europe/Kiev
+      - PAPERLESS_TIME_ZONE=${TZ}
       - PAPERLESS_OCR_LANGUAGE=ukr,eng
       - PAPERLESS_TIKA_ENABLED=1
       - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://paperless-gotenberg:3000
@@ -24,11 +24,13 @@ services:
       - /srv/paperless/export:/usr/src/paperless/export
       - /srv/paperless/consume:/usr/src/paperless/consume
     networks:
-      - paperless_internal
       - web
+      - database
     depends_on:
-      - paperless-db
-      - paperless-redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -42,44 +44,12 @@ services:
       timeout: 10s
       retries: 3
 
-  paperless-db:
-    image: postgres:16
-    container_name: paperless-db
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_DB=paperless
-      - POSTGRES_USER=paperless
-      - POSTGRES_PASSWORD=${PAPERLESS_DB_PASSWORD}
-    volumes:
-      - /srv/paperless/db:/var/lib/postgresql/data
-    networks:
-      - paperless_internal
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "paperless"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  paperless-redis:
-    image: redis:alpine
-    container_name: paperless-redis
-    restart: always
-    networks:
-      - paperless_internal
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   paperless-gotenberg:
     image: gotenberg/gotenberg:8.30.0
     container_name: paperless-gotenberg
     restart: always
     networks:
-      - paperless_internal
+      - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -91,7 +61,7 @@ services:
     container_name: paperless-tika
     restart: always
     networks:
-      - paperless_internal
+      - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9998/tika"]
       interval: 30s
@@ -101,6 +71,5 @@ services:
 networks:
   web:
     external: true
-  paperless_internal:
-    driver: bridge
-    name: paperless_internal
+  database:
+    external: true

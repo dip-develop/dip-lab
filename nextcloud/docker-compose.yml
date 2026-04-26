@@ -6,12 +6,12 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=nextcloud
-      - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${NEXTCLOUD_DB_NAME}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - REDIS_HOST=redis
-      - REDIS_PASSWORD=${NEXTCLOUD_REDIS_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - NEXTCLOUD_TRUSTED_DOMAINS=cloud.dm-home.de
       - OVERWRITEHOST=cloud.dm-home.de
       - OVERWRITEPROTOCOL=https
@@ -20,8 +20,13 @@ services:
       - /srv/nextcloud/data:/var/www/html/data
       - /mnt/object-storage/data/nextcloud:/mnt/object-storage:ro
     networks:
-      - nextcloud_internal
       - web
+      - database
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -29,41 +34,8 @@ services:
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
-      - "traefik.http.routers.nextcloud.middlewares=nextcloud-header"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/status.php"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  db:
-    image: postgres:16
-    container_name: nextcloud-db
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_DB=nextcloud
-      - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
-    volumes:
-      - /srv/nextcloud/db:/var/lib/postgresql/data
-    networks:
-      - nextcloud_internal
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "nextcloud"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  redis:
-    image: redis:alpine
-    container_name: nextcloud-redis
-    restart: always
-    networks:
-      - nextcloud_internal
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -71,6 +43,5 @@ services:
 networks:
   web:
     external: true
-  nextcloud_internal:
-    driver: bridge
-    name: nextcloud_internal
+  database:
+    external: true

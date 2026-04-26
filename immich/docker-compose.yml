@@ -6,11 +6,12 @@ services:
     env_file:
       - .env
     environment:
-      - DB_HOSTNAME=immich-db
-      - DB_USERNAME=immich
-      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
-      - DB_DATABASE_NAME=immich
-      - REDIS_HOSTNAME=immich-redis
+      - DB_HOSTNAME=postgres
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_DATABASE_NAME=${IMMICH_DB_NAME}
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - UPLOAD_LOCATION=/data/upload
     volumes:
       - /srv/immich/upload:/data/upload
@@ -19,11 +20,11 @@ services:
       - /mnt/object-storage/data/immich/library:/mnt/object-storage/library:ro
     networks:
       - web
-      - internal
+      - database
     depends_on:
-      immich-db:
+      postgres:
         condition: service_healthy
-      immich-redis:
+      redis:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
@@ -46,48 +47,15 @@ services:
     volumes:
       - /srv/immich/ml-cache:/cache
     networks:
-      - internal
+      - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  immich-db:
-    image: ghcr.io/immich-app/postgres:14-vectorchord0.5.3
-    container_name: immich-db
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_DB=immich
-      - POSTGRES_USER=immich
-      - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
-    volumes:
-      - /srv/immich/db:/var/lib/postgresql/data
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "immich", "-d", "immich"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  immich-redis:
-    image: redis:alpine
-    container_name: immich-redis
-    restart: always
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-
 networks:
   web:
     external: true
-  internal:
+  database:
     external: true

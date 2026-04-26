@@ -3,10 +3,10 @@
 set -e
 
 SERVICES=(
+    "databases"
     "proxy"
     "vaultwarden"
     "portainer"
-    "databases"
     "nextcloud"
     "paperless"
     "n8n"
@@ -25,8 +25,6 @@ setup_nets() {
     docker network create web 2>/dev/null || echo "[+] Network 'web' already exists"
     docker network create internal 2>/dev/null || echo "[+] Network 'internal' already exists"
     docker network create database 2>/dev/null || echo "[+] Network 'database' already exists"
-    docker network create paperless_internal 2>/dev/null || echo "[+] Network 'paperless_internal' already exists"
-    docker network create nextcloud_internal 2>/dev/null || echo "[+] Network 'nextcloud_internal' already exists"
     echo "[*] Networks ready"
 }
 
