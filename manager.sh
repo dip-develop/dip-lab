@@ -53,6 +53,8 @@ fix_permissions() {
     find "${SCRIPT_DIR}" -type d -exec chmod 755 {} \;
     find "${SCRIPT_DIR}" -type f -exec chmod 644 {} \;
     
+    chmod +x "${SCRIPT_DIR}/proxy/entrypoint.sh" 2>/dev/null || true
+    
     chown -R "${UID_DOCKER}:${GID_DOCKER}" "${SCRIPT_DIR}"
     chmod 750 "${SCRIPT_DIR}/manager.sh"
     
