@@ -8,8 +8,7 @@ api:
 
 log:
   level: INFO
-  filePath: /var/log/traefik/traefik.log
-  format: json
+  format: common
 
 entrypoints:
   web:
@@ -25,8 +24,20 @@ providers:
     directory: /etc/traefik/dynamic
     watch: true
 
+http:
+  routers:
+    ping:
+      rule: "Path(`/ping`)"
+      service: ping
+      entryPoints:
+        - web
+  services:
+    ping:
+      loadBalancer:
+        servers:
+          - url: "http://localhost"
+
 certificatesResolvers:
-  letsencrypt:
     acme:
       email: dmytro.prylutskyi@outlook.com
       storage: /etc/traefik/acme.json
