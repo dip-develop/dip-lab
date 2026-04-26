@@ -6,7 +6,7 @@ SERVICES=(
     "proxy"
     "vaultwarden"
     "portainer"
-    "database"
+    "databases"
     "nextcloud"
     "paperless"
     "n8n"
@@ -17,9 +17,6 @@ SERVICES=(
 )
 
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-readonly DOCKER_SOCKET="/var/run/docker.sock"
-readonly SRV_DIR="/srv"
-
 readonly UID_DOCKER=1000
 readonly GID_DOCKER=1000
 
@@ -34,25 +31,25 @@ setup_nets() {
 }
 
 setup_directories() {
-    echo "[*] Creating directory structure in ${SRV_DIR}..."
+    echo "[*] Creating directory structure in /srv..."
     
-    mkdir -p "${SRV_DIR}"/{proxy,portainer,vaultwarden,nextcloud,paperless,n8n,immich,llm,openclaw,mailcow,database}
-    mkdir -p "${SRV_DIR}/proxy"/{logs,dynamic,certs}
-    mkdir -p "${SRV_DIR}/portainer"/{data,certs}
-    mkdir -p "${SRV_DIR}/vaultwarden"/data
-    mkdir -p "${SRV_DIR}/nextcloud"/{app,data,db,redis}
-    mkdir -p "${SRV_DIR}/paperless"/{data,db,redis,export,consume}
-    mkdir -p "${SRV_DIR}/n8n"/{data,db}
-    mkdir -p "${SRV_DIR}/immich"/{db,redis,thumbs,profile,ml-cache}
-    mkdir -p "${SRV_DIR}/llm"/models
-    mkdir -p "${SRV_DIR}/openclaw"/{data,workspace}
-    mkdir -p "${SRV_DIR}/mailcow"/{data,mail,postfix,dovecot,redis,filter,solr,mysql}
-    mkdir -p "${SRV_DIR}/database"/{postgres,mysql,redis}
+    mkdir -p /srv/{proxy,portainer,vaultwarden,nextcloud,paperless,n8n,immich,llm,openclaw,mailcow,database}
+    mkdir -p /srv/proxy/{logs,dynamic,certs}
+    mkdir -p /srv/portainer/{data,certs}
+    mkdir -p /srv/vaultwarden/data
+    mkdir -p /srv/nextcloud/{app,data,db,redis}
+    mkdir -p /srv/paperless/{data,db,redis,export,consume}
+    mkdir -p /srv/n8n/{data,db}
+    mkdir -p /srv/immich/{db,redis,thumbs,profile,ml-cache}
+    mkdir -p /srv/llm/models
+    mkdir -p /srv/openclaw/{data,workspace}
+    mkdir -p /srv/mailcow/{data,mail,postfix,dovecot,redis,filter,solr,mysql}
+    mkdir -p /srv/database/{postgres,mysql,redis}
     
-    chown -R "${UID_DOCKER}:${GID_DOCKER}" "${SRV_DIR}"
-    chmod -R 755 "${SRV_DIR}"
-    chmod -R 700 "${SRV_DIR}/vaultwarden" 2>/dev/null || true
-    chmod -R 700 "${SRV_DIR}/mailcow" 2>/dev/null || true
+    chown -R "${UID_DOCKER}:${GID_DOCKER}" /srv
+    chmod -R 755 /srv
+    chmod -R 700 /srv/vaultwarden 2>/dev/null || true
+    chmod -R 700 /srv/mailcow 2>/dev/null || true
     
     echo "[*] Directories created"
 }
@@ -65,8 +62,8 @@ fix_permissions() {
     
     chown -R "${UID_DOCKER}:${GID_DOCKER}" "${SCRIPT_DIR}"
     chmod 750 "${SCRIPT_DIR}/manager.sh"
-    chmod 600 "${SCRIPT_DIR}"/*/.env 2>/dev/null || true
     
+    find "${SCRIPT_DIR}" -path "*/.env" -exec chmod 600 {} \; 2>/dev/null || true
     find "${SCRIPT_DIR}/proxy" -type f -name "*.json" -exec chmod 600 {} \; 2>/dev/null || true
     
     echo "[*] Permissions fixed"
@@ -77,26 +74,26 @@ usage() {
     echo ""
     echo "Commands:"
     echo "  start [svc]     - Start all or specific service"
-    echo "  stop [svc]    - Stop all or specific service"
-    echo "  restart [svc]  - Restart all or specific service"
-    echo "  update [svc]  - Update (pull) all or specific service"
-    echo "  logs [svc]    - Show logs for service"
-    echo "  status        - Show status of all services"
-    echo "  perm          - Set permissions and ownership"
-    echo "  setup        - Setup networks and directories"
-    echo "  clean        - Clean unused resources"
+    echo "  stop [svc]      - Stop all or specific service"
+    echo "  restart [svc]   - Restart all or specific service"
+    echo "  update [svc]    - Update (pull) all or specific service"
+    echo "  logs [svc]      - Show logs for service"
+    echo "  status          - Show status of all services"
+    echo "  setup           - Setup networks and directories"
+    echo "  perm            - Set permissions and ownership"
+    echo "  clean           - Clean unused resources"
     echo ""
     echo "Services:"
     for svc in "${SERVICES[@]}"; do
         echo "  - $svc"
     done
-    echo "  all           - all services"
+    echo "  all             - all services"
     echo ""
     echo "Examples:"
-    echo "  $0 start                # start all"
-    echo "  $0 start proxy         # start proxy only"
+    echo "  $0 setup              # setup networks and dirs"
+    echo "  $0 start              # start all"
+    echo "  $0 start proxy        # start proxy only"
     echo "  $0 logs immich --tail 100"
-    echo "  $0 status"
 }
 
 run_all() {
@@ -105,7 +102,7 @@ run_all() {
     for svc in "${SERVICES[@]}"; do
         if [ -f "$svc/docker-compose.yml" ]; then
             echo "[*] Running: $cmd on $svc"
-            docker compose -f "$svc/docker-compose.yml" $cmd "$@"
+            (cd "$svc" && docker compose $cmd "$@")
         fi
     done
 }
@@ -123,10 +120,9 @@ run_one() {
     esac
     
     if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
-        docker compose -f "$svc/docker-compose.yml" "$@"
+        (cd "$svc" && docker compose "$@")
     else
         echo "[!] Service '$svc' not found"
-        echo "[!] Available: ${SERVICES[*]}"
         exit 1
     fi
 }
@@ -144,10 +140,9 @@ case $ACTION in
         fi
         ;;
     stop)
-        reversed=("${SERVICES[@]}")
-        for svc in $(printf '%s\n' "${reversed[@]}" | tac); do
+        for svc in $(printf '%s\n' "${SERVICES[@]}" | tac); do
             if [ -f "$svc/docker-compose.yml" ]; then
-                docker compose -f "$svc/docker-compose.yml" down 2>/dev/null || true
+                (cd "$svc" && docker compose down 2>/dev/null) || true
             fi
         done
         ;;
@@ -180,16 +175,16 @@ case $ACTION in
         for svc in "${SERVICES[@]}"; do
             if [ -f "$svc/docker-compose.yml" ]; then
                 echo "=== $svc ==="
-                docker compose -f "$svc/docker-compose.yml" ps 2>/dev/null || echo "not found"
+                (cd "$svc" && docker compose ps 2>/dev/null) || echo "not found"
             fi
         done
-        ;;
-    perm)
-        fix_permissions
         ;;
     setup)
         setup_nets
         setup_directories
+        ;;
+    perm)
+        fix_permissions
         ;;
     clean)
         echo "[*] Cleaning unused Docker resources..."

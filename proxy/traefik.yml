@@ -61,7 +61,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: dmytro.prylutskyi@outlook.com
+      email: ${ACME_EMAIL}
       storage: /etc/traefik/acme.json
       httpChallenge:
         entryPoint: web

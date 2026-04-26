@@ -1,6 +1,8 @@
-# Data directories (never commit)
+# .env files
 .env
+.env.*
 */*.env
+mailcow.env
 /srv/
 *.log
 

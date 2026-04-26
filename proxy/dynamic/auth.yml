@@ -1,7 +1,7 @@
 http:
   routers:
     dashboard:
-      rule: "Host(`traefik.dipdev.de`)"
+      rule: "Host(`traefik.dm-home.de`)"
       service: api@internal
       entryPoints:
         - websecure
@@ -14,5 +14,18 @@ http:
   middlewares:
     auth_basic:
       basicAuth:
-        users:
-          - "admin:$apr1$MRfYsEPI$iJgpGkZoJxvKGoXmINehu/"
+        usersFile: /srv/proxy/dynamic/.htpasswd
+    security-headers:
+      headers:
+        sslRedirect: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceStsHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
+          X-Robots-Tag: "noindex, nofollow, noarchive"
+          X-Content-Type-Options: "nosniff"

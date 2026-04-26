@@ -3,15 +3,19 @@ services:
     image: traefik:v3.6
     container_name: traefik
     restart: always
+    env_file:
+      - .env
     ports:
       - "4080:80"
       - "4443:443"
     volumes:
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./dynamic:/etc/traefik/dynamic:ro
-      - ./acme.json:/etc/traefik/acme.json
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/proxy/dynamic:/etc/traefik/dynamic:ro
       - /srv/proxy/logs:/var/log/traefik
+      - ./entrypoint.sh:/entrypoint.sh:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    entrypoint: ["/entrypoint.sh"]
+    command: ["/docker-entrypoint.sh", "--config-file=/etc/traefik/traefik.yml"]
     networks:
       - web
     healthcheck:

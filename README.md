@@ -104,12 +104,13 @@ dm-home.de/
 git clone https://github.com/your-repo/dm-home.de.git
 cd dm-home.de
 
-# 2. Настроить .env файл (скопировать из .env.example)
-cp .env.example .env
-# Отредактировать .env с вашими паролями
-
-# 3. Создать сети и директории
+# 2. Создать сети, директории и .env файлы
 ./manager.sh setup
+
+# 3. Заполнить пароли в каждом .env файле
+vim vaultwarden/.env
+vim proxy/.env
+# ... и так далее для каждого сервиса
 
 # 4. Исправить права
 ./manager.sh perm
