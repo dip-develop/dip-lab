@@ -10,6 +10,9 @@ log:
   level: INFO
   format: common
 
+ping:
+  entryPoint: web
+
 entrypoints:
   web:
     address: ":80"
@@ -23,19 +26,6 @@ providers:
   file:
     directory: /etc/traefik/dynamic
     watch: true
-
-http:
-  routers:
-    ping:
-      rule: "Path(`/ping`)"
-      service: ping
-      entryPoints:
-        - web
-  services:
-    ping:
-      loadBalancer:
-        servers:
-          - url: "http://localhost"
 
 certificatesResolvers:
   letsencrypt:
