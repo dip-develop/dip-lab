@@ -14,11 +14,11 @@ services:
       - ./logs:/var/log/traefik
       - ./acme.json:/etc/traefik/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    command: ["/docker-entrypoint.sh", "--config-file=/etc/traefik/traefik.yml"]
+    command: traefik
     networks:
       - web
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4080/ping"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/ping"]
       interval: 30s
       timeout: 10s
       retries: 3
