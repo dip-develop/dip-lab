@@ -3,19 +3,19 @@ http:
     security-headers:
       headers:
         sslRedirect: true
-        sts_seconds: 31536000
-        sts_include_subdomains: true
-        sts_preload: true
-        force_sts_header: true
-        content_type_nosniff: true
-        browser_xss_filter: true
-        referrer_policy: "strict-origin-when-cross-origin"
-        custom_frame_options_value: "SAMEORIGIN"
-        custom_response_headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceStsHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
           X-Robots-Tag: "noindex, nofollow, noarchive"
           X-Content-Type-Options: "nosniff"
-    rate-limit:
-      rate_limit:
+    ratelimit:
+      rateLimit:
         average: 100
         burst: 50
         period: 1s
