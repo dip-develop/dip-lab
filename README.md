@@ -43,7 +43,7 @@ dm-home.de/
 
 | Сервис | Домен | Порт | Описание |
 |--------|-------|------|----------|
-| Traefik | - | 4080 (http), 4443 (https) | Reverse proxy |
+| Traefik | - | 80 (http), 443 (https) | Reverse proxy |
 | Vaultwarden | vault.dm-home.de | 8200 | Менеджер паролей |
 | Paperless | docs.dm-home.de | 8000 | Документы |
 | Portainer | admin.dm-home.de | 9000/9443 | Docker UI |
@@ -123,7 +123,7 @@ vim mailcow/mailcow.env
 
 ## Notes
 
-- Traefik слушает на портах 4080/4443 (т.к. 80/443 могут быть заняты)
+- Traefik слушает на портах 80/443 (т.к. 80/443 могут быть заняты)
 - Все сервисы за Traefik работают через HTTPS
 - Zero Trust Cloudflare для веб-доступа
 - Логи в `/srv/proxy/logs/`

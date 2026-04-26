@@ -27,7 +27,7 @@ accessLog:
 
 entryPoints:
   web:
-    address: ":4080"
+    address: ":80"
     http:
       redirections:
         entryPoint:
@@ -35,7 +35,7 @@ entryPoints:
           scheme: https
           permanent: true
   websecure:
-    address: ":4443"
+    address: ":443"
     http:
       middlewares:
         - security-headers
