@@ -5,7 +5,7 @@ monitoring/loki/
 
 # .env files
 .env
-.env.*
+#.env.*
 */*.env
 mailcow.env
 /srv/
