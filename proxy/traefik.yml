@@ -38,6 +38,7 @@ http:
           - url: "http://localhost"
 
 certificatesResolvers:
+  letsencrypt:
     acme:
       email: dmytro.prylutskyi@outlook.com
       storage: /etc/traefik/acme.json
