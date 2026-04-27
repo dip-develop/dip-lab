@@ -2,11 +2,9 @@ http:
   middlewares:
     security-headers:
       headers:
-        sslRedirect: true
         stsSeconds: 31536000
         stsIncludeSubdomains: true
         stsPreload: true
-        forceStsHeader: true
         contentTypeNosniff: true
         browserXssFilter: true
         referrerPolicy: "strict-origin-when-cross-origin"
@@ -14,15 +12,19 @@ http:
         customResponseHeaders:
           X-Robots-Tag: "noindex, nofollow, noarchive"
           X-Content-Type-Options: "nosniff"
+        frameDeny: true
+
     ratelimit:
       rateLimit:
         average: 100
         burst: 50
         period: 1s
+
     large-upload:
       buffering:
         maxRequestBodyBytes: 104857600
         memRequestBodyBytes: 20971520
+
     strip-trailing-slash:
       redirectRegex:
         regex: ^/(.*)/$

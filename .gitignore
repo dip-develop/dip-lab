@@ -16,6 +16,10 @@ proxy/certs/
 *.sock
 *.pid
 
+# OpenCode
+.opencode/
+.env.opencode
+
 # IDE
 .idea/
 .vscode/

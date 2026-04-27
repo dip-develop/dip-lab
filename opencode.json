@@ -1,0 +1,34 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "docker": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-docker"],
+      "description": "Docker container management"
+    },
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres"],
+      "environment": {
+        "DATABASE_URL": "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+      },
+      "description": "PostgreSQL database queries"
+    },
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem"],
+      "args": ["/home/dimoshka/dm-home.de"],
+      "description": "File operations in project directory"
+    },
+    "everything": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-everything"],
+      "description": "Comprehensive tools (fetch, puppeteer, etc)"
+    },
+    "ssh": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-server-ssh"],
+      "description": "SSH remote execution"
+    }
+  }
+}
