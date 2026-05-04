@@ -25,7 +25,7 @@ services:
       - -c
       - max_connections=200
       - -c
-      - shared_buffers=256MB
+      - shared_buffers=3GB
 
   mysql:
     image: mysql:8.0

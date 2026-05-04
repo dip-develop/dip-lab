@@ -7,22 +7,26 @@ api:
   insecure: true
 
 log:
-  level: DEBUG
+  level: INFO
+  format: common
+
+accessLog:
   format: common
 
 ping:
   entryPoint: web
 
-entrypoints:
+entryPoints:
   web:
-    address: ":80"
+    address: "10.0.0.1:80"
   websecure:
-    address: ":443"
+    address: "10.0.0.1:443"
 
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
+    network: web
   file:
     directory: /etc/traefik/dynamic
     watch: true

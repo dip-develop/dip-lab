@@ -5,15 +5,13 @@ services:
     restart: always
     env_file:
       - .env
-    ports:
-      - "8000:8000"
     environment:
       - PAPERLESS_REDIS=redis://:${REDIS_PASSWORD}@redis:6379
       - PAPERLESS_DBHOST=postgres
       - PAPERLESS_DBNAME=${PAPERLESS_DB_NAME}
       - PAPERLESS_DBUSER=${POSTGRES_USER}
       - PAPERLESS_DBPASS=${POSTGRES_PASSWORD}
-      - PAPERLESS_URL=http://192.168.1.1:8000
+      - PAPERLESS_URL=https://paperless.dm-home.de
       - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
       - PAPERLESS_TIME_ZONE=${TZ}
       - PAPERLESS_OCR_LANGUAGE=ukr,eng
@@ -25,6 +23,7 @@ services:
       - ./data/paperless/export:/usr/src/paperless/export
       - ./data/paperless/consume:/usr/src/paperless/consume
     networks:
+      - web
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
@@ -37,6 +36,7 @@ services:
     container_name: paperless-gotenberg
     restart: always
     networks:
+      - web
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -49,6 +49,7 @@ services:
     container_name: paperless-tika
     restart: always
     networks:
+      - web
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9998/tika"]

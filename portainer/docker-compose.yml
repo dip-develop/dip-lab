@@ -6,21 +6,17 @@ services:
     command: --http-enabled --bind :9000
     env_file:
       - .env
-    ports:
-      - "9000:9000"
     environment:
       - PORTAINER_ADMIN_PASSWORD=${PORTAINER_ADMIN_PASSWORD}
     volumes:
       - ./data/portainer:/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - default
+      - web
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/api/system/status"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-networks:
-  default:
-    driver: bridge
+

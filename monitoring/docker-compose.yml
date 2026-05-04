@@ -15,6 +15,7 @@ services:
       - ./prometheus:/etc/prometheus
       - ./data/prometheus:/prometheus
     networks:
+      - web
       - monitoring
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
@@ -29,16 +30,15 @@ services:
     user: "0"
     env_file:
       - .env
-    ports:
-      - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://192.168.1.1:3000
+      - GF_SERVER_ROOT_URL=http://10.0.0.1:3000
     volumes:
       - ./data/grafana:/var/lib/grafana
     networks:
+      - web
       - monitoring
     depends_on:
       - prometheus
