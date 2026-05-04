@@ -6,8 +6,8 @@ services:
     env_file:
       - .env
     ports:
-      - "80:80"
-      - "443:443"
+      - "10.0.0.1:8080:80"
+      - "10.0.0.1:8443:443"
     volumes:
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
       - ./dynamic:/etc/traefik/dynamic:ro
@@ -17,6 +17,7 @@ services:
     command: traefik
     networks:
       - web
+      - internal
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/ping"]
       interval: 30s
@@ -30,4 +31,6 @@ services:
 
 networks:
   web:
+    external: true
+  internal:
     external: true

@@ -5,8 +5,6 @@ services:
     restart: always
     env_file:
       - .env
-    ports:
-      - "2283:2283"
     environment:
       - DB_HOSTNAME=postgres
       - DB_USERNAME=${POSTGRES_USER}
@@ -21,6 +19,7 @@ services:
       - ./data/immich/profile:/data/profile
       - /mnt/object-storage/data/immich/library:/mnt/object-storage/library:ro
     networks:
+      - web
       - database
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:2283/api/server-info/ping"]
@@ -36,6 +35,7 @@ services:
     volumes:
       - ./data/immich/ml-cache:/cache
     networks:
+      - web
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]

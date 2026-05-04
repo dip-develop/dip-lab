@@ -17,7 +17,7 @@ services:
       - "${POPS_PORT}:995"
       - "${SIEVE_PORT}:4190"
       - "${DOVEVOT_PORT}:9993"
-      - "${MYSQL_PORT}:3306"
+
     volumes:
       - ./data/mailcow/data:/var/lib/docker
       - ./data/mailcow/mail:/var/mail
@@ -32,28 +32,16 @@ services:
     dns:
       - 127.0.0.1
     networks:
-      - mailcow
       - web
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mailcow-http.rule=Host(`mail.dipdev.de`)"
-      - "traefik.http.routers.mailcow-http.entrypoints=web"
-      - "traefik.http.routers.mailcow-https.rule=Host(`mail.dipdev.de`)"
-      - "traefik.http.routers.mailcow-https.entrypoints=websecure"
-      - "traefik.http.routers.mailcow-https.tls.certresolver=letsencrypt"
-      - "traefik.http.services.mailcow.loadbalancer.server.port=${HTTPS_PORT}"
     shm_size: 128m
     environment:
       TZ: Europe/Kiev
 
 networks:
-  mailcow:
-    driver: bridge
-    name: mailcow
   web:
     external: true

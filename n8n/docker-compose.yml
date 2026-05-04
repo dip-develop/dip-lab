@@ -5,13 +5,11 @@ services:
     restart: always
     env_file:
       - .env
-    ports:
-      - "5678:5678"
     environment:
-      - N8N_HOST=192.168.1.1:5678
+      - N8N_HOST=n8n.dm-home.de:5678
       - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://192.168.1.1:5678/
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.dm-home.de/
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
@@ -24,6 +22,7 @@ services:
     volumes:
       - ./data/n8n:/home/node/.n8n
     networks:
+      - web
       - database
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5678/healthz"]
