@@ -118,6 +118,8 @@ services:
       retries: 3
 
 networks:
+  web:
+    external: true
   monitoring:
     driver: bridge
     name: monitoring
