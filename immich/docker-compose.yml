@@ -5,6 +5,8 @@ services:
     restart: always
     env_file:
       - .env
+    ports:
+      - "2283:2283"
     environment:
       - DB_HOSTNAME=postgres
       - DB_USERNAME=${POSTGRES_USER}
@@ -19,15 +21,7 @@ services:
       - ./data/immich/profile:/data/profile
       - /mnt/object-storage/data/immich/library:/mnt/object-storage/library:ro
     networks:
-      - web
       - database
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=web"
-      - "traefik.http.routers.immich.rule=Host(`photos.dm-home.de`)"
-      - "traefik.http.routers.immich.entrypoints=websecure"
-      - "traefik.http.routers.immich.tls.certresolver=letsencrypt"
-      - "traefik.http.services.immich.loadbalancer.server.port=2283"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:2283/api/server-info/ping"]
       interval: 30s
@@ -50,7 +44,5 @@ services:
       retries: 3
 
 networks:
-  web:
-    external: true
   database:
     external: true

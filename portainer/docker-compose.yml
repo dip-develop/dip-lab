@@ -3,22 +3,18 @@ services:
     image: portainer/portainer-ce:2.40.0
     container_name: portainer
     restart: always
-    command: --http-enabled --bind :9000 --http-disabled
+    command: --http-enabled --bind :9000
     env_file:
       - .env
+    ports:
+      - "9000:9000"
     environment:
       - PORTAINER_ADMIN_PASSWORD=${PORTAINER_ADMIN_PASSWORD}
     volumes:
       - ./data/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - web
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=web"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.dm-home.de`)"
-      - "traefik.http.routers.portainer.entrypoints=websecure"
-      - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - default
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/api/system/status"]
       interval: 30s
@@ -26,5 +22,5 @@ services:
       retries: 3
 
 networks:
-  web:
-    external: true
+  default:
+    driver: bridge

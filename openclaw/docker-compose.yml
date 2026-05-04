@@ -5,6 +5,8 @@ services:
     restart: always
     env_file:
       - .env
+    ports:
+      - "18789:18789"
     environment:
       - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=${OPENCLAW_ALLOWED_ORIGINS}
       - OPENCLAW_TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
@@ -15,15 +17,7 @@ services:
       - ./data/openclaw:/data
       - ./data/openclaw-workspace:/workspace
     networks:
-      - web
       - internal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=web"
-      - "traefik.http.routers.openclaw.rule=Host(`ai.dm-home.de`)"
-      - "traefik.http.routers.openclaw.entrypoints=websecure"
-      - "traefik.http.routers.openclaw.tls.certresolver=letsencrypt"
-      - "traefik.http.services.openclaw.loadbalancer.server.port=18789"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:18789/health"]
       interval: 30s
@@ -31,7 +25,5 @@ services:
       retries: 3
 
 networks:
-  web:
-    external: true
   internal:
     external: true
