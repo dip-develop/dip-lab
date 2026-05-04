@@ -14,6 +14,7 @@ SERVICES=(
     "immich"
     "llm"
     "openclaw"
+    "mailcow"
 )
 
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -37,9 +38,17 @@ setup_directories() {
         fi
     done
     
-    mkdir -p proxy/dynamic proxy/logs proxy/certs
+    mkdir -p proxy/dynamic proxy/logs
     mkdir -p databases/data
     mkdir -p monitoring/data
+    mkdir -p mailcow/data/mailcow/data
+    mkdir -p mailcow/data/mailcow/mail
+    mkdir -p mailcow/data/mailcow/postfix
+    mkdir -p mailcow/data/mailcow/dovecot
+    mkdir -p mailcow/data/mailcow/redis
+    mkdir -p mailcow/data/mailcow/filter
+    mkdir -p mailcow/data/mailcow/solr
+    mkdir -p mailcow/data/mailcow/mysql
     
     chmod -R 755 */data 2>/dev/null || true
     
@@ -57,8 +66,9 @@ fix_permissions() {
     chown -R "${UID_DOCKER}:${GID_DOCKER}" "${SCRIPT_DIR}"
     chmod 750 "${SCRIPT_DIR}/manager.sh"
     
-    find "${SCRIPT_DIR}" -path "*/.env" -exec chmod 600 {} \; 2>/dev/null || true
-    find "${SCRIPT_DIR}/proxy" -type f -name "*.json" -exec chmod 600 {} \; 2>/dev/null || true
+    find "${SCRIPT_DIR}" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
+    find "${SCRIPT_DIR}" -name "mailcow.env" -exec chmod 600 {} \; 2>/dev/null || true
+    find "${SCRIPT_DIR}/proxy" -name "acme.json" -exec chmod 600 {} \; 2>/dev/null || true
     
     echo "[*] Permissions fixed"
 }
@@ -76,6 +86,8 @@ usage() {
     echo "  setup           - Setup networks and directories"
     echo "  perm            - Set permissions and ownership"
     echo "  clean           - Clean unused resources"
+    echo "  stop-all        - Stop all running Docker containers"
+    echo "  full-cleanup    - Stop all containers, remove all containers/images/volumes/networks"
     echo ""
     echo "Services:"
     for svc in "${SERVICES[@]}"; do
@@ -126,6 +138,9 @@ shift || true
 
 case $ACTION in
     start)
+        if [ -z "${1:-}" ]; then
+            echo "[!] IMPORTANT: databases must start first"
+        fi
         setup_nets
         if [ -z "${1:-}" ]; then
             run_all "up -d"
@@ -184,6 +199,21 @@ case $ACTION in
         echo "[*] Cleaning unused Docker resources..."
         docker volume prune -f
         docker network prune -f
+        ;;
+    stop-all)
+        echo "[*] Stopping all running Docker containers..."
+        docker stop $(docker ps -q) 2>/dev/null || true
+        echo "[+] All containers stopped"
+        ;;
+    full-cleanup)
+        echo "[*] Full Docker cleanup..."
+        docker stop $(docker ps -q) 2>/dev/null || true
+        docker rm $(docker ps -aq) 2>/dev/null || true
+        docker rmi $(docker images -q) 2>/dev/null || true
+        docker volume prune -f
+        docker network prune -f
+        docker builder prune -af
+        echo "[+] Full cleanup done"
         ;;
     *)
         usage
