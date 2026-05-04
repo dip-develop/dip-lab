@@ -15,7 +15,6 @@ services:
       - ./prometheus:/etc/prometheus
       - ./data/prometheus:/prometheus
     networks:
-      - web
       - monitoring
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
@@ -38,7 +37,6 @@ services:
     volumes:
       - ./data/grafana:/var/lib/grafana
     networks:
-      - web
       - monitoring
     depends_on:
       - prometheus
@@ -118,8 +116,6 @@ services:
       retries: 3
 
 networks:
-  web:
-    external: true
   monitoring:
     driver: bridge
     name: monitoring
