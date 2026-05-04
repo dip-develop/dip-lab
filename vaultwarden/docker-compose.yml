@@ -18,8 +18,6 @@ services:
       - YUBICO_SERVER=${YUBICO_SERVER}
     volumes:
       - ./data/vaultwarden:/data
-    networks:
-      - database
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/_health"]
       interval: 30s
