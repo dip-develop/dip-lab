@@ -18,8 +18,10 @@ services:
       - ./data/immich/thumbs:/data/thumbs
       - ./data/immich/profile:/data/profile
       - /mnt/object-storage/data/immich/library:/mnt/object-storage/library:ro
+    ports:
+      - "10.0.0.1:2283:2283"
     networks:
-      - web
+      - internal
       - database
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:2283/api/server-info/ping"]
@@ -35,7 +37,7 @@ services:
     volumes:
       - ./data/immich/ml-cache:/cache
     networks:
-      - web
+      - internal
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -45,4 +47,6 @@ services:
 
 networks:
   database:
+    external: true
+  internal:
     external: true

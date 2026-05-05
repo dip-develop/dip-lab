@@ -4,6 +4,8 @@ services:
     container_name: portainer
     restart: always
     command: --http-enabled --bind :9000
+    ports:
+      - "10.0.0.1:9000:9000"
     env_file:
       - .env
     environment:
@@ -12,7 +14,11 @@ services:
       - ./data/portainer:/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - web
+      - internal
+
+networks:
+  internal:
+    external: true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/api/system/status"]
       interval: 30s

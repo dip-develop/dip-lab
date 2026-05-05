@@ -19,8 +19,10 @@ services:
       - ./data/nextcloud/app:/var/www/html
       - ./data/nextcloud/data:/var/www/html/data
       - /mnt/object-storage/data/nextcloud:/mnt/object-storage:ro
+    ports:
+      - "10.0.0.1:8080:80"
     networks:
-      - web
+      - internal
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/status.php"]
@@ -30,4 +32,6 @@ services:
 
 networks:
   database:
+    external: true
+  internal:
     external: true

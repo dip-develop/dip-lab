@@ -22,8 +22,10 @@ services:
       - ./data/paperless/data:/usr/src/paperless/data
       - ./data/paperless/export:/usr/src/paperless/export
       - ./data/paperless/consume:/usr/src/paperless/consume
+    ports:
+      - "10.0.0.1:8000:8000"
     networks:
-      - web
+      - internal
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
@@ -36,7 +38,7 @@ services:
     container_name: paperless-gotenberg
     restart: always
     networks:
-      - web
+      - internal
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
@@ -49,7 +51,7 @@ services:
     container_name: paperless-tika
     restart: always
     networks:
-      - web
+      - internal
       - database
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9998/tika"]
@@ -59,4 +61,6 @@ services:
 
 networks:
   database:
+    external: true
+  internal:
     external: true

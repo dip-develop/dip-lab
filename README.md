@@ -35,9 +35,10 @@ dm-home.de/
 
 ## Сети
 
-- `web` - внешняя (Traefik) - **БУДЕТ УДАЛЕНА** после PR #1
-- `internal` - LLM, OpenCLAW (VPN-only)
-- `database` - общие PostgreSQL, Redis
+- `web` - Traefik reverse proxy (10.0.0.1:80,443)
+- `internal` - все сервисы (VPN-only, 10.0.0.1)
+- `database` - общие PostgreSQL, Redis, MySQL
+- `monitoring` - Grafana, Prometheus, Loki (изолирована)
 - `mailcow` - почтовый сервер (остаётся внешним)
 
 ## Доступ и порты
@@ -46,20 +47,25 @@ dm-home.de/
 
 Все сервисы доступны **ТОЛЬКО** через VPN сеть на адресе **10.0.0.1**
 
-| Сервис | VPN Порт | Описание |
-|--------|----------|----------|
-| Grafana | 10.0.0.1:3000 | Мониторинг и логи |
+| Сервис | Порт | Описание |
+|--------|------|----------|
+| **Сервисы** | | |
 | Vaultwarden | 10.0.0.1:8200 | Менеджер паролей |
+| Portainer | 10.0.0.1:9000 | Docker UI |
+| Nextcloud | 10.0.0.1:8080 | Файловый хостинг |
 | Paperless | 10.0.0.1:8000 | Управление документами |
-| Portainer | 10.0.0.1:9000 | Docker UI (HTTP) |
-| Portainer SSL | 10.0.0.1:9443 | Docker UI (HTTPS) |
-| Nextcloud | 10.0.0.1:80 | Файловый хостинг |
-| Nextcloud SSL | 10.0.0.1:443 | Файловый хостинг (HTTPS) |
 | n8n | 10.0.0.1:5678 | Автоматизация |
 | Immich | 10.0.0.1:2283 | Фото галерея |
 | OpenCLAW | 10.0.0.1:18789 | AI gateway |
-| LLM (vLLM) | 10.0.0.1:8000 | OpenAI-compatible API |
-| Traefik Dashboard | 10.0.0.1:8080 | Управление маршрутами (внутренний) |
+| LLM (Ollama) | 10.0.0.1:11434 | OpenAI-compatible API |
+| **Monitoring** | | |
+| Grafana | 10.0.0.1:3000 | Мониторинг и логи |
+| Prometheus | 10.0.0.1:9090 | Метрики |
+| Loki | 10.0.0.1:3100 | Логи |
+| cAdvisor | 10.0.0.1:8081 | Docker метрики |
+| Node Exporter | 10.0.0.1:9100 | Системные метрики |
+| **Proxy** | | |
+| Traefik | 10.0.0.1:80,443 | Reverse proxy (HTTP/HTTPS) |
 
 ### Внешний доступ (только Mailcow)
 
@@ -154,46 +160,54 @@ vim mailcow/mailcow.env
 
 ### Подключение к VPN
 
-Все сервисы доступны тол��ко через VPN с IP **10.0.0.1**:
+Все сервисы доступны только через VPN с IP **10.0.0.1**:
 
 ```bash
-# Подключиться к Grafana через VPN
-https://10.0.0.1:3000
-
 # Vault (Vaultwarden)
-https://10.0.0.1:8200
-
-# Документы (Paperless)
-https://10.0.0.1:8000
+http://10.0.0.1:8200
 
 # Docker UI (Portainer)
-https://10.0.0.1:9443
+http://10.0.0.1:9000
 
 # Nextcloud
-https://10.0.0.1
+http://10.0.0.1:8080
+
+# Документы (Paperless)
+http://10.0.0.1:8000
 
 # n8n
-https://10.0.0.1:5678
+http://10.0.0.1:5678
 
 # Immich (фото)
-https://10.0.0.1:2283
+http://10.0.0.1:2283
+
+# OpenCLAW (AI gateway)
+http://10.0.0.1:18789
+
+# LLM API (Ollama)
+http://10.0.0.1:11434
+
+# Monitoring
+http://10.0.0.1:3000  # Grafana
+http://10.0.0.1:9090  # Prometheus
 ```
 
 ### API доступ
 
 ```bash
-# vLLM OpenAI-compatible API (внутри docker network)
-http://llm:8000/v1/chat/completions
+# Ollama OpenAI-compatible API (внутри docker network)
+http://ollama:11434/v1/chat/completions
 
 # или через VPN
-http://10.0.0.1:8000/v1/chat/completions
+http://10.0.0.1:11434/v1/chat/completions
 ```
 
 ## Заметки
 
-- 🔒 **PR #1**: Миграция на VPN-only доступ (внешний: только Mailcow)
+- 🔒 Все сервисы доступны только через VPN (10.0.0.1)
 - 📊 databases запускается первым (все сервисы зависят от него)
-- 🔄 Traefik больше не слушает на 80/443 (только на внутренних портах)
-- 🛡️ Zero Trust Cloudflare для веб-доступа (отключено во время миграции)
-- 📝 Логи в `/srv/proxy/logs/`
-- 🔐 TLS сертификаты в `proxy/certs/` (не коммитить)
+- 🌐 Traefik слушает на 10.0.0.1:80,443 для reverse proxy
+- 🔐 Сервисы изолированы в сети `internal`, порты привязаны к 10.0.0.1
+- 📝 Логи в `proxy/logs/`
+- 🔐 TLS сертификаты в `proxy/acme.json` (не коммитить)
+- 🚫 Без DNS можно добавить записи в `/etc/hosts` на клиенте
