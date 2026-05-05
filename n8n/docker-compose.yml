@@ -21,8 +21,10 @@ services:
       - N8N_RATE_LIMIT=100
     volumes:
       - ./data/n8n:/home/node/.n8n
+    ports:
+      - "10.0.0.1:5678:5678"
     networks:
-      - web
+      - internal
       - database
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5678/healthz"]
@@ -32,4 +34,6 @@ services:
 
 networks:
   database:
+    external: true
+  internal:
     external: true
