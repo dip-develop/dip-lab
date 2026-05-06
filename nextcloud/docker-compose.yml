@@ -20,7 +20,7 @@ services:
       - ./data/nextcloud/data:/var/www/html/data
       - /mnt/object-storage/data/nextcloud:/mnt/object-storage:ro
     ports:
-      - "10.0.0.1:8080:80"
+      - "10.0.0.1:8081:80"
     networks:
       - internal
       - database
