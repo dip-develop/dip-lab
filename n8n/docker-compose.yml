@@ -19,6 +19,7 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_TRUST_PROXY=true
       - N8N_RATE_LIMIT=100
+      - N8N_SECURE_COOKIE=false
     volumes:
       - ./data/n8n:/home/node/.n8n:rw
     ports:
