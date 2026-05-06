@@ -51,6 +51,7 @@ setup_directories() {
     mkdir -p mailcow/data/mailcow/mysql
     
     chmod -R 755 */data 2>/dev/null || true
+    chown -R "${UID_DOCKER}:${GID_DOCKER}" */data 2>/dev/null || true
     
     echo "[*] Data directories created"
 }
