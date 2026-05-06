@@ -18,8 +18,7 @@ services:
       - OVERWRITEHOST=${NEXTCLOUD_INTERNAL_HOST}
       - OVERWRITEPROTOCOL=http
     volumes:
-      - ./data/nextcloud/app:/var/www/html
-      - ./data/nextcloud/data:/var/www/html/data
+      - ./data/nextcloud:/var/www/html
       - /mnt/object-storage/data/nextcloud:/mnt/object-storage:ro
     ports:
       - "10.0.0.1:8181:80"

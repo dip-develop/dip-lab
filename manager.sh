@@ -41,8 +41,8 @@ setup_directories() {
     # n8n specific: container expects /home/node/.n8n
     mkdir -p n8n/data/n8n
     
-    # Nextcloud specific: container expects /var/www/html and /var/www/html/data
-    mkdir -p nextcloud/data/app nextcloud/data/data
+    # Nextcloud specific: container expects /var/www/html (includes data, config, etc.)
+    mkdir -p nextcloud/data
     
     mkdir -p proxy/dynamic proxy/logs
     mkdir -p databases/data
@@ -62,8 +62,7 @@ setup_directories() {
     chown -R 1000:1000 n8n/data/n8n 2>/dev/null || true
     
     # Nextcloud runs as www-data (UID 33)
-    chown -R 33:33 nextcloud/data/app 2>/dev/null || true
-    chown -R 33:33 nextcloud/data/data 2>/dev/null || true
+    chown -R 33:33 nextcloud/data 2>/dev/null || true
     
     echo "[*] Data directories created"
 }
