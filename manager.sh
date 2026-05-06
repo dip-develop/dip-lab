@@ -70,24 +70,23 @@ setup_directories() {
 fix_permissions() {
     echo "[*] Fixing permissions..."
     
-    find "${SCRIPT_DIR}" -type d -exec chmod 755 {} \;
-    find "${SCRIPT_DIR}" -type f -exec chmod 644 {} \;
-    
+    # Fix script permissions
+    chmod 755 "${SCRIPT_DIR}"
+    chmod 750 "${SCRIPT_DIR}/manager.sh"
     chmod +x "${SCRIPT_DIR}/proxy/entrypoint.sh" 2>/dev/null || true
     
-    chown -R "${UID_DOCKER}:${GID_DOCKER}" "${SCRIPT_DIR}"
-    chmod 750 "${SCRIPT_DIR}/manager.sh"
-    
-    # n8n runs as node (UID 1000) - needs write access to its data
-    chown -R 1000:1000 "${SCRIPT_DIR}/n8n/data/n8n" 2>/dev/null || true
-    
-    # Nextcloud runs as www-data (UID 33) - needs write access to its data
-    chown -R 33:33 "${SCRIPT_DIR}/nextcloud/data/app" 2>/dev/null || true
-    chown -R 33:33 "${SCRIPT_DIR}/nextcloud/data/data" 2>/dev/null || true
-    
+    # Fix .env files permissions (sensitive data)
     find "${SCRIPT_DIR}" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
     find "${SCRIPT_DIR}" -name "mailcow.env" -exec chmod 600 {} \; 2>/dev/null || true
     find "${SCRIPT_DIR}/proxy" -name "acme.json" -exec chmod 600 {} \; 2>/dev/null || true
+    
+    # n8n runs as node (UID 1000) - needs write access to its data
+    mkdir -p "${SCRIPT_DIR}/n8n/data/n8n"
+    chown -R 1000:1000 "${SCRIPT_DIR}/n8n/data/n8n" 2>/dev/null || true
+    
+    # Nextcloud runs as www-data (UID 33)
+    mkdir -p "${SCRIPT_DIR}/nextcloud/data"
+    chown -R 33:33 "${SCRIPT_DIR}/nextcloud/data" 2>/dev/null || true
     
     echo "[*] Permissions fixed"
 }
