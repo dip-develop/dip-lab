@@ -38,6 +38,12 @@ setup_directories() {
         fi
     done
     
+    # n8n specific: container expects /home/node/.n8n
+    mkdir -p n8n/data/n8n
+    
+    # Nextcloud specific: container expects /var/www/html and /var/www/html/data
+    mkdir -p nextcloud/data/app nextcloud/data/data
+    
     mkdir -p proxy/dynamic proxy/logs
     mkdir -p databases/data
     mkdir -p monitoring/data
@@ -51,7 +57,13 @@ setup_directories() {
     mkdir -p mailcow/data/mailcow/mysql
     
     chmod -R 755 */data 2>/dev/null || true
-    chown -R "${UID_DOCKER}:${GID_DOCKER}" */data 2>/dev/null || true
+    
+    # n8n runs as node (UID 1000)
+    chown -R 1000:1000 n8n/data/n8n 2>/dev/null || true
+    
+    # Nextcloud runs as www-data (UID 33)
+    chown -R 33:33 nextcloud/data/app 2>/dev/null || true
+    chown -R 33:33 nextcloud/data/data 2>/dev/null || true
     
     echo "[*] Data directories created"
 }
@@ -66,6 +78,13 @@ fix_permissions() {
     
     chown -R "${UID_DOCKER}:${GID_DOCKER}" "${SCRIPT_DIR}"
     chmod 750 "${SCRIPT_DIR}/manager.sh"
+    
+    # n8n runs as node (UID 1000) - needs write access to its data
+    chown -R 1000:1000 "${SCRIPT_DIR}/n8n/data/n8n" 2>/dev/null || true
+    
+    # Nextcloud runs as www-data (UID 33) - needs write access to its data
+    chown -R 33:33 "${SCRIPT_DIR}/nextcloud/data/app" 2>/dev/null || true
+    chown -R 33:33 "${SCRIPT_DIR}/nextcloud/data/data" 2>/dev/null || true
     
     find "${SCRIPT_DIR}" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
     find "${SCRIPT_DIR}" -name "mailcow.env" -exec chmod 600 {} \; 2>/dev/null || true
