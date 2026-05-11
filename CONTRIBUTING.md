@@ -15,8 +15,8 @@ Thank you for your interest in contributing!
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/dm-home.git
-cd dm-home
+git clone https://github.com/yourusername/dm-lab.git
+cd dm-lab
 
 # Copy environment template
 cp databases/.env.example databases/.env
