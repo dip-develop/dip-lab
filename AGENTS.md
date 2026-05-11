@@ -1,4 +1,4 @@
-# Home Lab - dm-home.de
+# DIP-Lab
 
 ## Quick Start
 
