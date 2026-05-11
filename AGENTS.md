@@ -63,7 +63,6 @@ All `*.env` files, `proxy/acme.json`, `proxy/logs/`, `proxy/certs/`, `*/data/` d
 ## Project Identity
 
 - **Public name:** DIP-Lab
-- **Internal codename:** DM-Home
 - **Type:** Open-source, self-hosted home & business infrastructure stack
 - **Deployment target:** VPS with 12 GB RAM, 4 CPU cores, 100 GB NVMe, expandable S3-compatible object storage
 
