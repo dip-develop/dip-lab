@@ -88,6 +88,12 @@ fix_permissions() {
     mkdir -p "${SCRIPT_DIR}/cloud/data"
     chown -R 0:0 "${SCRIPT_DIR}/cloud/data" 2>/dev/null || true
     
+    # Databases: PostgreSQL (999), MySQL (999), Redis (6379)
+    mkdir -p "${SCRIPT_DIR}/databases/data"
+    chown -R 999:999 "${SCRIPT_DIR}/databases/data/postgres" 2>/dev/null || true
+    chown -R 999:999 "${SCRIPT_DIR}/databases/data/mysql" 2>/dev/null || true
+    chown -R 6379:6379 "${SCRIPT_DIR}/databases/data/redis" 2>/dev/null || true
+    
     echo "[*] Permissions fixed"
 }
 
@@ -137,7 +143,7 @@ run_one() {
     
     case "$svc" in
         all)
-            run_all "up -d" "$@"
+            run_all up -d "$@"
             return
             ;;
     esac
@@ -160,9 +166,9 @@ case $ACTION in
         fi
         setup_nets
         if [ -z "${1:-}" ]; then
-            run_all "up -d"
+            run_all up -d
         else
-            run_one "$1" "up -d"
+            run_one "$1" up -d
         fi
         ;;
     stop)
