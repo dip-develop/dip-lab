@@ -27,7 +27,7 @@ services:
       - -c
       - max_connections=200
       - -c
-      - shared_buffers=2G
+      - shared_buffers=2GB
     deploy:
       resources:
         limits:

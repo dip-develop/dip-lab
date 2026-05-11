@@ -14,7 +14,6 @@ services:
       - HERMES_UID=1000
       - HERMES_GID=1000
       - HERMES_DASHBOARD=1
-    network_mode: bridge
     networks:
       - internal
     security_opt:
