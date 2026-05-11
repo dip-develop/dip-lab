@@ -19,7 +19,7 @@ services:
       - ./data/gallery/profile:/data/profile
       - /mnt/object-storage/data/gallery/library:/mnt/object-storage/library:ro
     ports:
-      - "${BIND_IP:-10.0.0.1}:2283:2283"
+      - "${BIND_IP:-127.0.0.1}:2283:2283"
     networks:
       - internal
       - database
