@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
-  mailcow-dockerized:
+  mail:
     image: mailcow/mailcow-dockerized:2026-03
-    container_name: mailcow
+    container_name: mail
     restart: always
     ports:
       - "${SMTP_PORT}:25"
@@ -17,16 +15,16 @@ services:
       - "${DOVEVOT_PORT}:9993"
 
     volumes:
-      - ./data/mailcow/data:/var/lib/docker
-      - ./data/mailcow/mail:/var/mail
-      - ./data/mailcow/postfix:/var/spool/postfix
-      - ./data/mailcow/dovecot:/var/lib/dovecot
-      - ./data/mailcow/redis:/var/lib/redis
-      - ./data/mailcow/filter:/var/milterd
-      - ./data/mailcow/solr:/var/lib/solr
-      - ./data/mailcow/mysql:/var/lib/mysql
+      - ./data/mail/data:/var/lib/docker
+      - ./data/mail/mail:/var/mail
+      - ./data/mail/postfix:/var/spool/postfix
+      - ./data/mail/dovecot:/var/lib/dovecot
+      - ./data/mail/redis:/var/lib/redis
+      - ./data/mail/filter:/var/milterd
+      - ./data/mail/solr:/var/lib/solr
+      - ./data/mail/mysql:/var/lib/mysql
     env_file:
-      - ./mailcow.env
+      - ./mail.env
     dns:
       - 127.0.0.1
     networks:
@@ -37,8 +35,15 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     shm_size: 128m
+    security_opt:
+      - no-new-privileges:true
     environment:
-      TZ: Europe/Kiev
+      TZ: Europe/Berlin
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
 
 networks:
   web:

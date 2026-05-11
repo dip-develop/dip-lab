@@ -1,28 +1,35 @@
 services:
-  openclaw:
+  lmagent:
     image: ghcr.io/openclaw/openclaw:latest
-    container_name: openclaw
+    container_name: lmagent
     restart: always
     env_file:
       - .env
     ports:
       - "10.0.0.1:18789:18789"
     environment:
-      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=${OPENCLAW_ALLOWED_ORIGINS}
+      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=${LMAGENT_ALLOWED_ORIGINS}
       - OPENCLAW_TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - OPENCLAW_DEEPseek_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENCLAW_DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - OPENCLAW_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENCLAW_OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
-      - ./data/openclaw:/data
-      - ./data/openclaw-workspace:/workspace
+      - ./data/lmagent:/data
+      - ./data/lmagent-workspace:/workspace
     networks:
       - internal
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:18789/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
 
 networks:
   internal:

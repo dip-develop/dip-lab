@@ -3,7 +3,7 @@ services:
     image: prom/prometheus:v3.1.0
     container_name: prometheus
     restart: always
-    user: "0"
+    user: "472"
     env_file:
       - .env
     command:
@@ -18,17 +18,24 @@ services:
       - "10.0.0.1:9090:9090"
     networks:
       - monitoring
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
 
   grafana:
     image: grafana/grafana:11.4.0
     container_name: grafana
     restart: always
-    user: "0"
+    user: "472"
     env_file:
       - .env
     environment:
@@ -44,16 +51,24 @@ services:
       - monitoring
     depends_on:
       - prometheus
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   loki:
     image: grafana/loki:3.3.0
     container_name: loki
     restart: always
+    user: "472"
     env_file:
       - .env
     command: -config.expand-env=true -config.file=/etc/loki/local-config.yaml
@@ -64,16 +79,24 @@ services:
       - "10.0.0.1:3100:3100"
     networks:
       - monitoring
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3100/ready"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   promtail:
     image: grafana/promtail:3.3.0
     container_name: promtail
     restart: always
+    user: "472"
     env_file:
       - .env
     volumes:
@@ -83,13 +106,19 @@ services:
       - /etc/hostname:/etc/hostname:ro
     networks:
       - monitoring
+    security_opt:
+      - no-new-privileges:true
     command: -config.file=/etc/promtail/config.yml
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.50.0
     container_name: cadvisor
     restart: always
-    privileged: true
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -100,7 +129,14 @@ services:
       - "10.0.0.1:8081:8080"
     networks:
       - monitoring
+    security_opt:
+      - no-new-privileges:true
     command: --store_container_labels=false --disable_metrics=percpu,sched,tcp,udp,disk,diskIO,referenced_memory,resctrl
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
@@ -119,11 +155,18 @@ services:
       - "10.0.0.1:9100:9100"
     networks:
       - monitoring
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9100/metrics"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
 
 networks:
   monitoring:

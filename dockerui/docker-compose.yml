@@ -1,7 +1,7 @@
 services:
-  portainer:
+  dockerui:
     image: portainer/portainer-ce:2.40.0
-    container_name: portainer
+    container_name: dockerui
     restart: always
     command: --http-enabled --bind :9000
     ports:
@@ -9,20 +9,25 @@ services:
     env_file:
       - .env
     environment:
-      - PORTAINER_ADMIN_PASSWORD=${PORTAINER_ADMIN_PASSWORD}
+      - PORTAINER_ADMIN_PASSWORD=${DOCKERUI_ADMIN_PASSWORD}
     volumes:
-      - ./data/portainer:/data
+      - ./data/dockerui:/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - internal
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:9000/api/system/status"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
 networks:
   internal:
     external: true
-
-

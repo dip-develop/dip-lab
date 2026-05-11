@@ -1,37 +1,43 @@
 services:
-  n8n:
+  automation:
     image: n8nio/n8n:1.123.36
-    container_name: n8n
+    container_name: automation
     restart: always
     env_file:
       - .env
     environment:
-      - N8N_HOST=n8n.dm-home.de:5678
-      - N8N_PORT=5678
+      - N8N_HOST=automation.example.com:5678
       - N8N_PROTOCOL=https
-      - WEBHOOK_URL=https://n8n.dm-home.de/
+      - WEBHOOK_URL=https://automation.example.com/
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${N8N_DB_NAME}
+      - DB_POSTGRESDB_DATABASE=${AUTOMATION_DB_NAME}
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_ENCRYPTION_KEY=${AUTOMATION_ENCRYPTION_KEY}
       - N8N_TRUST_PROXY=true
       - N8N_RATE_LIMIT=100
       - N8N_SECURE_COOKIE=false
     volumes:
-      - ./data/n8n:/home/node/.n8n:rw
+      - ./data/automation:/home/node/.n8n:rw
     ports:
       - "10.0.0.1:5678:5678"
     networks:
       - internal
       - database
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5678/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
 
 networks:
   database:

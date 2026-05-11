@@ -1,7 +1,7 @@
 services:
-  vaultwarden:
+  passwords:
     image: vaultwarden/server:1.35.4
-    container_name: vaultwarden
+    container_name: passwords
     restart: always
     env_file:
       - .env
@@ -9,19 +9,26 @@ services:
       - "10.0.0.1:8200:80"
     environment:
       - DOMAIN=http://10.0.0.1:8200
-      - SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}
-      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+      - SIGNUPS_ALLOWED=${PASSWORDS_SIGNUPS_ALLOWED}
+      - ADMIN_TOKEN=${PASSWORDS_ADMIN_TOKEN}
       - RATE_LIMIT_SECONDS=3
       - RATE_LIMIT_BURST=10
     volumes:
-      - ./data/vaultwarden:/data
+      - ./data/passwords:/data
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/_health"]
       interval: 30s
       timeout: 10s
       retries: 3
-    networks:
-      - internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
 networks:
   internal:
