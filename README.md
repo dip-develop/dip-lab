@@ -40,24 +40,24 @@ Shared PostgreSQL and Redis for all services:
 
 ## Access and Ports
 
-### Internal Access (10.0.0.1)
+### Internal Access (127.0.0.1)
 
-All services accessible via internal network at **10.0.0.1** (except mail and traefik which are externally accessible)
+All services accessible via internal network at **127.0.0.1** (except mail and traefik which are externally accessible)
 
 | Service | Port | Description |
 |---------|------|--------------|
 | **Services** | | |
-| Passwords | 10.0.0.1:8200 | Password manager |
-| DockerUI | 10.0.0.1:9000 | Docker UI |
-| Cloud | 10.0.0.1:8383 | File hosting |
-| Docs | 10.0.0.1:8000 | Document management |
-| Automation | 10.0.0.1:5678 | Automation |
-| Gallery | 10.0.0.1:2283 | Photo gallery |
-| LMagent | 10.0.0.1:18789 | AI agent |
-| LLM (vLLM) | 10.0.0.1:8001 | OpenAI-compatible API |
+| Passwords | 127.0.0.1:8200 | Password manager |
+| DockerUI | 127.0.0.1:9000 | Docker UI |
+| Cloud | 127.0.0.1:8383 | File hosting |
+| Docs | 127.0.0.1:8000 | Document management |
+| Automation | 127.0.0.1:5678 | Automation |
+| Gallery | 127.0.0.1:2283 | Photo gallery |
+| LMagent | 127.0.0.1:18789 | AI agent |
+| LLM (vLLM) | 127.0.0.1:8001 | OpenAI-compatible API |
 | **Monitoring** | | |
-| Grafana | 10.0.0.1:3000 | Monitoring and logs |
-| Prometheus | 10.0.0.1:9090 | Metrics |
+| Grafana | 127.0.0.1:3000 | Monitoring and logs |
+| Prometheus | 127.0.0.1:9090 | Metrics |
 | **Proxy** | | |
 | Traefik | 80, 443 (external) | Reverse proxy (HTTP/HTTPS) |
 
@@ -118,7 +118,7 @@ These services are accessible directly from outside:
 
 ## Security
 
-- All services accessible only via internal network (10.0.0.1) except Traefik and Mail
+- All services accessible only via internal network (127.0.0.1) except Traefik and Mail
 - Traefik and Mail have direct internet access (for mail and reverse proxy)
 - TLS 1.2+ with secure cipher suites
 - Strict-Transport-Security headers
@@ -161,36 +161,36 @@ vim mail/mail.env
 
 ### Internal Connection
 
-All services accessible only via internal network at **10.0.0.1**:
+All services accessible only via internal network at **127.0.0.1**:
 
 ```bash
 # Passwords (Vaultwarden)
-http://10.0.0.1:8200
+http://127.0.0.1:8200
 
 # Docker UI
-http://10.0.0.1:9000
+http://127.0.0.1:9000
 
 # Cloud (Seafile)
-http://10.0.0.1:8383
+http://127.0.0.1:8383
 
 # Docs (Paperless)
-http://10.0.0.1:8000
+http://127.0.0.1:8000
 
 # Automation (n8n)
-http://10.0.0.1:5678
+http://127.0.0.1:5678
 
 # Gallery (Immich)
-http://10.0.0.1:2283
+http://127.0.0.1:2283
 
 # LMagent (AI agent)
-http://10.0.0.1:18789
+http://127.0.0.1:18789
 
 # LLM API (vLLM)
-http://10.0.0.1:8001
+http://127.0.0.1:8001
 
 # Monitoring
-http://10.0.0.1:3000  # Grafana
-http://10.0.0.1:9090  # Prometheus
+http://127.0.0.1:3000  # Grafana
+http://127.0.0.1:9090  # Prometheus
 ```
 
 ### API Access
@@ -200,16 +200,16 @@ http://10.0.0.1:9090  # Prometheus
 http://llm:8000/v1/chat/completions
 
 # or via internal network
-http://10.0.0.1:8001/v1/chat/completions
+http://127.0.0.1:8001/v1/chat/completions
 ```
 
 ## Notes
 
-- Services isolated in `internal` network, ports bound to 10.0.0.1
+- Services isolated in `internal` network, ports bound to 127.0.0.1
 - databases starts first (all services depend on it)
 - Traefik listens on 80,443 (external access) for reverse proxy
 - Mail ports (25, 465, 587, 143, 993, 110, 995, 4190, 9993) available on host for mail
-- Services isolated in `internal` network, ports bound to 10.0.0.1
+- Services isolated in `internal` network, ports bound to 127.0.0.1
 - Logs in `proxy/logs/`
 - TLS certificates in `proxy/acme.json` (do not commit)
 - Without DNS, add entries to `/etc/hosts` on client

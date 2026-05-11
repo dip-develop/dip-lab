@@ -22,7 +22,7 @@ services:
     volumes:
       - ./data/automation:/home/node/.n8n:rw
     ports:
-      - "${BIND_IP:-10.0.0.1}:5678:5678"
+      - "${BIND_IP:-127.0.0.1}:5678:5678"
     networks:
       - internal
       - database

@@ -18,9 +18,9 @@ ping:
 
 entryPoints:
   web:
-    address: "10.0.0.1:80"
+    address: "127.0.0.1:80"
   websecure:
-    address: "10.0.0.1:443"
+    address: "127.0.0.1:443"
 
 providers:
   docker:
