@@ -19,7 +19,7 @@ services:
       - ./data/gallery/profile:/data/profile
       - /mnt/object-storage/data/gallery/library:/mnt/object-storage/library:ro
     ports:
-      - "10.0.0.1:2283:2283"
+      - "${BIND_IP:-10.0.0.1}:2283:2283"
     networks:
       - internal
       - database
@@ -36,6 +36,12 @@ services:
         limits:
           cpus: '1'
           memory: 2G
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.immich.rule=Host(`${DOMAINexample.comdm-home.de}`)"
+    #   - "traefik.http.routers.immich.entrypoints=websecure"
+    #   - "traefik.http.routers.immich.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.immich.loadbalancer.server.port=2283"
 
   gallery-ml:
     image: ghcr.io/immich-app/immich-machine-learning:release

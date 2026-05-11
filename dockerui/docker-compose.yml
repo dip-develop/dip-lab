@@ -5,7 +5,7 @@ services:
     restart: always
     command: --http-enabled --bind :9000
     ports:
-      - "10.0.0.1:9000:9000"
+      - "${BIND_IP:-10.0.0.1}:9000:9000"
     env_file:
       - .env
     environment:
@@ -27,6 +27,12 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.portainer.rule=Host(`${DOMAIN:admin.example.com}`)"
+    #   - "traefik.http.routers.portainer.entrypoints=websecure"
+    #   - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
 networks:
   internal:

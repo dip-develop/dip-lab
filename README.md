@@ -1,9 +1,9 @@
-# Home Lab - dm-home.de
+# DIP-Lab
 
 ## Structure
 
 ```
-dm-home.de/
+.../
 ├── databases/      # Shared PostgreSQL, MySQL, Redis
 ├── proxy/          # Traefik (reverse proxy)
 ├── monitoring/     # Grafana, Prometheus, Loki

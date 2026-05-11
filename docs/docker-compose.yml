@@ -11,7 +11,7 @@ services:
       - PAPERLESS_DBNAME=${DOCS_DB_NAME}
       - PAPERLESS_DBUSER=${POSTGRES_USER}
       - PAPERLESS_DBPASS=${POSTGRES_PASSWORD}
-      - PAPERLESS_URL=https://docs.example.com
+      - PAPERLESS_URL=https://${DOMAIN:docs.example.com}
       - PAPERLESS_SECRET_KEY=${DOCS_SECRET_KEY}
       - PAPERLESS_TIME_ZONE=${TZ}
       - PAPERLESS_OCR_LANGUAGE=deu,eng
@@ -23,7 +23,7 @@ services:
       - ./data/docs/export:/usr/src/paperless/export
       - ./data/docs/consume:/usr/src/paperless/consume
     ports:
-      - "10.0.0.1:8000:8000"
+      - "${BIND_IP:-10.0.0.1}:8000:8000"
     networks:
       - internal
       - database
@@ -39,6 +39,12 @@ services:
         limits:
           cpus: '1'
           memory: 2G
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.paperless.rule=Host(`${DOMAIN:docs.example.com}`)"
+    #   - "traefik.http.routers.paperless.entrypoints=websecure"
+    #   - "traefik.http.routers.paperless.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.paperless.loadbalancer.server.port=8000"
 
   docs-gotenberg:
     image: gotenberg/gotenberg:8.30.0

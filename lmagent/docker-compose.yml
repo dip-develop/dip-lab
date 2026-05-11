@@ -6,8 +6,8 @@ services:
     env_file:
       - .env
     ports:
-      - "10.0.0.1:18789:8642"
-      - "10.0.0.1:18790:9119"
+      - "${BIND_IP:-10.0.0.1}:18789:8642"
+      - "${BIND_IP:-10.0.0.1}:18790:9119"
     volumes:
       - ./data/lmagent:/opt/data
     environment:
@@ -23,6 +23,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.hermes.rule=Host(`${Dexample.comdm-home.de}`)"
+    #   - "traefik.http.routers.hermes.entrypoints=websecure"
+    #   - "traefik.http.routers.hermes.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.hermes.loadbalancer.server.port=8642"
 
   lmagent:
   # Note: Keeping for backward compatibility, points to hermes service

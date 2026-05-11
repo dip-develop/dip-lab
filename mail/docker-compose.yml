@@ -44,6 +44,12 @@ services:
         limits:
           cpus: '2'
           memory: 4G
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.mailcow.rule=Host(`mail.example.com`)"
+    #   - "traefik.http.routers.mailcow.entrypoints=websecure"
+    #   - "traefik.http.routers.mailcow.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.mailcow.loadbalancer.server.port=80"
 
 networks:
   web:
