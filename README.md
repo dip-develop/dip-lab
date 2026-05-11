@@ -14,7 +14,6 @@ dm-home.de/
 ├── automation/     # Automation (n8n)
 ├── gallery/        # Photo gallery (Immich)
 ├── llm/            # LLM API (vLLM)
-├── lmagent/        # AI gateway
 └── mail/           # Corporate mail (Mailcow)
 ```
 
@@ -36,14 +35,14 @@ Shared PostgreSQL and Redis for all services:
 ## Networks
 
 - `web` - Traefik reverse proxy (80, 443 on host)
-- `internal` - all services (VPN-only, 10.0.0.1)
+- `internal` - LLM, lmagent (isolated)
 - `database` - shared PostgreSQL, Redis, MySQL
 
 ## Access and Ports
 
-### VPN Access (10.0.0.1)
+### Internal Access (10.0.0.1)
 
-All services accessible via VPN network at **10.0.0.1** (except mail and traefik which are externally accessible)
+All services accessible via internal network at **10.0.0.1** (except mail and traefik which are externally accessible)
 
 | Service | Port | Description |
 |---------|------|--------------|
@@ -54,7 +53,7 @@ All services accessible via VPN network at **10.0.0.1** (except mail and traefik
 | Docs | 10.0.0.1:8000 | Document management |
 | Automation | 10.0.0.1:5678 | Automation |
 | Gallery | 10.0.0.1:2283 | Photo gallery |
-| LMagent | 10.0.0.1:18789 | AI gateway |
+| LMagent | 10.0.0.1:18789 | AI agent |
 | LLM (vLLM) | 10.0.0.1:8001 | OpenAI-compatible API |
 | **Monitoring** | | |
 | Grafana | 10.0.0.1:3000 | Monitoring and logs |
@@ -64,7 +63,10 @@ All services accessible via VPN network at **10.0.0.1** (except mail and traefik
 
 ### External Access (Direct)
 
-These services are accessible directly from outside (without VPN):
+These services are accessible directly from outside:
+
+| Service | Port | Description |
+|---------|------|--------------|
 
 | Service | Port | Description |
 |---------|------|--------------|
@@ -116,7 +118,7 @@ These services are accessible directly from outside (without VPN):
 
 ## Security
 
-- All services accessible only via VPN (10.0.0.1) except Traefik and Mail
+- All services accessible only via internal network (10.0.0.1) except Traefik and Mail
 - Traefik and Mail have direct internet access (for mail and reverse proxy)
 - TLS 1.2+ with secure cipher suites
 - Strict-Transport-Security headers
@@ -157,9 +159,9 @@ vim mail/mail.env
 
 ## Service Access
 
-### VPN Connection
+### Internal Connection
 
-All services accessible only via VPN with IP **10.0.0.1**:
+All services accessible only via internal network at **10.0.0.1**:
 
 ```bash
 # Passwords (Vaultwarden)
@@ -180,7 +182,7 @@ http://10.0.0.1:5678
 # Gallery (Immich)
 http://10.0.0.1:2283
 
-# LMagent (AI gateway)
+# LMagent (AI agent)
 http://10.0.0.1:18789
 
 # LLM API (vLLM)
@@ -197,13 +199,13 @@ http://10.0.0.1:9090  # Prometheus
 # vLLM OpenAI-compatible API (inside docker network)
 http://llm:8000/v1/chat/completions
 
-# or via VPN
+# or via internal network
 http://10.0.0.1:8001/v1/chat/completions
 ```
 
 ## Notes
 
-- All services accessible only via VPN (10.0.0.1)
+- Services isolated in `internal` network, ports bound to 10.0.0.1
 - databases starts first (all services depend on it)
 - Traefik listens on 80,443 (external access) for reverse proxy
 - Mail ports (25, 465, 587, 143, 993, 110, 995, 4190, 9993) available on host for mail

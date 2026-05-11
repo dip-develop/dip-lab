@@ -47,6 +47,7 @@ setup_directories() {
     mkdir -p proxy/dynamic proxy/logs
     mkdir -p databases/data
     mkdir -p monitoring/data
+    mkdir -p lmagent/data
     mkdir -p mail/data/mail
     mkdir -p mail/data/postfix
     mkdir -p mail/data/dovecot

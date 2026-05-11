@@ -36,13 +36,12 @@ All management via `./manager.sh`:
 8. **automation** - Automation (n8n)
 9. **gallery** - Photo gallery (Immich)
 10. **llm** - LLM API (vLLM, on `internal` network)
-11. **lmagent** - AI gateway (on `internal` network)
-12. **mail** - Corporate mail (Mailcow)
+11. **lmagent** - AI agent (on `internal` network)
 
 ## Docker Networks
 
 - `web` - External-facing (Traefik)
-- `internal` - LLM, LMagent (isolated)
+- `internal` - LLM, lmagent (isolated)
 - `database` - PostgreSQL, MySQL, Redis (shared)
 
 ## Sensitive Files (NOT to commit)

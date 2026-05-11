@@ -1,35 +1,37 @@
 services:
-  lmagent:
-    image: ghcr.io/openclaw/openclaw:latest
-    container_name: lmagent
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes
     restart: always
     env_file:
       - .env
     ports:
-      - "10.0.0.1:18789:18789"
-    environment:
-      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS=${LMAGENT_ALLOWED_ORIGINS}
-      - OPENCLAW_TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - OPENCLAW_DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
-      - OPENCLAW_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENCLAW_OPENAI_API_KEY=${OPENAI_API_KEY}
+      - "10.0.0.1:18789:8642"
+      - "10.0.0.1:18790:9119"
     volumes:
-      - ./data/lmagent:/data
-      - ./data/lmagent-workspace:/workspace
+      - ./data/lmagent:/opt/data
+    environment:
+      - HERMES_UID=1000
+      - HERMES_GID=1000
+      - HERMES_DASHBOARD=1
+    network_mode: bridge
     networks:
       - internal
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:18789/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8642/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 2G
+
+  lmagent:
+  # Note: Keeping for backward compatibility, points to hermes service
+    image: nginx:alpine
+    container_name: lmagent-alias
+    restart: always
+    networks:
+      - internal
 
 networks:
   internal:
