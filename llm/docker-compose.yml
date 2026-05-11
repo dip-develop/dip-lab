@@ -1,21 +1,30 @@
 services:
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: vllm
     restart: always
     ports:
-      - "10.0.0.1:11434:11434"
+      - "10.0.0.1:8001:8000"
     volumes:
-      - ./data/llm/models:/root/.ollama
+      - ./data/llm/models:/models
     environment:
-      - OLLAMA_HOST=0.0.0.0:11434
+      - HF_TOKEN=${HF_TOKEN:-}
+      - VLLM_API_KEY=
+    command: --model google/gemma-4-2b-it --dtype half --enforce-eager --host 0.0.0.0 --port 8000
     networks:
       - internal
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
 
 networks:
   internal:

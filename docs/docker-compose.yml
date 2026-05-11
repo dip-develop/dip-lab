@@ -1,63 +1,84 @@
 services:
-  paperless:
+  docs:
     image: paperlessngx/paperless-ngx:2.20.13
-    container_name: paperless
+    container_name: docs
     restart: always
     env_file:
       - .env
     environment:
       - PAPERLESS_REDIS=redis://:${REDIS_PASSWORD}@redis:6379
       - PAPERLESS_DBHOST=postgres
-      - PAPERLESS_DBNAME=${PAPERLESS_DB_NAME}
+      - PAPERLESS_DBNAME=${DOCS_DB_NAME}
       - PAPERLESS_DBUSER=${POSTGRES_USER}
       - PAPERLESS_DBPASS=${POSTGRES_PASSWORD}
-      - PAPERLESS_URL=https://paperless.dm-home.de
-      - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
+      - PAPERLESS_URL=https://docs.example.com
+      - PAPERLESS_SECRET_KEY=${DOCS_SECRET_KEY}
       - PAPERLESS_TIME_ZONE=${TZ}
       - PAPERLESS_OCR_LANGUAGE=deu,eng
       - PAPERLESS_TIKA_ENABLED=1
-      - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://paperless-gotenberg:3000
-      - PAPERLESS_TIKA_ENDPOINT=http://paperless-tika:9998
+      - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://docs-gotenberg:3000
+      - PAPERLESS_TIKA_ENDPOINT=http://docs-tika:9998
     volumes:
-      - ./data/paperless/data:/usr/src/paperless/data
-      - ./data/paperless/export:/usr/src/paperless/export
-      - ./data/paperless/consume:/usr/src/paperless/consume
+      - ./data/docs/data:/usr/src/paperless/data
+      - ./data/docs/export:/usr/src/paperless/export
+      - ./data/docs/consume:/usr/src/paperless/consume
     ports:
       - "10.0.0.1:8000:8000"
     networks:
       - internal
       - database
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
 
-  paperless-gotenberg:
+  docs-gotenberg:
     image: gotenberg/gotenberg:8.30.0
-    container_name: paperless-gotenberg
+    container_name: docs-gotenberg
     restart: always
     networks:
       - internal
       - database
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
 
-  paperless-tika:
+  docs-tika:
     image: apache/tika:3.2.3.0
-    container_name: paperless-tika
+    container_name: docs-tika
     restart: always
     networks:
       - internal
       - database
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9998/tika"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
 networks:
   database:

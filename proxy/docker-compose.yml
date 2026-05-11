@@ -18,6 +18,8 @@ services:
     networks:
       - web
       - internal
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/ping"]
       interval: 30s
@@ -28,6 +30,11 @@ services:
       nofile:
         soft: 65536
         hard: 65536
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
 networks:
   web:

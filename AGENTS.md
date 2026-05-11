@@ -16,32 +16,33 @@ All management via `./manager.sh`:
 - `stop` - Stop all in reverse order
 - `restart [svc]` - Restart all or one service
 - `update [svc]` - Pull + restart
-- `logs <svc>` - Follow logs (e.g., `./manager.sh logs immich`)
+- `logs <svc>` - Follow logs (e.g., `./manager.sh logs gallery`)
 - `status` - Show all service status
 - `setup` - Create Docker networks (`web`, `internal`, `database`) + data dirs
 - `perm` - Fix file permissions and ownership
 - `clean` - Prune unused Docker volumes/networks
+- `stop-all` - Stop all running Docker containers
+- `full-cleanup` - Stop all containers, remove all containers/images/volumes/networks
 
 ## Services (in startup order)
 
 1. **databases** - PostgreSQL (pgvector), MySQL, Redis (all on `database` network)
 2. **proxy** - Traefik reverse proxy on ports 80/443 (`web` network)
 3. **monitoring** - Grafana, Prometheus, Loki
-4. **vaultwarden** - Password manager
-5. **portainer** - Docker management UI
-6. **nextcloud** - File cloud
-7. **paperless** - Document management
-8. **n8n** - Automation
-9. **immich** - Photo gallery
+4. **passwords** - Password manager (Vaultwarden)
+5. **dockerui** - Docker management UI (Portainer)
+6. **cloud** - File cloud (Seafile)
+7. **docs** - Document management (Paperless)
+8. **automation** - Automation (n8n)
+9. **gallery** - Photo gallery (Immich)
 10. **llm** - LLM API (vLLM, on `internal` network)
-11. **openclaw** - AI gateway (on `internal` network)
-
-Note: `mailcow` is managed separately (corporate mail, not in this repo).
+11. **lmagent** - AI gateway (on `internal` network)
+12. **mail** - Corporate mail (Mailcow)
 
 ## Docker Networks
 
 - `web` - External-facing (Traefik)
-- `internal` - LLM, OpenCLAW (isolated)
+- `internal` - LLM, LMagent (isolated)
 - `database` - PostgreSQL, MySQL, Redis (shared)
 
 ## Sensitive Files (NOT to commit)
@@ -50,7 +51,6 @@ All `*.env` files, `proxy/acme.json`, `proxy/logs/`, `proxy/certs/`, `*/data/` d
 
 ## Aliases
 
-- `docs` alias for `paperless` service
 - `all` starts all services in order
 
 ## Traefik Notes

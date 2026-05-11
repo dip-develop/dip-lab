@@ -6,15 +6,15 @@ SERVICES=(
     "databases"
     "proxy"
     "monitoring"
-    "vaultwarden"
-    "portainer"
-    "nextcloud"
-    "paperless"
-    "n8n"
-    "immich"
+    "passwords"
+    "dockerui"
+    "cloud"
+    "docs"
+    "automation"
+    "gallery"
     "llm"
-    "openclaw"
-    "mailcow"
+    "lmagent"
+    "mail"
 )
 
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -38,31 +38,30 @@ setup_directories() {
         fi
     done
     
-    # n8n specific: container expects /home/node/.n8n
-    mkdir -p n8n/data/n8n
+    # Automation specific: container expects /home/node/.n8n
+    mkdir -p automation/data/automation
     
-    # Nextcloud specific: container expects /var/www/html (includes data, config, etc.)
-    mkdir -p nextcloud/data
+    # Cloud specific: container expects /shared
+    mkdir -p cloud/data
     
     mkdir -p proxy/dynamic proxy/logs
     mkdir -p databases/data
     mkdir -p monitoring/data
-    mkdir -p mailcow/data/mailcow/data
-    mkdir -p mailcow/data/mailcow/mail
-    mkdir -p mailcow/data/mailcow/postfix
-    mkdir -p mailcow/data/mailcow/dovecot
-    mkdir -p mailcow/data/mailcow/redis
-    mkdir -p mailcow/data/mailcow/filter
-    mkdir -p mailcow/data/mailcow/solr
-    mkdir -p mailcow/data/mailcow/mysql
+    mkdir -p mail/data/mail
+    mkdir -p mail/data/postfix
+    mkdir -p mail/data/dovecot
+    mkdir -p mail/data/redis
+    mkdir -p mail/data/filter
+    mkdir -p mail/data/solr
+    mkdir -p mail/data/mysql
     
     chmod -R 755 */data 2>/dev/null || true
     
-    # n8n runs as node (UID 1000)
-    chown -R 1000:1000 n8n/data/n8n 2>/dev/null || true
+    # Automation runs as node (UID 1000)
+    chown -R 1000:1000 automation/data/automation 2>/dev/null || true
     
-    # Nextcloud runs as www-data (UID 33)
-    chown -R 33:33 nextcloud/data 2>/dev/null || true
+    # Cloud runs as root
+    chown -R 0:0 cloud/data 2>/dev/null || true
     
     echo "[*] Data directories created"
 }
@@ -77,16 +76,16 @@ fix_permissions() {
     
     # Fix .env files permissions (sensitive data)
     find "${SCRIPT_DIR}" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
-    find "${SCRIPT_DIR}" -name "mailcow.env" -exec chmod 600 {} \; 2>/dev/null || true
+    find "${SCRIPT_DIR}" -name "mail.env" -exec chmod 600 {} \; 2>/dev/null || true
     find "${SCRIPT_DIR}/proxy" -name "acme.json" -exec chmod 600 {} \; 2>/dev/null || true
     
-    # n8n runs as node (UID 1000) - needs write access to its data
-    mkdir -p "${SCRIPT_DIR}/n8n/data/n8n"
-    chown -R 1000:1000 "${SCRIPT_DIR}/n8n/data/n8n" 2>/dev/null || true
+    # Automation runs as node (UID 1000) - needs write access to its data
+    mkdir -p "${SCRIPT_DIR}/automation/data/automation"
+    chown -R 1000:1000 "${SCRIPT_DIR}/automation/data/automation" 2>/dev/null || true
     
-    # Nextcloud runs as www-data (UID 33)
-    mkdir -p "${SCRIPT_DIR}/nextcloud/data"
-    chown -R 33:33 "${SCRIPT_DIR}/nextcloud/data" 2>/dev/null || true
+    # Cloud runs as root
+    mkdir -p "${SCRIPT_DIR}/cloud/data"
+    chown -R 0:0 "${SCRIPT_DIR}/cloud/data" 2>/dev/null || true
     
     echo "[*] Permissions fixed"
 }
@@ -117,7 +116,7 @@ usage() {
     echo "  $0 setup              # setup networks and dirs"
     echo "  $0 start              # start all"
     echo "  $0 start proxy        # start proxy only"
-    echo "  $0 logs immich --tail 100"
+    echo "  $0 logs gallery --tail 100"
 }
 
 run_all() {
@@ -136,7 +135,6 @@ run_one() {
     shift
     
     case "$svc" in
-        docs) svc="paperless" ;;
         all)
             run_all "up -d" "$@"
             return

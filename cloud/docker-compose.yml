@@ -1,0 +1,50 @@
+services:
+  cloud:
+    image: seafileltd/seafile-mc:12.0
+    container_name: cloud
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=mysql
+      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
+      - DB_ENGINE=mysql
+      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
+      - SEAFILE_SERVER_HOSTNAME=10.0.0.1:8383
+      - TIME_ZONE=${TZ}
+    volumes:
+      - ./data/cloud:/shared
+    ports:
+      - "10.0.0.1:8383:80"
+      - "10.0.0.1:8384:8000"
+    networks:
+      - internal
+      - database
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  memcached:
+    image: memcached:1.6-alpine
+    container_name: cloud-memcached
+    restart: always
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+networks:
+  database:
+    external: true
+  internal:
+    external: true
