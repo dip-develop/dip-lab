@@ -179,11 +179,21 @@ case $ACTION in
         fi
         ;;
     stop)
-        for svc in $(printf '%s\n' "${SERVICES[@]}" | tac); do
-            if [ -f "$svc/docker-compose.yml" ]; then
-                (cd "$svc" && docker compose down 2>/dev/null) || true
+        if [ -z "${1:-}" ]; then
+            for svc in $(printf '%s\n' "${SERVICES[@]}" | tac); do
+                if [ -f "$svc/docker-compose.yml" ]; then
+                    (cd "$svc" && docker compose down 2>/dev/null) || true
+                fi
+            done
+        else
+            svc="$1"
+            if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
+                (cd "$svc" && docker compose down)
+            else
+                echo "[!] Service '$svc' not found"
+                exit 1
             fi
-        done
+        fi
         ;;
     restart)
         if [ -z "${1:-}" ]; then
