@@ -1,6 +1,6 @@
 services:
   gallery-server:
-    image: ghcr.io/immich-app/immich-server:latest
+    image: ghcr.io/immich-app/immich-server:v2
     container_name: gallery-server
     restart: always
     env_file:
