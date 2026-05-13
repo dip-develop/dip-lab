@@ -1,6 +1,6 @@
 services:
   mail:
-    image: mailcow/mailcow-dockerized:2026-03
+    image: mailcow/mailcow-dockerized:latest
     container_name: mail
     restart: always
     ports:
@@ -24,7 +24,7 @@ services:
       - ./data/mail/solr:/var/lib/solr
       - ./data/mail/mysql:/var/lib/mysql
     env_file:
-      - ./mail.env
+      - ./.env
     dns:
       - 127.0.0.1
     networks:

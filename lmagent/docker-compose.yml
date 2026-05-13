@@ -25,7 +25,7 @@ services:
       retries: 3
     # labels:
     #   - "traefik.enable=true"
-    #   - "traefik.http.routers.hermes.rule=Host(`${DOMAIN:ai.example.com}`)"
+    #   - "traefik.http.routers.hermes.rule=Host(`${DOMAIN:-ai.example.com}`)"
     #   - "traefik.http.routers.hermes.entrypoints=websecure"
     #   - "traefik.http.routers.hermes.tls.certresolver=letsencrypt"
     #   - "traefik.http.services.hermes.loadbalancer.server.port=8642"

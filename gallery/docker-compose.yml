@@ -1,6 +1,6 @@
 services:
   gallery-server:
-    image: ghcr.io/immich-app/immich-server:release
+    image: ghcr.io/immich-app/immich-server:latest
     container_name: gallery-server
     restart: always
     env_file:
@@ -38,7 +38,7 @@ services:
           memory: 2G
     # labels:
     #   - "traefik.enable=true"
-    #   - "traefik.http.routers.immich.rule=Host(`${DOMAIN:gallery.example.com}`)"
+    #   - "traefik.http.routers.immich.rule=Host(`${DOMAIN:-gallery.example.com}`)"
     #   - "traefik.http.routers.immich.entrypoints=websecure"
     #   - "traefik.http.routers.immich.tls.certresolver=letsencrypt"
     #   - "traefik.http.services.immich.loadbalancer.server.port=2283"
