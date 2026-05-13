@@ -6,15 +6,16 @@ services:
     env_file:
       - .env
     environment:
-      - DB_HOST=mysql
-      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
-      - DB_USER=${MYSQL_USER}
-      - DB_PASS=${MYSQL_PASSWORD}
-      - DB_ENGINE=mysql
+      - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
+      - TIME_ZONE=${TZ}
+      - SEAFILE_MYSQL_DB_HOST=mysql
+      - SEAFILE_MYSQL_DB_PORT=3306
+      - SEAFILE_MYSQL_DB_USER=${MYSQL_USER}
+      - SEAFILE_MYSQL_DB_PASSWORD=${MYSQL_PASSWORD}
+      - INIT_SEAFILE_MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
       - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
-      - TIME_ZONE=${TZ}
     volumes:
       - ./data/cloud:/shared
       # Object Storage - large files (uncomment to enable)
