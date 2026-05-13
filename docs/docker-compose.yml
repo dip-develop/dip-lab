@@ -1,6 +1,6 @@
 services:
   docs:
-    image: paperlessngx/paperless-ngx:2.20.13
+    image: paperlessngx/paperless-ngx:latest
     container_name: docs
     restart: always
     env_file:
@@ -11,7 +11,7 @@ services:
       - PAPERLESS_DBNAME=${DOCS_DB_NAME}
       - PAPERLESS_DBUSER=${POSTGRES_USER}
       - PAPERLESS_DBPASS=${POSTGRES_PASSWORD}
-      - PAPERLESS_URL=https://${DOMAIN:docs.example.com}
+      - PAPERLESS_URL=https://${DOMAIN:-docs.example.com}
       - PAPERLESS_SECRET_KEY=${DOCS_SECRET_KEY}
       - PAPERLESS_TIME_ZONE=${TZ}
       - PAPERLESS_OCR_LANGUAGE=deu,eng
@@ -41,7 +41,7 @@ services:
           memory: 2G
     # labels:
     #   - "traefik.enable=true"
-    #   - "traefik.http.routers.paperless.rule=Host(`${DOMAIN:docs.example.com}`)"
+    #   - "traefik.http.routers.paperless.rule=Host(`${DOMAIN:-docs.example.com}`)"
     #   - "traefik.http.routers.paperless.entrypoints=websecure"
     #   - "traefik.http.routers.paperless.tls.certresolver=letsencrypt"
     #   - "traefik.http.services.paperless.loadbalancer.server.port=8000"

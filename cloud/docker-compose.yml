@@ -1,6 +1,6 @@
 services:
   cloud:
-    image: seafileltd/seafile-mc:12.0
+    image: seafileltd/seafile-mc:latest
     container_name: cloud
     restart: always
     env_file:
@@ -30,7 +30,7 @@ services:
           memory: 1G
     # labels:
     #   - "traefik.enable=true"
-    #   - "traefik.http.routers.seafile.rule=Host(`${DOMAIN:cloud.example.com}`)"
+    #   - "traefik.http.routers.seafile.rule=Host(`${DOMAIN:-cloud.example.com}`)"
     #   - "traefik.http.routers.seafile.entrypoints=websecure"
     #   - "traefik.http.routers.seafile.tls.certresolver=letsencrypt"
     #   - "traefik.http.services.seafile.loadbalancer.server.port=80"
