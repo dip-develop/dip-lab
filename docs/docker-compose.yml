@@ -19,11 +19,11 @@ services:
       - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://docs-gotenberg:3000
       - PAPERLESS_TIKA_ENDPOINT=http://docs-tika:9998
     volumes:
-      - ./data/docs/data:/usr/src/paperless/data
+      # - ./data/docs/data:/usr/src/paperless/data
       - ./data/docs/export:/usr/src/paperless/export
       - ./data/docs/consume:/usr/src/paperless/consume
       # Object Storage - large documents (uncomment to enable)
-      # - /mnt/object-storage/data/docs:/usr/src/paperless/data
+      - /mnt/object-storage/data/docs:/usr/src/paperless/data
     ports:
       - "${BIND_IP:-0.0.0.0}:8000:8000"
     networks:
