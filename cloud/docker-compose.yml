@@ -6,6 +6,7 @@ services:
     env_file:
       - .env
     environment:
+      - DB_HOST=mysql
       - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
       - TIME_ZONE=${TZ}
       - SEAFILE_MYSQL_DB_HOST=mysql
