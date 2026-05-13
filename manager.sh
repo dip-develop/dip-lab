@@ -48,6 +48,22 @@ setup_directories() {
     mkdir -p monitoring/data
     mkdir -p lmagent/data
     
+    # Object Storage directories (S3-compatible storage mount)
+    # Only create if /mnt/object-storage/data is accessible
+    if mountpoint -q /mnt/object-storage/data 2>/dev/null || [ -d /mnt/object-storage/data ]; then
+        echo "[*] Creating object storage directories..."
+        mkdir -p /mnt/object-storage/data/gallery/upload
+        mkdir -p /mnt/object-storage/data/gallery/thumbs
+        mkdir -p /mnt/object-storage/data/cloud/seafile-data
+        mkdir -p /mnt/object-storage/data/docs
+        mkdir -p /mnt/object-storage/data/automation
+        chmod -R 755 /mnt/object-storage/data/* 2>/dev/null || true
+        echo "[+] Object storage directories ready"
+    else
+        echo "[!] Object storage not mounted at /mnt/object-storage/data"
+        echo "[!] Services requiring object storage will use local NVMe"
+    fi
+    
     chmod -R 755 */data 2>/dev/null || true
     
     # Automation runs as node (UID 1000)
