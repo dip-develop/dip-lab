@@ -43,6 +43,12 @@ setup_directories() {
     # Cloud specific: container expects /shared
     mkdir -p cloud/data
     
+    # Gallery (Immich) specific: requires subdirectories with .immich markers
+    mkdir -p gallery/data/gallery/{upload,thumbs,profile,backup,library,encoded-video}
+    for dir in upload thumbs profile backup library encoded-video; do
+        touch "gallery/data/gallery/$dir/.immich"
+    done
+    
     mkdir -p proxy/dynamic proxy/logs
     mkdir -p databases/data
     mkdir -p monitoring/data
@@ -54,6 +60,10 @@ setup_directories() {
         echo "[*] Creating object storage directories..."
         mkdir -p /mnt/object-storage/data/gallery/upload
         mkdir -p /mnt/object-storage/data/gallery/thumbs
+        mkdir -p /mnt/object-storage/data/gallery/profile
+        mkdir -p /mnt/object-storage/data/gallery/backup
+        mkdir -p /mnt/object-storage/data/gallery/library
+        mkdir -p /mnt/object-storage/data/gallery/encoded-video
         mkdir -p /mnt/object-storage/data/cloud/seafile-data
         mkdir -p /mnt/object-storage/data/docs
         mkdir -p /mnt/object-storage/data/automation
@@ -212,13 +222,18 @@ case $ACTION in
         fi
         ;;
     logs)
-        svc=${1:-}
-        shift
-        if [ -z "$svc" ]; then
+        if [ -z "${1:-}" ]; then
             echo "[!] Service required: $0 logs <service>"
             exit 1
         fi
-        run_one "$svc" "logs -f $@"
+        svc="$1"
+        shift
+        if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
+            (cd "$svc" && docker compose logs -f "$@")
+        else
+            echo "[!] Service '$svc' not found"
+            exit 1
+        fi
         ;;
     status)
         for svc in "${SERVICES[@]}"; do
