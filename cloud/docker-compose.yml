@@ -8,6 +8,8 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
+      - DB_USER=${MYSQL_USER}
+      - DB_PASS=${MYSQL_PASSWORD}
       - DB_ENGINE=mysql
       - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
