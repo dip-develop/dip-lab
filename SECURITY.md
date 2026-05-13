@@ -25,7 +25,7 @@ When deploying this home lab:
 1. **Change all default passwords** - All secrets in `.env` files should be changed
 2. **Use strong passwords** - Use a password manager (included in this repo)
 3. **Keep services updated** - Run `./manager.sh update` regularly
-4. **Restrict network access** - Services run on internal network (127.0.0.1)
+4. **Restrict network access** - Services run on internal network (0.0.0.0)
 5. **Review container permissions** - Avoid running containers as root when possible
 6. **Enable firewall** - Only expose necessary ports to the internet (80, 443, 25, etc.)
 
