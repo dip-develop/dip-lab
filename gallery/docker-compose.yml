@@ -17,7 +17,13 @@ services:
       - ./data/gallery/upload:/data/upload
       - ./data/gallery/thumbs:/data/thumbs
       - ./data/gallery/profile:/data/profile
-      - /mnt/object-storage/data/gallery/library:/mnt/object-storage/library:ro
+      # Object Storage - large media files (uncomment to enable)
+      # Large files stored in S3-compatible storage, small files stay on NVMe
+      # - /mnt/object-storage/data/gallery/upload:/data/upload:consistent
+      # - /mnt/object-storage/data/gallery/thumbs:/data/thumbs
+      # Cross-service access - read other services' data (uncomment to enable)
+      # - ../cloud/data/cloud/seafile-data:/mnt/seafile:ro
+      # - ../docs/data/docs:/mnt/docs:ro
     ports:
       - "${BIND_IP:-127.0.0.1}:2283:2283"
     networks:

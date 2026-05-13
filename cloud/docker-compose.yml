@@ -15,6 +15,13 @@ services:
       - TIME_ZONE=${TZ}
     volumes:
       - ./data/cloud:/shared
+      # Object Storage - large files (uncomment to enable)
+      # Seafile stores files in /shared/seafile-data
+      # Use S3 backend in .env for object storage instead of local mount
+      # - /mnt/object-storage/data/cloud/seafile-data:/shared/seafile-data
+      # Cross-service access - read other services' data (uncomment to enable)
+      # - ../gallery/data/gallery/upload:/mnt/gallery:ro
+      # - /mnt/object-storage/docs/data:/mnt/docs:ro
     ports:
       - "${BIND_IP:-127.0.0.1}:8383:80"
       - "${BIND_IP:-127.0.0.1}:8384:8000"

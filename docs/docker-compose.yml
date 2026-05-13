@@ -22,6 +22,11 @@ services:
       - ./data/docs/data:/usr/src/paperless/data
       - ./data/docs/export:/usr/src/paperless/export
       - ./data/docs/consume:/usr/src/paperless/consume
+      # Object Storage - large documents (uncomment to enable)
+      # - /mnt/object-storage/data/docs:/usr/src/paperless/data
+      # Cross-service access - read other services' data (uncomment to enable)
+      # - ../cloud/data/cloud:/mnt/cloud:ro
+      # - ../gallery/data/gallery/thumbs:/mnt/gallery-thumbs:ro
     ports:
       - "${BIND_IP:-127.0.0.1}:8000:8000"
     networks:
