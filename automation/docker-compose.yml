@@ -22,11 +22,11 @@ services:
     volumes:
       - ./data/automation:/home/node/.n8n:rw
       # Object Storage - large execution data (uncomment to enable)
-      # - /mnt/object-storage/data/automation:/mnt/object-storage:rw
+      - /mnt/object-storage/data/automation:/mnt/object-storage:rw
       # Cross-service access - read other services' data (uncomment to enable)
-      # - ../cloud/data/cloud:/mnt/cloud:ro
-      # - ../gallery/data/gallery:/mnt/gallery:ro
-      # - ../docs/data/docs:/mnt/docs:ro
+      - /mnt/object-storage/data/cloud:/mnt/cloud:ro
+      - /mnt/object-storage/data/gallery:/mnt/gallery:ro
+      - /mnt/object-storage/data/docs:/mnt/docs:ro
     ports:
       - "${BIND_IP:-0.0.0.0}:5678:5678"
     networks:

@@ -14,16 +14,13 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - UPLOAD_LOCATION=/data/upload
     volumes:
-      - ./data/gallery/upload:/data/upload
+      # - ./data/gallery/upload:/data/upload
       - ./data/gallery/thumbs:/data/thumbs
       - ./data/gallery/profile:/data/profile
       # Object Storage - large media files (uncomment to enable)
       # Large files stored in S3-compatible storage, small files stay on NVMe
-      # - /mnt/object-storage/data/gallery/upload:/data/upload:consistent
-      # - /mnt/object-storage/data/gallery/thumbs:/data/thumbs
-      # Cross-service access - read other services' data (uncomment to enable)
-      # - ../cloud/data/cloud/seafile-data:/mnt/seafile:ro
-      # - ../docs/data/docs:/mnt/docs:ro
+      - /mnt/object-storage/data/gallery/upload:/data/upload:consistent
+      - /mnt/object-storage/data/gallery/thumbs:/data/thumbs
     ports:
       - "${BIND_IP:-0.0.0.0}:2283:2283"
     networks:
