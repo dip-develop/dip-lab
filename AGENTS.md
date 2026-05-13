@@ -74,7 +74,6 @@ DIP-Lab provides a unified, modular environment for:
 - photo and media management (Immich)
 - document processing and OCR (Paperless-ngx)
 - password management (Vaultwarden)
-- corporate email (Mailcow)
 - workflow automation (n8n)
 - local LLM inference (vLLM)
 - AI agent execution (Hermes/lmagent)
@@ -88,8 +87,7 @@ The project is fully containerized using **Docker** and organized into modular s
 ### Core architectural principles
 
 - **Traefik** is the only public entrypoint (reverse proxy + TLS).
-- **Mailcow** is publicly accessible for corporate email.
-- All other services are **internal-only** by default.
+- All services are **internal-only** by default.
 - Access to internal services is via **WireGuard VPN**.
 - Optional public exposure is enabled via **commented Traefik labels** in docker-compose files.
 - Shared infrastructure components:
@@ -115,7 +113,7 @@ The project is fully containerized using **Docker** and organized into modular s
 
 ## Networking & Security Model
 
-- Only Traefik and Mailcow are exposed publicly.
+- Only Traefik is exposed publicly.
 - All other services are accessible only through WireGuard VPN.
 - Optional public exposure is enabled by uncommenting Traefik labels.
 - Each service runs in its own Docker network.

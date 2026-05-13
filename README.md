@@ -13,8 +13,7 @@
 ├── docs/           # Document management
 ├── automation/     # Automation (n8n)
 ├── gallery/        # Photo gallery (Immich)
-├── llm/            # LLM API (vLLM)
-└── mail/           # Corporate mail (Mailcow)
+└── llm/            # LLM API (vLLM)
 ```
 
 ## Server Resources
@@ -30,7 +29,6 @@ Shared PostgreSQL and Redis for all services:
 | Service | Database | Description |
 |---------|----------|-------------|
 | databases | PostgreSQL, Redis | Shared DBs |
-| mail | MySQL (built-in) | Mail |
 
 ## Networks
 
@@ -42,7 +40,7 @@ Shared PostgreSQL and Redis for all services:
 
 ### Internal Access (127.0.0.1)
 
-All services accessible via internal network at **127.0.0.1** (except mail and traefik which are externally accessible)
+All services accessible via internal network at **127.0.0.1** (except traefik which is externally accessible)
 
 | Service | Port | Description |
 |---------|------|--------------|
@@ -71,17 +69,13 @@ These services are accessible directly from outside:
 | Service | Port | Description |
 |---------|------|--------------|
 | **Traefik** | 80, 443 | Reverse proxy (HTTPS) |
-| **Mail SMTP** | 25, 465, 587 | Email sending |
-| **Mail IMAP** | 143, 993 | Email receiving |
-| **Mail POP3** | 110, 995 | POP3 access |
-| **Mail Sieve** | 4190 | Email filtering |
 
 ### Database (Internal Network)
 
 | Service | Host | Port | Description |
 |---------|------|------|-------------|
 | PostgreSQL | postgres | 5432 | Main DB (passwords, docs, automation, gallery) |
-| MySQL | mysql | 3306 | Mail MySQL |
+| MySQL | mysql | 3306 | Main MySQL |
 | Redis | redis | 6379 | Cache and queues |
 
 ## Management
@@ -118,8 +112,8 @@ These services are accessible directly from outside:
 
 ## Security
 
-- All services accessible only via internal network (127.0.0.1) except Traefik and Mail
-- Traefik and Mail have direct internet access (for mail and reverse proxy)
+- All services accessible only via internal network (127.0.0.1) except Traefik
+- Traefik has direct internet access (for reverse proxy)
 - TLS 1.2+ with secure cipher suites
 - Strict-Transport-Security headers
 - Rate limiting on Traefik
@@ -141,7 +135,6 @@ cd server
 vim databases/.env
 vim passwords/.env
 vim cloud/.env
-vim mail/mail.env
 
 # 4. Fix permissions
 ./manager.sh perm
@@ -208,7 +201,6 @@ http://127.0.0.1:8001/v1/chat/completions
 - Services isolated in `internal` network, ports bound to 127.0.0.1
 - databases starts first (all services depend on it)
 - Traefik listens on 80,443 (external access) for reverse proxy
-- Mail ports (25, 465, 587, 143, 993, 110, 995, 4190, 9993) available on host for mail
 - Services isolated in `internal` network, ports bound to 127.0.0.1
 - Logs in `proxy/logs/`
 - TLS certificates in `proxy/acme.json` (do not commit)

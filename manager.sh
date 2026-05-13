@@ -14,7 +14,6 @@ SERVICES=(
     "gallery"
     "llm"
     "lmagent"
-    "mail"
 )
 
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -48,13 +47,6 @@ setup_directories() {
     mkdir -p databases/data
     mkdir -p monitoring/data
     mkdir -p lmagent/data
-    mkdir -p mail/data/mail
-    mkdir -p mail/data/postfix
-    mkdir -p mail/data/dovecot
-    mkdir -p mail/data/redis
-    mkdir -p mail/data/filter
-    mkdir -p mail/data/solr
-    mkdir -p mail/data/mysql
     
     chmod -R 755 */data 2>/dev/null || true
     
@@ -77,7 +69,6 @@ fix_permissions() {
     
     # Fix .env files permissions (sensitive data)
     find "${SCRIPT_DIR}" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
-    find "${SCRIPT_DIR}" -name "mail.env" -exec chmod 600 {} \; 2>/dev/null || true
     find "${SCRIPT_DIR}/proxy" -name "acme.json" -exec chmod 600 {} \; 2>/dev/null || true
     
     # Automation runs as node (UID 1000) - needs write access to its data
