@@ -13,7 +13,7 @@ SERVICES=(
     "automation"
     "gallery"
     "llm"
-    "lmagent"
+    "aiagent"
 )
 
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -46,7 +46,7 @@ setup_directories() {
     mkdir -p proxy/dynamic proxy/logs
     mkdir -p databases/data
     mkdir -p monitoring/data
-    mkdir -p lmagent/data
+    mkdir -p aiagent/data
     
     # Object Storage directories (S3-compatible storage mount)
     # Only create if /mnt/object-storage/data is accessible

@@ -36,12 +36,12 @@ All management via `./manager.sh`:
 8. **automation** - Automation (n8n)
 9. **gallery** - Photo gallery (Immich)
 10. **llm** - LLM API (vLLM, on `internal` network)
-11. **lmagent** - AI agent (on `internal` network)
+11. **aiagent** - AI agent (on `internal` network)
 
 ## Docker Networks
 
 - `web` - External-facing (Traefik)
-- `internal` - LLM, lmagent (isolated)
+- `internal` - LLM, aiagent (isolated)
 - `database` - PostgreSQL, MySQL, Redis (shared)
 
 ## Sensitive Files (NOT to commit)
@@ -76,7 +76,7 @@ DIP-Lab provides a unified, modular environment for:
 - password management (Vaultwarden)
 - workflow automation (n8n)
 - local LLM inference (vLLM)
-- AI agent execution (Hermes/lmagent)
+- AI agent execution (Hermes/aiagent)
 - monitoring and observability (Prometheus, Grafana, Loki)
 - optional business backends and websites
 

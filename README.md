@@ -33,7 +33,7 @@ Shared PostgreSQL and Redis for all services:
 ## Networks
 
 - `web` - Traefik reverse proxy (80, 443 on host)
-- `internal` - LLM, lmagent (isolated)
+- `internal` - LLM, aiagent (isolated)
 - `database` - shared PostgreSQL, Redis, MySQL
 
 ## Access and Ports
