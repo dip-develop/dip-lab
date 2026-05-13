@@ -4,7 +4,7 @@ services:
     container_name: vllm
     restart: always
     ports:
-      - "${BIND_IP:-127.0.0.1}:8001:8000"
+      - "${BIND_IP:-0.0.0.0}:8001:8000"
     volumes:
       - ./data/llm/models:/models
     environment:

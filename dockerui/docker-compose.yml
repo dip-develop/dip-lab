@@ -5,7 +5,7 @@ services:
     restart: always
     command: --http-enabled --bind :9000
     ports:
-      - "${BIND_IP:-127.0.0.1}:9000:9000"
+      - "${BIND_IP:-0.0.0.0}:9000:9000"
     env_file:
       - .env
     environment:

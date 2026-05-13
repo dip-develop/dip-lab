@@ -25,7 +25,7 @@ services:
       # - ../cloud/data/cloud/seafile-data:/mnt/seafile:ro
       # - ../docs/data/docs:/mnt/docs:ro
     ports:
-      - "${BIND_IP:-127.0.0.1}:2283:2283"
+      - "${BIND_IP:-0.0.0.0}:2283:2283"
     networks:
       - internal
       - database

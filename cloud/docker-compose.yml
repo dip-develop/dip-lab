@@ -11,7 +11,7 @@ services:
       - DB_ENGINE=mysql
       - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
-      - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-127.0.0.1}:8383
+      - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
       - TIME_ZONE=${TZ}
     volumes:
       - ./data/cloud:/shared
@@ -23,8 +23,8 @@ services:
       # - ../gallery/data/gallery/upload:/mnt/gallery:ro
       # - /mnt/object-storage/docs/data:/mnt/docs:ro
     ports:
-      - "${BIND_IP:-127.0.0.1}:8383:80"
-      - "${BIND_IP:-127.0.0.1}:8384:8000"
+      - "${BIND_IP:-0.0.0.0}:8383:80"
+      - "${BIND_IP:-0.0.0.0}:8384:8000"
     networks:
       - internal
       - database

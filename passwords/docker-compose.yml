@@ -6,9 +6,9 @@ services:
     env_file:
       - .env
     ports:
-      - "${BIND_IP:-127.0.0.1}:8200:80"
+      - "${BIND_IP:-0.0.0.0}:8200:80"
     environment:
-      - DOMAIN=http://${BIND_IP:-127.0.0.1}:8200
+      - DOMAIN=http://${BIND_IP:-0.0.0.0}:8200
       - SIGNUPS_ALLOWED=${PASSWORDS_SIGNUPS_ALLOWED}
       - ADMIN_TOKEN=${PASSWORDS_ADMIN_TOKEN}
       - RATE_LIMIT_SECONDS=3

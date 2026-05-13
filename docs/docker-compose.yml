@@ -28,7 +28,7 @@ services:
       # - ../cloud/data/cloud:/mnt/cloud:ro
       # - ../gallery/data/gallery/thumbs:/mnt/gallery-thumbs:ro
     ports:
-      - "${BIND_IP:-127.0.0.1}:8000:8000"
+      - "${BIND_IP:-0.0.0.0}:8000:8000"
     networks:
       - internal
       - database
