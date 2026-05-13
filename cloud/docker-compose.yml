@@ -13,6 +13,7 @@ services:
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${MYSQL_USER}
       - SEAFILE_MYSQL_DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
       - INIT_SEAFILE_MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
@@ -22,13 +23,13 @@ services:
       # Object Storage - large files (uncomment to enable)
       # Seafile stores files in /shared/seafile-data
       # Use S3 backend in .env for object storage instead of local mount
-      - /mnt/object-storage/data/cloud/seafile-data:/shared/seafile-data
+      # - /mnt/object-storage/data/cloud/seafile-data:/shared/seafile-data
       # Cross-service access - read other services' data (uncomment to enable)
-      - /mnt/object-storage/data/gallery/upload:/mnt/gallery:ro
-      - /mnt/object-storage/data/docs:/mnt/docs:ro
+      # - /mnt/object-storage/data/gallery/upload:/mnt/gallery:ro
+      # - /mnt/object-storage/data/docs:/mnt/docs:ro
     ports:
-      - "${BIND_IP:-0.0.0.0}:8383:80"
-      - "${BIND_IP:-0.0.0.0}:8384:8000"
+      - "${BIND_IP:-0.0.0.0}:8385:80"
+      - "${BIND_IP:-0.0.0.0}:8386:8000"
     networks:
       - internal
       - database
