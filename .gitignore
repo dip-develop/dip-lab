@@ -1,7 +1,6 @@
 # .env files
 *.env
 */*.env
-mail/mail.env
 
 # Data directories (local)
 */data/
