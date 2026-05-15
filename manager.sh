@@ -50,7 +50,7 @@ setup_directories() {
     done
     
     mkdir -p proxy/dynamic proxy/logs
-    mkdir -p databases/data
+    mkdir -p databases/data/{postgres,mysql,redis}
     mkdir -p monitoring/data
     mkdir -p aiagent/data
     
