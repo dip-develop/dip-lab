@@ -13,7 +13,8 @@
 ├── docs/           # Document management
 ├── automation/     # Automation (n8n)
 ├── gallery/        # Photo gallery (Immich)
-└── llm/            # LLM API (vLLM)
+├── llm/            # LLM API (vLLM)
+└── aiagent/        # AI agent (Hermes)
 ```
 
 ## Server Resources
@@ -51,7 +52,8 @@ All services accessible via internal network at **0.0.0.0** (except traefik whic
 | Docs | 0.0.0.0:8000 | Document management |
 | Automation | 0.0.0.0:5678 | Automation |
 | Gallery | 0.0.0.0:2283 | Photo gallery |
-| LMagent | 0.0.0.0:18789 | AI agent |
+| Hermes (AI agent) | 0.0.0.0:18789 | Agent API |
+| Hermes Dashboard | 0.0.0.0:18790 | Agent Web UI |
 | LLM (vLLM) | 0.0.0.0:8001 | OpenAI-compatible API |
 | **Monitoring** | | |
 | Grafana | 0.0.0.0:3000 | Monitoring and logs |
@@ -175,8 +177,11 @@ http://0.0.0.0:5678
 # Gallery (Immich)
 http://0.0.0.0:2283
 
-# LMagent (AI agent)
-http://0.0.0.0:18789
+# Hermes (AI agent)
+http://0.0.0.0:18789  # API
+
+# Hermes Dashboard (Web UI)
+http://0.0.0.0:18790
 
 # LLM API (vLLM)
 http://0.0.0.0:8001
