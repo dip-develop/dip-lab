@@ -67,6 +67,10 @@ setup_directories() {
         mkdir -p /mnt/object-storage/data/cloud/seafile-data
         mkdir -p /mnt/object-storage/data/docs
         mkdir -p /mnt/object-storage/data/automation
+        # Create .immich markers for gallery folders
+        for dir in upload thumbs backup library encoded-video; do
+            touch "/mnt/object-storage/data/gallery/$dir/.immich" 2>/dev/null || true
+        done
         chmod -R 755 /mnt/object-storage/data/* 2>/dev/null || true
         echo "[+] Object storage directories ready"
     else
