@@ -44,8 +44,8 @@ setup_directories() {
     mkdir -p cloud/data
     
     # Gallery (Immich) specific: requires subdirectories with .immich markers
-    mkdir -p gallery/data/gallery/{upload,thumbs,profile,backup,library,encoded-video}
-    for dir in upload thumbs profile backup library encoded-video; do
+    mkdir -p gallery/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
+    for dir in upload thumbs profile backups library encoded-video; do
         touch "gallery/data/gallery/$dir/.immich"
     done
     
@@ -61,14 +61,14 @@ setup_directories() {
         mkdir -p /mnt/object-storage/data/gallery/upload
         mkdir -p /mnt/object-storage/data/gallery/thumbs
         mkdir -p /mnt/object-storage/data/gallery/profile
-        mkdir -p /mnt/object-storage/data/gallery/backup
+        mkdir -p /mnt/object-storage/data/gallery/backups
         mkdir -p /mnt/object-storage/data/gallery/library
         mkdir -p /mnt/object-storage/data/gallery/encoded-video
         mkdir -p /mnt/object-storage/data/cloud/seafile-data
         mkdir -p /mnt/object-storage/data/docs
         mkdir -p /mnt/object-storage/data/automation
         # Create .immich markers for gallery folders
-        for dir in upload thumbs backup library encoded-video; do
+        for dir in upload thumbs backups library encoded-video; do
             touch "/mnt/object-storage/data/gallery/$dir/.immich" 2>/dev/null || true
         done
         chmod -R 755 /mnt/object-storage/data/* 2>/dev/null || true
