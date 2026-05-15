@@ -28,7 +28,7 @@ services:
       # - /mnt/object-storage/data/gallery/upload:/mnt/gallery:ro
       # - /mnt/object-storage/data/docs:/mnt/docs:ro
     ports:
-      - "${BIND_IP:-0.0.0.0}:8385:80"
+      - "${BIND_IP:-0.0.0.0}:8383:80"
       - "${BIND_IP:-0.0.0.0}:8386:8000"
     networks:
       - internal
