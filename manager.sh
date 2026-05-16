@@ -184,33 +184,48 @@ cloud_post_setup() {
 
     echo "[*] Waiting for Seafile config directory..."
     for i in $(seq 1 $max_attempts); do
+        if docker exec cloud test -f /shared/seafile/conf/seahub_settings.py 2>/dev/null; then
+            break
+        fi
         if [ -f "${conf_dir}/seahub_settings.py" ]; then
             break
         fi
         sleep 2
     done
 
-    if [ ! -f "${env_file}" ]; then
-        if [ ! -d "$conf_dir" ]; then
-            echo "[!] Seafile config directory not found after setup"
-            echo "[!] Check 'docker logs cloud' for errors"
-            return 1
-        fi
-        JWT_KEY=$(openssl rand -base64 32)
-        cat > "$env_file" << EOF
+    if docker exec cloud test -f /shared/seafile/conf/.env 2>/dev/null; then
+        echo "[+] Seafile .env already exists"
+        return
+    fi
+    if [ -f "${env_file}" ]; then
+        echo "[+] Seafile .env already exists"
+        return
+    fi
+
+    JWT_KEY=$(openssl rand -base64 32)
+
+    if docker exec cloud test -d /shared/seafile/conf 2>/dev/null; then
+        docker exec cloud bash -c "cat > /shared/seafile/conf/.env << ENVEOF
 JWT_PRIVATE_KEY=${JWT_KEY}
 SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
 SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
 SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
 SEAFILE_SERVER_PROTOCOL=http
 SEAFILE_SERVER_HOSTNAME=localhost:8383
-EOF
-        echo "[+] Created Seafile .env with JWT_PRIVATE_KEY"
-        docker restart cloud >/dev/null 2>&1 || true
-        echo "[+] Restarted cloud container"
+ENVEOF"
+        echo "[+] Created Seafile .env via docker exec"
+    elif [ -d "$conf_dir" ]; then
+        printf 'JWT_PRIVATE_KEY=%s\nSEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db\nSEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db\nSEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db\nSEAFILE_SERVER_PROTOCOL=http\nSEAFILE_SERVER_HOSTNAME=localhost:8383\n' \
+            "${JWT_KEY}" | sudo tee "${env_file}" >/dev/null
+        echo "[+] Created Seafile .env on host"
     else
-        echo "[+] Seafile .env already exists"
+        echo "[!] Seafile config directory not found after setup"
+        echo "[!] Check 'docker logs cloud' for errors"
+        return 1
     fi
+
+    docker restart cloud >/dev/null 2>&1 || true
+    echo "[+] Restarted cloud container"
 }
 
 ACTION=${1:-}
