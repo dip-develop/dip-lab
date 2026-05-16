@@ -193,12 +193,11 @@ cloud_post_setup() {
         sleep 2
     done
 
-    if docker exec cloud test -f /shared/seafile/conf/.env 2>/dev/null; then
+    if docker exec cloud test -f /shared/seafile/conf/.env 2>/dev/null || [ -f "${env_file}" ]; then
         echo "[+] Seafile .env already exists"
-        return
-    fi
-    if [ -f "${env_file}" ]; then
-        echo "[+] Seafile .env already exists"
+        sudo chown -R 0:0 "${SCRIPT_DIR}/cloud/data/cloud/seafile" 2>/dev/null || true
+        docker restart cloud >/dev/null 2>&1 || true
+        echo "[+] Restarted cloud container"
         return
     fi
 
@@ -224,6 +223,7 @@ ENVEOF"
         return 1
     fi
 
+    sudo chown -R 0:0 "${SCRIPT_DIR}/cloud/data/cloud/seafile" 2>/dev/null || true
     docker restart cloud >/dev/null 2>&1 || true
     echo "[+] Restarted cloud container"
 }
