@@ -26,7 +26,7 @@ services:
       # Object Storage - large files (uncomment to enable)
       # Seafile stores files in /shared/seafile-data
       # Use S3 backend in .env for object storage instead of local mount
-      - ./data/cloud/seafile-data:/shared/seafile-data
+      - ./data/cloud/seafile-data:/shared/seafile/seafile-data
       - /mnt/object-storage/data/cloud:/shared
       # Cross-service access - read other services' data (uncomment to enable)
       - /mnt/object-storage/data/gallery/upload:/mnt/gallery:ro
