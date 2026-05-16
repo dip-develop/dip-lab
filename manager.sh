@@ -177,6 +177,42 @@ run_one() {
     fi
 }
 
+cloud_post_setup() {
+    local conf_dir="${SCRIPT_DIR}/cloud/data/cloud/seafile/conf"
+    local env_file="${conf_dir}/.env"
+    local max_attempts=30
+
+    echo "[*] Waiting for Seafile config directory..."
+    for i in $(seq 1 $max_attempts); do
+        if [ -f "${conf_dir}/seahub_settings.py" ]; then
+            break
+        fi
+        sleep 2
+    done
+
+    if [ ! -f "${env_file}" ]; then
+        if [ ! -d "$conf_dir" ]; then
+            echo "[!] Seafile config directory not found after setup"
+            echo "[!] Check 'docker logs cloud' for errors"
+            return 1
+        fi
+        JWT_KEY=$(openssl rand -base64 32)
+        cat > "$env_file" << EOF
+JWT_PRIVATE_KEY=${JWT_KEY}
+SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
+SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
+SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
+SEAFILE_SERVER_PROTOCOL=http
+SEAFILE_SERVER_HOSTNAME=localhost:8383
+EOF
+        echo "[+] Created Seafile .env with JWT_PRIVATE_KEY"
+        docker restart cloud >/dev/null 2>&1 || true
+        echo "[+] Restarted cloud container"
+    else
+        echo "[+] Seafile .env already exists"
+    fi
+}
+
 ACTION=${1:-}
 shift || true
 
@@ -188,8 +224,12 @@ case $ACTION in
         setup_nets
         if [ -z "${1:-}" ]; then
             run_all up -d
+            cloud_post_setup
         else
             run_one "$1" up -d
+            if [ "$1" = "cloud" ]; then
+                cloud_post_setup
+            fi
         fi
         ;;
     stop)
@@ -251,6 +291,7 @@ case $ACTION in
         setup_nets
         setup_directories
         ;;
+
     perm)
         fix_permissions
         ;;
