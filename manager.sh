@@ -177,69 +177,6 @@ run_one() {
     fi
 }
 
-cloud_post_setup() {
-    local conf_dir="${SCRIPT_DIR}/cloud/data/cloud/seafile/conf"
-    local env_file="${conf_dir}/.env"
-    local max_attempts=30
-
-    echo "[*] Waiting for Seafile config directory..."
-    for i in $(seq 1 $max_attempts); do
-        if docker exec cloud test -f /shared/seafile/conf/seahub_settings.py 2>/dev/null; then
-            break
-        fi
-        if [ -f "${conf_dir}/seahub_settings.py" ]; then
-            break
-        fi
-        sleep 2
-    done
-
-    if docker exec cloud test -f /shared/seafile/conf/.env 2>/dev/null || [ -f "${env_file}" ]; then
-        echo "[+] Seafile .env already exists"
-        sudo chown -R 0:0 "${SCRIPT_DIR}/cloud/data/cloud/seafile" 2>/dev/null || true
-        docker restart cloud >/dev/null 2>&1 || true
-        echo "[+] Restarted cloud container"
-        return
-    fi
-
-    JWT_KEY=$(openssl rand -base64 32)
-
-    # Source cloud .env for Redis/MySQL passwords
-    if [ -f "${SCRIPT_DIR}/cloud/.env" ]; then
-        set -a
-        . "${SCRIPT_DIR}/cloud/.env"
-        set +a
-    fi
-
-    if docker exec cloud test -d /shared/seafile/conf 2>/dev/null; then
-        docker exec cloud bash -c "cat > /shared/seafile/conf/.env << ENVEOF
-JWT_PRIVATE_KEY=${JWT_KEY}
-SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
-SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
-SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
-SEAFILE_SERVER_PROTOCOL=http
-SEAFILE_SERVER_HOSTNAME=localhost:8383
-REDIS_PASSWORD=${REDIS_PASSWORD:-}
-SEAFILE_MYSQL_DB_HOST=mysql
-SEAFILE_MYSQL_DB_PORT=3306
-SEAFILE_MYSQL_DB_USER=${MYSQL_USER:-cloud}
-SEAFILE_MYSQL_DB_PASSWORD=${MYSQL_PASSWORD:-}
-ENVEOF"
-        echo "[+] Created Seafile .env via docker exec"
-    elif [ -d "$conf_dir" ]; then
-        printf 'JWT_PRIVATE_KEY=%s\nSEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db\nSEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db\nSEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db\nSEAFILE_SERVER_PROTOCOL=http\nSEAFILE_SERVER_HOSTNAME=localhost:8383\nREDIS_PASSWORD=%s\nSEAFILE_MYSQL_DB_HOST=mysql\nSEAFILE_MYSQL_DB_PORT=3306\nSEAFILE_MYSQL_DB_USER=%s\nSEAFILE_MYSQL_DB_PASSWORD=%s\n' \
-            "${JWT_KEY}" "${REDIS_PASSWORD:-}" "${MYSQL_USER:-cloud}" "${MYSQL_PASSWORD:-}" | sudo tee "${env_file}" >/dev/null
-        echo "[+] Created Seafile .env on host"
-    else
-        echo "[!] Seafile config directory not found after setup"
-        echo "[!] Check 'docker logs cloud' for errors"
-        return 1
-    fi
-
-    sudo chown -R 0:0 "${SCRIPT_DIR}/cloud/data/cloud/seafile" 2>/dev/null || true
-    docker restart cloud >/dev/null 2>&1 || true
-    echo "[+] Restarted cloud container"
-}
-
 ACTION=${1:-}
 shift || true
 
@@ -251,12 +188,8 @@ case $ACTION in
         setup_nets
         if [ -z "${1:-}" ]; then
             run_all up -d
-            cloud_post_setup
         else
             run_one "$1" up -d
-            if [ "$1" = "cloud" ]; then
-                cloud_post_setup
-            fi
         fi
         ;;
     stop)
