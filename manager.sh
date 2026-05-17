@@ -41,7 +41,7 @@ setup_directories() {
     mkdir -p automation/data/automation
     
     # Cloud specific: container expects /shared
-    mkdir -p cloud/data
+    mkdir -p cloud/data/cloud/seafile-data
     
     # Gallery (Immich) specific: requires subdirectories with .immich markers
     mkdir -p gallery/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
@@ -65,6 +65,7 @@ setup_directories() {
         mkdir -p /mnt/object-storage/data/gallery/library
         mkdir -p /mnt/object-storage/data/gallery/encoded-video
         mkdir -p /mnt/object-storage/data/cloud/seafile-data
+        mkdir -p /mnt/object-storage/data/cloud/seafile/{conf,logs,seahub-data}
         mkdir -p /mnt/object-storage/data/docs
         mkdir -p /mnt/object-storage/data/automation
         # Create .immich markers for gallery folders
@@ -106,7 +107,7 @@ fix_permissions() {
     chown -R 1000:1000 "${SCRIPT_DIR}/automation/data/automation" 2>/dev/null || true
     
     # Cloud runs as root
-    mkdir -p "${SCRIPT_DIR}/cloud/data"
+    mkdir -p "${SCRIPT_DIR}/cloud/data/cloud/seafile-data"
     chown -R 0:0 "${SCRIPT_DIR}/cloud/data" 2>/dev/null || true
     
     # Databases: PostgreSQL (999), MySQL (999), Redis (6379)
