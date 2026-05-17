@@ -40,8 +40,8 @@ setup_directories() {
     # Automation specific: container expects /home/node/.n8n
     mkdir -p automation/data/automation
     
-    # Cloud specific: container expects /shared
-    mkdir -p cloud/data/cloud/seafile-data
+    # Cloud specific: parent dir for bind mount (docker auto-creates seafile-data on start)
+    mkdir -p cloud/data/cloud
     
     # Gallery (Immich) specific: requires subdirectories with .immich markers
     mkdir -p gallery/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
@@ -64,8 +64,7 @@ setup_directories() {
         mkdir -p /mnt/object-storage/data/gallery/backups
         mkdir -p /mnt/object-storage/data/gallery/library
         mkdir -p /mnt/object-storage/data/gallery/encoded-video
-        mkdir -p /mnt/object-storage/data/cloud/seafile-data
-        mkdir -p /mnt/object-storage/data/cloud/seafile/{conf,logs,seahub-data}
+        # Cloud uses local storage (Seafile's native S3 backend for object storage)
         mkdir -p /mnt/object-storage/data/docs
         mkdir -p /mnt/object-storage/data/automation
         # Create .immich markers for gallery folders
@@ -107,7 +106,7 @@ fix_permissions() {
     chown -R 1000:1000 "${SCRIPT_DIR}/automation/data/automation" 2>/dev/null || true
     
     # Cloud runs as root
-    mkdir -p "${SCRIPT_DIR}/cloud/data/cloud/seafile-data"
+    mkdir -p "${SCRIPT_DIR}/cloud/data/cloud"
     chown -R 0:0 "${SCRIPT_DIR}/cloud/data" 2>/dev/null || true
     
     # Databases: PostgreSQL (999), MySQL (999), Redis (6379)

@@ -24,13 +24,17 @@ services:
       - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
       - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
+      - SEAFILE_USE_S3=${SEAFILE_USE_S3:-}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
+      - S3_REGION=${S3_REGION:-}
+      - S3_ENDPOINT=${S3_ENDPOINT:-}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:-}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:-}
+      - S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-}
     volumes:
-      # - ./data/cloud:/shared
-      # Object Storage - large files (uncomment to enable)
-      # Seafile stores files in /shared/seafile-data
-      # Use S3 backend in .env for object storage instead of local mount
-      - ./data/cloud/seafile-data:/shared/seafile/seafile-data
-      - /mnt/object-storage/data/cloud:/shared
+      - ./data/cloud:/shared
+      # Object Storage — use Seafile's native S3 backend (SEAFILE_USE_S3=1 in .env)
+      # instead of FUSE mounts, which break Unix permissions
       # Cross-service access - read other services' data (uncomment to enable)
       - /mnt/object-storage/data/gallery/upload:/mnt/gallery:ro
       - /mnt/object-storage/data/docs:/mnt/docs:ro
