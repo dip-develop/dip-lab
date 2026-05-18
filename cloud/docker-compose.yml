@@ -7,6 +7,7 @@ services:
       - .env
     environment:
       - DB_HOST=mysql
+      - SEAFILE_SERVER_PROTOCOL=http
       - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
       - TIME_ZONE=${TZ}
       - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
@@ -21,9 +22,10 @@ services:
       - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - INIT_SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      - INIT_SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
       - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
-      - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
       - SEAFILE_USE_S3=${SEAFILE_USE_S3:-}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
       - S3_REGION=${S3_REGION:-}
@@ -49,7 +51,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
     # labels:
     #   - "traefik.enable=true"
@@ -69,7 +71,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
 
 networks:
