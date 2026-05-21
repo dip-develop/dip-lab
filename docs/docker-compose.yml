@@ -1,5 +1,6 @@
 services:
   docs:
+    build: ./
     image: paperlessngx/paperless-ngx:latest
     container_name: docs
     restart: always
