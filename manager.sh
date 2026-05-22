@@ -225,6 +225,15 @@ case $ACTION in
             run_one "$1" "up -d"
         fi
         ;;
+    build)
+        if [ -z "${1:-}" ]; then
+            echo "[!] Service required: $0 build <service>"
+            exit 1
+        fi
+        svc="$1"
+        echo "[*] Building service: $svc"
+        (cd "$svc" && docker compose build "$@")
+        ;;
     logs)
         if [ -z "${1:-}" ]; then
             echo "[!] Service required: $0 logs <service>"
