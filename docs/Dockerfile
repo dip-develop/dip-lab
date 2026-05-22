@@ -6,3 +6,6 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr-ukr \
     tesseract-ocr-rus \
     && rm -rf /var/lib/apt/lists/*
+
+# Verify that the languages are installed
+RUN tesseract --list-langs
