@@ -1,7 +1,7 @@
 FROM ghcr.io/paperless-ngx/paperless-ngx:latest
 
 RUN apt-get update && apt-get install -y \
-    ocrmypdf \
+    #ocrmypdf \
     tesseract-ocr-eng \
     tesseract-ocr-deu \
     tesseract-ocr-ukr \
