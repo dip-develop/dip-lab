@@ -16,6 +16,7 @@ services:
       - HERMES_DASHBOARD=1
     networks:
       - internal
+    tty: true
     security_opt:
       - no-new-privileges:true
     healthcheck:
