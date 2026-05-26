@@ -10,7 +10,7 @@ services:
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
       - VLLM_API_KEY=
-    command: --model google/gemma-4-2b-it --dtype half --enforce-eager --host 0.0.0.0 --port 8000
+    command: --model google/gemma-4-2b-it --device cpu --enforce-eager --host 0.0.0.0 --port 8000
     networks:
       - internal
     security_opt:
