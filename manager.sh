@@ -40,6 +40,9 @@ setup_directories() {
     # Automation specific: container expects /home/node/.n8n
     mkdir -p automation/data/automation
     
+    # Docs (Paperless) specific: subdirectories for bind mounts
+    mkdir -p docs/data/docs/{export,consume,media}
+
     # Cloud specific: parent dir for bind mount (docker auto-creates seafile-data on start)
     mkdir -p cloud/data/cloud
     
