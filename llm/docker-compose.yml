@@ -1,36 +1,43 @@
 services:
-  vllm:
-    image: vllm/vllm-openai:cpu
-    container_name: vllm
+  llama:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: llama
     restart: always
+
     ports:
-      - "${BIND_IP:-0.0.0.0}:8001:8000"
+      - "${BIND_IP:-0.0.0.0}:8001:8080"
+
     volumes:
       - ./data/llm/models:/models
+
     environment:
-      - HF_TOKEN=${HF_TOKEN:-}
-      - VLLM_API_KEY=
-    command: --model google/gemma-4-2b-it --device cpu --enforce-eager --host 0.0.0.0 --port 8000
-    networks:
-      - internal
-    security_opt:
-      - no-new-privileges:true
+      - LLAMA_ARG_MODEL=/models/gemma-2b-it.Q4_K_M.gguf
+
+    command: >
+      --model /models/gemma-2b-it.Q4_K_M.gguf
+      --ctx-size 4096
+      --threads 8
+      --parallel 2
+      --host 0.0.0.0
+      --port 8080
+
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/models"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+    networks:
+      - internal
+
+    security_opt:
+      - no-new-privileges:true
+
     deploy:
       resources:
         limits:
           cpus: '4'
           memory: 8G
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.vllm.rule=Host(`${DOMAIN:-vllm.example.com}`)"
-    #   - "traefik.http.routers.vllm.entrypoints=websecure"
-    #   - "traefik.http.routers.vllm.tls.certresolver=letsencrypt"
-    #   - "traefik.http.services.vllm.loadbalancer.server.port=8000"
 
 networks:
   internal:
