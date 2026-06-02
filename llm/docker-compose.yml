@@ -1,6 +1,6 @@
 services:
   llama:
-    image: ghcr.io/ggerganov/llama.cpp:server
+    image: ghcr.io/ggerganov/llama.cpp:latest
     container_name: llama
     restart: always
 
@@ -10,10 +10,8 @@ services:
     volumes:
       - ./data/llm/models:/models
 
-    environment:
-      - LLAMA_ARG_MODEL=/models/gemma-2b-it.Q4_K_M.gguf
-
     command: >
+      llama-server
       --model /models/gemma-2b-it.Q4_K_M.gguf
       --ctx-size 4096
       --threads 8
