@@ -1,6 +1,6 @@
 services:
   llama:
-    image: ghcr.io/ggerganov/llama.cpp:latest
+    image: ghcr.io/ggml-org/llama.cpp:full
     container_name: llama
     restart: always
 
