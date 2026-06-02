@@ -13,6 +13,7 @@ services:
       - REDIS_HOSTNAME=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - UPLOAD_LOCATION=/data/upload
+      - IMMICH_IGNORE_MOUNT_CHECK_ERRORS=true
     volumes:
       # - ./data/gallery/upload:/data/upload
       - ./data/gallery/thumbs:/data/thumbs
