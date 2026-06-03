@@ -16,12 +16,13 @@ services:
       - IMMICH_IGNORE_MOUNT_CHECK_ERRORS=true
     volumes:
       # - ./data/gallery/upload:/data/upload
-      - ./data/gallery/thumbs:/data/thumbs
-      - ./data/gallery/profile:/data/profile
+      #- ./data/gallery/thumbs:/data/thumbs
+      #- ./data/gallery/profile:/data/profile
       # Object Storage - large media files (uncomment to enable)
       # Large files stored in S3-compatible storage, small files stay on NVMe
+      - /mnt/object-storage/data/gallery/profile:/data/profile
       - /mnt/object-storage/data/gallery/upload:/data/upload
-      #- /mnt/object-storage/data/gallery/thumbs:/data/thumbs
+      - /mnt/object-storage/data/gallery/thumbs:/data/thumbs
       - /mnt/object-storage/data/gallery/backups:/data/backups
       - /mnt/object-storage/data/gallery/library:/data/library
       - /mnt/object-storage/data/gallery/encoded-video:/data/encoded-video
