@@ -138,7 +138,7 @@ setup_directories() {
         fi
     done
 
-    if timeout 5 mountpoint -q /mnt/object-storage/data 2>/dev/null || timeout 5 [ -d /mnt/object-storage/data ] 2>/dev/null; then
+    if [ -d /mnt/object-storage/data ] 2>/dev/null; then
         log info "Creating object storage directories..."
         timeout 10 bash -c '
             mkdir -p /mnt/object-storage/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
