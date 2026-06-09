@@ -2,9 +2,15 @@ services:
   cloud:
     image: seafileltd/seafile-mc:13.0.21
     container_name: cloud
+    user: "1000:1000"
     restart: always
     env_file:
       - .env
+    command: >
+      bash -c "
+        chown -R 1000:1000 /shared/seafile/seafile-data 2>/dev/null;
+        exec /sbin/my_init -- /scripts/enterpoint.sh
+      "
     environment:
       - DB_HOST=mysql
       - SEAFILE_SERVER_PROTOCOL=http
