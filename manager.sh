@@ -140,14 +140,13 @@ setup_directories() {
 
     if [ -d /mnt/object-storage/data ] 2>/dev/null; then
         log info "Creating object storage directories..."
-        timeout 10 bash -c '
-            mkdir -p /mnt/object-storage/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
-            mkdir -p /mnt/object-storage/data/{docs,automation}
-            for dir in upload thumbs backups library encoded-video; do
-                touch "/mnt/object-storage/data/gallery/$dir/.immich" 2>/dev/null || true
-            done
-            chmod -R 755 /mnt/object-storage/data/* 2>/dev/null || true
-        ' && log ok "Object storage directories ready" || log warn "Object storage operations timed out or failed"
+        mkdir -p /mnt/object-storage/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
+        mkdir -p /mnt/object-storage/data/{docs,automation}
+        for dir in upload thumbs backups library encoded-video; do
+            timeout 3 touch "/mnt/object-storage/data/gallery/$dir/.immich" 2>/dev/null || true
+        done
+        chmod -R 755 /mnt/object-storage/data/gallery /mnt/object-storage/data/docs /mnt/object-storage/data/automation 2>/dev/null || true
+        log ok "Object storage directories ready"
     else
         log warn "Object storage not mounted at /mnt/object-storage/data"
     fi
