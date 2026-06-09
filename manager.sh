@@ -170,6 +170,10 @@ fix_permissions() {
 
     mkdir -p "$SCRIPT_DIR/cloud/data/cloud"
     chown -R 1000:1000 "$SCRIPT_DIR/cloud/data" 2>/dev/null || true
+    # Production data lives on object storage, not in repo
+    if [ -d /mnt/object-storage/data/cloud ]; then
+        timeout 10 chown -R 1000:1000 /mnt/object-storage/data/cloud 2>/dev/null || log warn "Could not chown /mnt/object-storage/data/cloud (need root?)"
+    fi
 
     mkdir -p "$SCRIPT_DIR/databases/data"
     chown -R 999:999 "$SCRIPT_DIR/databases/data/postgres" 2>/dev/null || true
