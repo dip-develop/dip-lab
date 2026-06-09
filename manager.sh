@@ -169,7 +169,7 @@ fix_permissions() {
     chown -R 1000:1000 "$SCRIPT_DIR/automation/data/automation" 2>/dev/null || true
 
     mkdir -p "$SCRIPT_DIR/cloud/data/cloud"
-    chown -R 0:0 "$SCRIPT_DIR/cloud/data" 2>/dev/null || true
+    chown -R 1000:1000 "$SCRIPT_DIR/cloud/data" 2>/dev/null || true
 
     mkdir -p "$SCRIPT_DIR/databases/data"
     chown -R 999:999 "$SCRIPT_DIR/databases/data/postgres" 2>/dev/null || true
