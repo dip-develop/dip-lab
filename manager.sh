@@ -2,7 +2,15 @@
 
 set -e
 
-SERVICES=(
+# ── Colors ──────────────────────────────────────────────────────────────────
+readonly C_RESET='\033[0m'
+readonly C_BLUE='\033[0;34m'
+readonly C_GREEN='\033[0;32m'
+readonly C_YELLOW='\033[1;33m'
+readonly C_RED='\033[0;31m'
+
+# ── Config ───────────────────────────────────────────────────────────────────
+SERVICES_ALL=(
     "databases"
     "proxy"
     "monitoring"
@@ -16,246 +24,496 @@ SERVICES=(
     "aiagent"
 )
 
-readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-readonly UID_DOCKER=1000
-readonly GID_DOCKER=1000
+DRY_RUN=false
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-setup_nets() {
-    echo "[*] Setting up networks..."
-    docker network create web 2>/dev/null || echo "[+] Network 'web' already exists"
-    docker network create internal 2>/dev/null || echo "[+] Network 'internal' already exists"
-    docker network create database 2>/dev/null || echo "[+] Network 'database' already exists"
-    echo "[*] Networks ready"
+# ── Logging ──────────────────────────────────────────────────────────────────
+log() {
+    local level=$1 symbol color
+    shift
+    case $level in
+        info) symbol="*" color=$C_BLUE   ;;
+        ok)   symbol="+" color=$C_GREEN  ;;
+        warn) symbol="!" color=$C_YELLOW ;;
+        err)  symbol="!" color=$C_RED    ;;
+        *)    symbol="*" color=$C_RESET  ;;
+    esac
+    printf "%s [%b%s%b] %s\n" "$(date '+%H:%M:%S')" "$color" "$symbol" "$C_RESET" "$*"
 }
 
+# ── Load disabled services ──────────────────────────────────────────────────
+DISABLED_FILE="$SCRIPT_DIR/.disabled_services"
+
+if [ -f "$DISABLED_FILE" ]; then
+    mapfile -t DISABLED < <(grep -v '^\s*#' "$DISABLED_FILE" | tr -d ' \t\r' | grep -v '^$')
+else
+    DISABLED=()
+fi
+
+is_disabled() {
+    local svc=$1
+    for d in "${DISABLED[@]}"; do
+        [ "$svc" = "$d" ] && return 0
+    done
+    return 1
+}
+
+SERVICES=()
+for svc in "${SERVICES_ALL[@]}"; do
+    is_disabled "$svc" || SERVICES+=("$svc")
+done
+
+# ── Networks ─────────────────────────────────────────────────────────────────
+setup_nets() {
+    log info "Setting up networks..."
+    docker network create web      2>/dev/null || log ok "Network 'web' already exists"
+    docker network create internal 2>/dev/null || log ok "Network 'internal' already exists"
+    docker network create database 2>/dev/null || log ok "Network 'database' already exists"
+    log ok "Networks ready"
+}
+
+# ── Wait for ready (containers up, not starting / unhealthy) ────────────────
+wait_for_ready() {
+    local svc=$1
+    local timeout=${2:-90}
+    local interval=3 elapsed=0
+
+    [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ] || return 0
+
+    log info "Waiting for $svc to be ready..."
+    while [ $elapsed -lt $timeout ]; do
+        local output
+        output=$(cd "$SCRIPT_DIR/$svc" && docker compose ps 2>/dev/null) || {
+            sleep "$interval"
+            elapsed=$((elapsed + interval))
+            continue
+        }
+        local body
+        body=$(echo "$output" | tail -n +2)
+        local lines
+        lines=$(echo "$body" | grep -c . || true)
+
+        if [ "$lines" -eq 0 ]; then
+            sleep "$interval"
+            elapsed=$((elapsed + interval))
+            continue
+        fi
+
+        if echo "$body" | grep -q "starting"; then
+            sleep "$interval"
+            elapsed=$((elapsed + interval))
+            continue
+        fi
+
+        if echo "$body" | grep -q "(unhealthy)"; then
+            sleep "$interval"
+            elapsed=$((elapsed + interval))
+            continue
+        fi
+
+        local running
+        running=$(echo "$body" | grep -c "Up" || true)
+        if [ "$running" -ge "$lines" ]; then
+            log ok "$svc is ready ($((elapsed + interval))s)"
+            return 0
+        fi
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+    log warn "$svc not ready within ${timeout}s"
+    return 1
+}
+
+# ── Directories ──────────────────────────────────────────────────────────────
 setup_directories() {
-    echo "[*] Creating data directories..."
-    
-    for svc in "${SERVICES[@]}"; do
-        if [ -f "$svc/docker-compose.yml" ]; then
-            mkdir -p "$svc/data"
+    log info "Creating data directories..."
+
+    for svc in "${SERVICES_ALL[@]}"; do
+        if [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ]; then
+            mkdir -p "$SCRIPT_DIR/$svc/data"
+        fi
+        if [ -f "$SCRIPT_DIR/$svc/setup.sh" ]; then
+            log info "Running $svc/setup.sh..."
+            bash "$SCRIPT_DIR/$svc/setup.sh"
         fi
     done
-    
-    # Automation specific: container expects /home/node/.n8n
-    mkdir -p automation/data/automation
-    
-    # Docs (Paperless) specific: subdirectories for bind mounts
-    mkdir -p docs/data/docs/{export,consume,media}
 
-    # Cloud specific: parent dir for bind mount (docker auto-creates seafile-data on start)
-    mkdir -p cloud/data/cloud
-    
-    # Gallery (Immich) specific: requires subdirectories with .immich markers
-    mkdir -p gallery/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
-    for dir in upload thumbs profile backups library encoded-video; do
-        touch "gallery/data/gallery/$dir/.immich"
-    done
-    
-    mkdir -p proxy/dynamic proxy/logs
-    mkdir -p databases/data/{postgres,mysql,redis}
-    mkdir -p monitoring/data
-    mkdir -p aiagent/data
-    
-    # Object Storage directories (S3-compatible storage mount)
-    # Only create if /mnt/object-storage/data is accessible
     if mountpoint -q /mnt/object-storage/data 2>/dev/null || [ -d /mnt/object-storage/data ]; then
-        echo "[*] Creating object storage directories..."
-        mkdir -p /mnt/object-storage/data/gallery/upload
-        mkdir -p /mnt/object-storage/data/gallery/thumbs
-        mkdir -p /mnt/object-storage/data/gallery/profile
-        mkdir -p /mnt/object-storage/data/gallery/backups
-        mkdir -p /mnt/object-storage/data/gallery/library
-        mkdir -p /mnt/object-storage/data/gallery/encoded-video
-        # Cloud uses local storage (Seafile's native S3 backend for object storage)
-        mkdir -p /mnt/object-storage/data/docs
-        mkdir -p /mnt/object-storage/data/automation
-        # Create .immich markers for gallery folders
+        log info "Creating object storage directories..."
+        mkdir -p /mnt/object-storage/data/gallery/{upload,thumbs,profile,backups,library,encoded-video}
+        mkdir -p /mnt/object-storage/data/{docs,automation}
         for dir in upload thumbs backups library encoded-video; do
             touch "/mnt/object-storage/data/gallery/$dir/.immich" 2>/dev/null || true
         done
         chmod -R 755 /mnt/object-storage/data/* 2>/dev/null || true
-        echo "[+] Object storage directories ready"
+        log ok "Object storage directories ready"
     else
-        echo "[!] Object storage not mounted at /mnt/object-storage/data"
-        echo "[!] Services requiring object storage will use local NVMe"
+        log warn "Object storage not mounted at /mnt/object-storage/data"
     fi
-    
-    chmod -R 755 */data 2>/dev/null || true
-    
-    # Automation runs as node (UID 1000)
-    chown -R 1000:1000 automation/data/automation 2>/dev/null || true
-    
-    # Cloud runs as root
-    chown -R 0:0 cloud/data 2>/dev/null || true
-    
-    echo "[*] Data directories created"
+
+    chmod -R 755 "$SCRIPT_DIR"/*/data 2>/dev/null || true
+    log ok "Data directories created"
 }
 
+# ── Permissions ──────────────────────────────────────────────────────────────
 fix_permissions() {
-    echo "[*] Fixing permissions..."
-    
-    # Fix script permissions
-    chmod 755 "${SCRIPT_DIR}"
-    chmod 750 "${SCRIPT_DIR}/manager.sh"
-    chmod +x "${SCRIPT_DIR}/proxy/entrypoint.sh" 2>/dev/null || true
-    
-    # Fix .env files permissions (sensitive data)
-    find "${SCRIPT_DIR}" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
-    find "${SCRIPT_DIR}/proxy" -name "acme.json" -exec chmod 600 {} \; 2>/dev/null || true
-    
-    # Automation runs as node (UID 1000) - needs write access to its data
-    mkdir -p "${SCRIPT_DIR}/automation/data/automation"
-    chown -R 1000:1000 "${SCRIPT_DIR}/automation/data/automation" 2>/dev/null || true
-    
-    # Cloud runs as root
-    mkdir -p "${SCRIPT_DIR}/cloud/data/cloud"
-    chown -R 0:0 "${SCRIPT_DIR}/cloud/data" 2>/dev/null || true
-    
-    # Databases: PostgreSQL (999), MySQL (999), Redis (6379)
-    mkdir -p "${SCRIPT_DIR}/databases/data"
-    chown -R 999:999 "${SCRIPT_DIR}/databases/data/postgres" 2>/dev/null || true
-    chown -R 999:999 "${SCRIPT_DIR}/databases/data/mysql" 2>/dev/null || true
-    chown -R 6379:6379 "${SCRIPT_DIR}/databases/data/redis" 2>/dev/null || true
-    
-    echo "[*] Permissions fixed"
+    log info "Fixing permissions..."
+
+    chmod 755 "$SCRIPT_DIR"
+    chmod 750 "$SCRIPT_DIR/manager.sh"
+    chmod +x "$SCRIPT_DIR/proxy/entrypoint.sh" 2>/dev/null || true
+
+    find "$SCRIPT_DIR" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
+    find "$SCRIPT_DIR/proxy" -name "acme.json" -exec chmod 600 {} \; 2>/dev/null || true
+
+    mkdir -p "$SCRIPT_DIR/automation/data/automation"
+    chown -R 1000:1000 "$SCRIPT_DIR/automation/data/automation" 2>/dev/null || true
+
+    mkdir -p "$SCRIPT_DIR/cloud/data/cloud"
+    chown -R 0:0 "$SCRIPT_DIR/cloud/data" 2>/dev/null || true
+
+    mkdir -p "$SCRIPT_DIR/databases/data"
+    chown -R 999:999 "$SCRIPT_DIR/databases/data/postgres" 2>/dev/null || true
+    chown -R 999:999 "$SCRIPT_DIR/databases/data/mysql" 2>/dev/null || true
+    chown -R 6379:6379 "$SCRIPT_DIR/databases/data/redis" 2>/dev/null || true
+
+    log ok "Permissions fixed"
 }
 
-usage() {
-    echo "Usage: $0 <command> [service]"
-    echo ""
-    echo "Commands:"
-    echo "  start [svc]     - Start all or specific service"
-    echo "  stop [svc]      - Stop all or specific service"
-    echo "  restart [svc]   - Restart all or specific service"
-    echo "  update [svc]    - Update (pull) all or specific service"
-    echo "  logs [svc]      - Show logs for service"
-    echo "  status          - Show status of all services"
-    echo "  setup           - Setup networks and directories"
-    echo "  perm            - Set permissions and ownership"
-    echo "  clean           - Clean unused resources"
-    echo "  stop-all        - Stop all running Docker containers"
-    echo "  full-cleanup    - Stop all containers, remove all containers/images/volumes/networks"
-    echo ""
-    echo "Services:"
-    for svc in "${SERVICES[@]}"; do
-        echo "  - $svc"
-    done
-    echo "  all             - all services"
-    echo ""
-    echo "Examples:"
-    echo "  $0 setup              # setup networks and dirs"
-    echo "  $0 start              # start all"
-    echo "  $0 start proxy        # start proxy only"
-    echo "  $0 logs gallery --tail 100"
-}
-
-run_all() {
+# ── Parallel execution ───────────────────────────────────────────────────────
+run_all_parallel() {
     local cmd=$1
     shift
+    local pids=() failed=0
+
     for svc in "${SERVICES[@]}"; do
-        if [ -f "$svc/docker-compose.yml" ]; then
-            echo "[*] Running: $cmd on $svc"
-            (cd "$svc" && docker compose $cmd "$@")
+        [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ] || continue
+        if [ "$DRY_RUN" = true ]; then
+            log info "DRY-RUN: $svc: docker compose $cmd $*"
+        else
+            log info "$svc: docker compose $cmd $*"
+            (cd "$SCRIPT_DIR/$svc" && docker compose "$cmd" "$@") &
+            pids+=($!)
         fi
     done
+
+    for pid in "${pids[@]}"; do
+        wait "$pid" || failed=$((failed + 1))
+    done
+    [ $failed -gt 0 ] && log warn "$failed service(s) had issues"
+    return 0
 }
 
+# ── Start all (databases → proxy → rest in parallel) ────────────────────────
+start_all() {
+    if [ "$DRY_RUN" = true ]; then
+        log info "DRY-RUN: start all services"
+        for svc in "${SERVICES[@]}"; do
+            echo "         $svc: docker compose up -d"
+        done
+        return
+    fi
+
+    # 1. databases (blocking, wait for ready)
+    if [[ " ${SERVICES[*]} " =~ " databases " ]] && [ -f "$SCRIPT_DIR/databases/docker-compose.yml" ]; then
+        log info "databases: starting..."
+        (cd "$SCRIPT_DIR/databases" && docker compose up -d)
+        wait_for_ready "databases"
+    fi
+
+    # 2. proxy (wait for it)
+    if [[ " ${SERVICES[*]} " =~ " proxy " ]] && [ -f "$SCRIPT_DIR/proxy/docker-compose.yml" ]; then
+        log info "proxy: starting..."
+        (cd "$SCRIPT_DIR/proxy" && docker compose up -d)
+        wait_for_ready "proxy"
+    fi
+
+    # 3. everything else in parallel
+    local pids=() failed=0
+    for svc in "${SERVICES[@]}"; do
+        [ "$svc" = "databases" ] || [ "$svc" = "proxy" ] && continue
+        [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ] || continue
+        log info "$svc: starting..."
+        (cd "$SCRIPT_DIR/$svc" && docker compose up -d) &
+        pids+=($!)
+    done
+
+    for pid in "${pids[@]}"; do
+        wait "$pid" || failed=$((failed + 1))
+    done
+
+    if [ $failed -eq 0 ]; then log ok "All services started"
+    else log warn "$failed service(s) had startup issues"; fi
+}
+
+# ── Stop all (reversed, databases last) ─────────────────────────────────────
+stop_all() {
+    if [ "$DRY_RUN" = true ]; then
+        log info "DRY-RUN: stop all services"
+        for svc in $(printf '%s\n' "${SERVICES[@]}" | tac); do
+            echo "         $svc: docker compose down"
+        done
+        return
+    fi
+
+    local pids=() failed=0
+    for svc in $(printf '%s\n' "${SERVICES[@]}" | tac); do
+        [ "$svc" = "databases" ] && continue
+        [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ] || continue
+        log info "$svc: stopping..."
+        (cd "$SCRIPT_DIR/$svc" && docker compose down 2>/dev/null) &
+        pids+=($!)
+    done
+
+    for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
+
+    if [[ " ${SERVICES[*]} " =~ " databases " ]] && [ -f "$SCRIPT_DIR/databases/docker-compose.yml" ]; then
+        log info "databases: stopping..."
+        (cd "$SCRIPT_DIR/databases" && docker compose down 2>/dev/null) || true
+    fi
+
+    log ok "All services stopped"
+}
+
+# ── Profiles ─────────────────────────────────────────────────────────────────
+profile_cmd() {
+    local action=$1
+    shift
+
+    case $action in
+        list)
+            log info "Available profiles:"
+            if [ -d "$SCRIPT_DIR/.profiles" ]; then
+                for f in "$SCRIPT_DIR/.profiles"/*; do
+                    [ -f "$f" ] && echo "  - $(basename "$f")"
+                done
+            fi
+            if [ -f "$DISABLED_FILE" ]; then
+                log info "Active: custom (.disabled_services)"
+            else
+                log info "Active: full (all services enabled)"
+            fi
+            ;;
+        show)
+            if [ -f "$DISABLED_FILE" ]; then
+                log info "Disabled services:"
+                grep -v '^\s*#' "$DISABLED_FILE" | grep -v '^$' | sed 's/^/  /'
+            else
+                log info "No services disabled"
+            fi
+            ;;
+        enable)
+            local svc=$1
+            [ -z "$svc" ] && { log err "Service name required"; return 1; }
+            if [ -f "$DISABLED_FILE" ]; then
+                grep -Fxv "$svc" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null || true
+                mv "${DISABLED_FILE}.tmp" "$DISABLED_FILE"
+                [ ! -s "$DISABLED_FILE" ] && rm -f "$DISABLED_FILE"
+            fi
+            log ok "$svc enabled"
+            ;;
+        disable)
+            local svc=$1
+            [ -z "$svc" ] && { log err "Service name required"; return 1; }
+            echo "$svc" >> "$DISABLED_FILE"
+            sort -u -o "$DISABLED_FILE" "$DISABLED_FILE"
+            log ok "$svc disabled"
+            ;;
+        *)
+            local profile=$action
+            local profile_file="$SCRIPT_DIR/.profiles/$profile"
+            if [ -f "$profile_file" ]; then
+                cp "$profile_file" "$DISABLED_FILE"
+                log ok "Switched to profile '$profile'"
+            else
+                log err "Profile '$profile' not found in .profiles/"
+                return 1
+            fi
+            ;;
+    esac
+}
+
+# ── Backup / Restore ─────────────────────────────────────────────────────────
+backup_cmd() {
+    local backup_dir="${1:-$SCRIPT_DIR/backups}"
+    mkdir -p "$backup_dir"
+    local date_str
+    date_str=$(date '+%Y%m%d-%H%M%S')
+    local backup_file="$backup_dir/dm-home-backup-$date_str.tar.gz"
+
+    log info "Creating backup: $backup_file"
+    local dirs=()
+    for svc in "${SERVICES_ALL[@]}"; do
+        [ -d "$SCRIPT_DIR/$svc/data" ] && dirs+=("$svc/data")
+    done
+
+    if [ ${#dirs[@]} -eq 0 ]; then
+        log warn "No data directories to backup"
+        return
+    fi
+
+    tar czf "$backup_file" -C "$SCRIPT_DIR" "${dirs[@]}" 2>/dev/null
+    log ok "Backup: $backup_file ($(du -h "$backup_file" | cut -f1))"
+}
+
+restore_cmd() {
+    local backup_file=$1
+    if [ -z "$backup_file" ] || [ ! -f "$backup_file" ]; then
+        log err "File not found: $backup_file"
+        log info "Usage: $0 restore <backup-file>"
+        return 1
+    fi
+
+    log warn "Restore from $backup_file will OVERWRITE existing data directories"
+    log warn "Ensure services are stopped first"
+    read -rp "Continue? [y/N] " confirm
+    [ "$confirm" != "y" ] && [ "$confirm" != "Y" ] && { log info "Cancelled"; return; }
+
+    log info "Restoring..."
+    tar xzf "$backup_file" -C "$SCRIPT_DIR"
+    log ok "Restored from $backup_file"
+}
+
+# ── Run one service ──────────────────────────────────────────────────────────
 run_one() {
     local svc=$1
     shift
-    
-    case "$svc" in
-        all)
-            run_all up -d "$@"
-            return
-            ;;
-    esac
-    
-    if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
-        (cd "$svc" && docker compose "$@")
+
+    if [ "$DRY_RUN" = true ]; then
+        log info "DRY-RUN: $svc: docker compose $*"
+        return
+    fi
+
+    if [ -d "$SCRIPT_DIR/$svc" ] && [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ]; then
+        (cd "$SCRIPT_DIR/$svc" && docker compose "$@")
     else
-        echo "[!] Service '$svc' not found"
+        log err "Service '$svc' not found"
         exit 1
     fi
 }
+
+# ── Usage ────────────────────────────────────────────────────────────────────
+usage() {
+    cat <<EOF
+Usage: $0 [options] <command> [args]
+
+Commands:
+  start [svc]       Start all or one service (databases → proxy → rest)
+  stop [svc]        Stop all or one service (databases last)
+  restart [svc]     Restart all or one service
+  update [svc]      Pull images + recreate containers
+  build <svc>       Build service image
+  logs <svc>        Tail logs for a service
+  status            Show container status (enabled services only)
+  exec <svc> <cmd>  Run command in a service container
+  setup             Create networks + data directories
+  perm              Fix file permissions / ownership
+  profile           Manage disabled-service profiles
+    list            List available profiles
+    show            Show current disabled services
+    enable <svc>    Re-enable a service
+    disable <svc>   Disable a service
+    <name>          Switch to a predefined profile
+  backup [dir]      Tar.gz data directories
+  restore <file>    Restore data from backup archive
+  clean             Prune unused Docker volumes / networks
+  stop-all          Stop every running container
+  full-cleanup      Nuke containers, images, volumes, networks
+
+Options:
+  -n, --dry-run     Print what would be done, don't execute
+
+EOF
+    echo "Services:"
+    for svc in "${SERVICES_ALL[@]}"; do
+        if is_disabled "$svc"; then
+            echo -e "  ${C_YELLOW}- $svc (disabled)${C_RESET}"
+        else
+            echo "  - $svc"
+        fi
+    done
+    echo ""
+    echo "Examples:"
+    echo "  $0 setup                          # init everything"
+    echo "  $0 start                          # start enabled services"
+    echo "  $0 -n start                       # dry-run"
+    echo "  $0 start llm                      # start llm even if disabled"
+    echo "  $0 profile minimal                # switch to minimal profile"
+    echo "  $0 profile disable llm            # disable llm on the fly"
+    echo "  $0 logs gallery --tail 50"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  MAIN
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Parse global flags ───────────────────────────────────────────────────────
+POSITIONAL=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -n|--dry-run) DRY_RUN=true; shift ;;
+        *) POSITIONAL+=("$1"); shift ;;
+    esac
+done
+set -- "${POSITIONAL[@]}"
 
 ACTION=${1:-}
 shift || true
 
 case $ACTION in
     start)
-        if [ -z "${1:-}" ]; then
-            echo "[!] IMPORTANT: databases must start first"
-        fi
         setup_nets
-        if [ -z "${1:-}" ]; then
-            run_all up -d
+        if [ -z "${1:-}" ] || [ "$1" = "all" ]; then
+            start_all
         else
             run_one "$1" up -d
         fi
         ;;
     stop)
-        if [ -z "${1:-}" ]; then
-            for svc in $(printf '%s\n' "${SERVICES[@]}" | tac); do
-                if [ -f "$svc/docker-compose.yml" ]; then
-                    (cd "$svc" && docker compose down 2>/dev/null) || true
-                fi
-            done
+        if [ -z "${1:-}" ] || [ "$1" = "all" ]; then
+            stop_all
         else
-            svc="$1"
-            if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
-                (cd "$svc" && docker compose down)
-            else
-                echo "[!] Service '$svc' not found"
-                exit 1
-            fi
+            run_one "$1" down
         fi
         ;;
     restart)
-        if [ -z "${1:-}" ]; then
-            run_all "restart"
+        if [ -z "${1:-}" ] || [ "$1" = "all" ]; then
+            run_all_parallel restart
         else
-            run_one "$1" "restart"
+            run_one "$1" restart
         fi
         ;;
     update)
-        if [ -z "${1:-}" ]; then
-            run_all "pull"
-            run_all "up -d"
+        if [ -z "${1:-}" ] || [ "$1" = "all" ]; then
+            log info "Pulling images..."
+            run_all_parallel pull
+            log info "Recreating containers..."
+            start_all
         else
-            run_one "$1" "pull"
-            run_one "$1" "up -d"
+            run_one "$1" pull
+            run_one "$1" up -d
         fi
         ;;
     build)
-        if [ -z "${1:-}" ]; then
-            echo "[!] Service required: $0 build <service>"
-            exit 1
-        fi
-        svc="$1"
-        echo "[*] Building service: $svc"
-        (cd "$svc" && docker compose build "$@")
+        [ -z "${1:-}" ] && { log err "Service required: $0 build <svc>"; exit 1; }
+        svc="$1"; shift
+        run_one "$svc" build "$@"
         ;;
     logs)
-        if [ -z "${1:-}" ]; then
-            echo "[!] Service required: $0 logs <service>"
-            exit 1
-        fi
-        svc="$1"
-        shift
-        if [ -d "$svc" ] && [ -f "$svc/docker-compose.yml" ]; then
-            (cd "$svc" && docker compose logs -f "$@")
-        else
-            echo "[!] Service '$svc' not found"
-            exit 1
-        fi
+        [ -z "${1:-}" ] && { log err "Service required: $0 logs <svc>"; exit 1; }
+        svc="$1"; shift
+        run_one "$svc" logs -f "$@"
+        ;;
+    exec)
+        [ -z "${1:-}" ] || [ -z "${2:-}" ] && { log err "Usage: $0 exec <svc> <cmd>"; exit 1; }
+        svc="$1"; shift
+        run_one "$svc" exec "$@"
         ;;
     status)
         for svc in "${SERVICES[@]}"; do
-            if [ -f "$svc/docker-compose.yml" ]; then
+            if [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ]; then
                 echo "=== $svc ==="
-                (cd "$svc" && docker compose ps 2>/dev/null) || echo "not found"
+                (cd "$SCRIPT_DIR/$svc" && docker compose ps 2>/dev/null) || echo "  (not running)"
             fi
         done
         ;;
@@ -263,29 +521,41 @@ case $ACTION in
         setup_nets
         setup_directories
         ;;
-
     perm)
         fix_permissions
         ;;
+    profile)
+        profile_cmd "$@"
+        ;;
+    backup)
+        backup_cmd "$1"
+        ;;
+    restore)
+        restore_cmd "$1"
+        ;;
     clean)
-        echo "[*] Cleaning unused Docker resources..."
+        log info "Cleaning unused Docker resources..."
         docker volume prune -f
         docker network prune -f
+        log ok "Clean complete"
         ;;
     stop-all)
-        echo "[*] Stopping all running Docker containers..."
+        log info "Stopping all running containers..."
         docker stop $(docker ps -q) 2>/dev/null || true
-        echo "[+] All containers stopped"
+        log ok "All containers stopped"
         ;;
     full-cleanup)
-        echo "[*] Full Docker cleanup..."
+        log warn "Full Docker cleanup..."
         docker stop $(docker ps -q) 2>/dev/null || true
         docker rm $(docker ps -aq) 2>/dev/null || true
         docker rmi $(docker images -q) 2>/dev/null || true
         docker volume prune -f
         docker network prune -f
         docker builder prune -af
-        echo "[+] Full cleanup done"
+        log ok "Full cleanup done"
+        ;;
+    help|--help|-h)
+        usage
         ;;
     *)
         usage

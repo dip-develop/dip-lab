@@ -15,6 +15,9 @@ proxy/certs/
 *.sock
 *.pid
 
+# Disabled services (user-specific)
+.disabled_services
+
 # OpenCode
 .opencode/
 .env.opencode
