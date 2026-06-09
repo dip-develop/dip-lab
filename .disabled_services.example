@@ -1,0 +1,10 @@
+# List services you want to disable from bulk operations.
+# One service name per line. Lines starting with # are ignored.
+# You can still target these services explicitly, e.g.:
+#   ./manager.sh start llm
+#   ./manager.sh logs automation --tail 50
+
+# llm
+# passwords
+# automation
+# monitoring
