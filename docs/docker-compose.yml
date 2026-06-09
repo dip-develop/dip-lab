@@ -24,6 +24,7 @@ services:
       - ./data/docs/export:/usr/src/paperless/export
       - ./data/docs/consume:/usr/src/paperless/consume
       - ./data/docs/media:/usr/src/paperless/media
+      - ./data/docs/log:/usr/src/paperless/data/log
       # Object Storage - large documents (uncomment to enable)
       - /mnt/object-storage/data/docs:/usr/src/paperless/data
     ports:
