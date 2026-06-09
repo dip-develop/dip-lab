@@ -2,7 +2,6 @@ services:
   cloud:
     image: seafileltd/seafile-mc:13.0.21
     container_name: cloud
-    user: "1000:1000"
     restart: always
     env_file:
       - .env
@@ -12,6 +11,7 @@ services:
         exec /sbin/my_init -- /scripts/enterpoint.sh
       "
     environment:
+      - NON_ROOT=true
       - DB_HOST=mysql
       - SEAFILE_SERVER_PROTOCOL=http
       - SEAFILE_SERVER_HOSTNAME=${BIND_IP:-0.0.0.0}:8383
