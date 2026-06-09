@@ -39,7 +39,12 @@ Services can be excluded from bulk commands. Two ways:
 
 Disabled services can still be targeted explicitly: `./manager.sh start llm`
 
-Built-in profiles (in `.profiles/`): `full` (all), `minimal` (databases + proxy + dockerui), `media` (adds gallery + docs), `no-ai` (disables llm + aiagent).
+Built-in profiles (in `.profiles/`):
+- `full` — all services
+- `default` — databases + proxy + dockerui + cloud + docs + gallery
+- `minimal` — databases + proxy + dockerui
+- `media` — default + monitoring
+- `no-ai` — all except llm + aiagent
 
 ## Service directories & images
 
