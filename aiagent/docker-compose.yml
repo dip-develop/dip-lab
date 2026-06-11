@@ -14,7 +14,6 @@ services:
     environment:
       - HERMES_UID=1000
       - HERMES_GID=1000
-      - GATEWAY_DASHBOARD_BIND=${BIND_IP:-0.0.0.0}
       - HERMES_DASHBOARD_HOST=${BIND_IP:-0.0.0.0}
     networks:
       - internal
