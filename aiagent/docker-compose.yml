@@ -2,7 +2,8 @@ services:
   hermes:
     image: nousresearch/hermes-agent:latest
     container_name: hermes
-    restart: always
+    command: gateway run
+    restart: unless-stopped
     env_file:
       - .env
     ports:
@@ -13,19 +14,24 @@ services:
     environment:
       - HERMES_UID=1000
       - HERMES_GID=1000
-      - HERMES_DASHBOARD=1
-      - GATEWAY_DASHBOARD_INSECURE=true
       - GATEWAY_DASHBOARD_BIND=${BIND_IP:-0.0.0.0}
+      - HERMES_DASHBOARD_HOST=${BIND_IP:-0.0.0.0}
     networks:
       - internal
     tty: true
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8642/health"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8642/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
     # labels:
     #   - "traefik.enable=true"
     #   - "traefik.http.routers.hermes.rule=Host(`${DOMAIN:-ai.example.com}`)"
@@ -33,13 +39,13 @@ services:
     #   - "traefik.http.routers.hermes.tls.certresolver=letsencrypt"
     #   - "traefik.http.services.hermes.loadbalancer.server.port=8642"
 
-  aiagent:
+  #aiagent:
   # Note: Keeping for backward compatibility, points to hermes service
-    image: nginx:alpine
-    container_name: aiagent-alias
-    restart: always
-    networks:
-      - internal
+  #  image: nginx:alpine
+  #  container_name: aiagent-alias
+  #  restart: always
+  #  networks:
+  #    - internal
 
 networks:
   internal:
