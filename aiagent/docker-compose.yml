@@ -14,6 +14,8 @@ services:
       - HERMES_UID=1000
       - HERMES_GID=1000
       - HERMES_DASHBOARD=1
+      - GATEWAY_DASHBOARD_INSECURE=true
+      - GATEWAY_DASHBOARD_BIND=${BIND_IP:-0.0.0.0}
     networks:
       - internal
     tty: true
