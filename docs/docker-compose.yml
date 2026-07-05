@@ -19,6 +19,8 @@ services:
       - PAPERLESS_TIKA_ENABLED=1
       - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://docs-gotenberg:3000
       - PAPERLESS_TIKA_ENDPOINT=http://docs-tika:9998
+      - PAPERLESS_OCR_MEMORY_LIMIT=2000
+      - PAPERLESS_TASK_WORKERS=2
     volumes:
       # - ./data/docs/data:/usr/src/paperless/data
       - ./data/docs/export:/usr/src/paperless/export
@@ -42,8 +44,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 2G
+          cpus: '2'
+          memory: 4G
     # labels:
     #   - "traefik.enable=true"
     #   - "traefik.http.routers.paperless.rule=Host(`${DOMAIN:-docs.example.com}`)"
@@ -57,7 +59,7 @@ services:
     restart: always
     networks:
       - internal
-      - database
+ #     - database
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -68,7 +70,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '1'
           memory: 1G
 
   docs-tika:
@@ -77,7 +79,7 @@ services:
     restart: always
     networks:
       - internal
-      - database
+#      - database
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -88,8 +90,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '1'
+          memory: 1G
 
 networks:
   database:
