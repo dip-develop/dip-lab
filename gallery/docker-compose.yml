@@ -1,6 +1,6 @@
 services:
   gallery-server:
-    image: ghcr.io/immich-app/immich-server:v2
+    image: ghcr.io/immich-app/immich-server:v3
     container_name: gallery-server
     restart: always
     env_file:
@@ -42,8 +42,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 2G
+          cpus: '2'
+          memory: 4G
     # labels:
     #   - "traefik.enable=true"
     #   - "traefik.http.routers.immich.rule=Host(`${DOMAIN:-gallery.example.com}`)"
@@ -70,8 +70,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 2G
+          cpus: '2'
+          memory: 4G
 
 networks:
   database:
