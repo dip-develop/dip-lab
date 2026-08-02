@@ -12,7 +12,7 @@ Docker Compose home lab. 11 services in `docker-compose.yml` files, each in its 
 
 | Command | What it does |
 |---------|-------------|
-| `./manager.sh setup` | Create 3 Docker networks + data directories |
+| `./manager.sh setup` | Create 3 Docker networks + data dirs; runs any `<svc>/setup.sh` present |
 | `./manager.sh start [svc]` | Start all (databases first, then parallel) or one service |
 | `./manager.sh stop [svc]` | Stop all (databases last) or one service |
 | `./manager.sh restart [svc]` | Restart all or one service |
@@ -58,9 +58,9 @@ Built-in profiles (in `.profiles/`):
 | `cloud/` | Seafile + memcached | `seafileltd/seafile-mc:13.0.21` |
 | `docs/` | Paperless-ngx + Gotenberg + Tika | Custom Dockerfile (adds Tesseract OCR langs) |
 | `automation/` | n8n | `n8nio/n8n:latest` |
-| `gallery/` | Immich server + ML | `ghcr.io/immich-app/immich-server:v2` |
+| `gallery/` | Immich server + ML | `ghcr.io/immich-app/immich-server:v3` |
 | `llm/` | llama.cpp serving Gemma 2B (downloads GGUF on first start) | `ghcr.io/ggml-org/llama.cpp:full` |
-| `aiagent/` | Hermes (AI agent) + nginx alias (2 containers) | `nousresearch/hermes-agent:latest` |
+| `aiagent/` | Hermes only (1 container, 2 ports: 18789 API, 18790 UI); nginx alias is commented out | `nousresearch/hermes-agent:latest` |
 
 ## Networks
 
@@ -73,11 +73,11 @@ Services that need DB access attach to both `internal` and `database`. Services 
 
 ## Secrets & env
 
-Every service has `<dir>/.env` (gitignored) and `<dir>/.env.example` with variables. Never commit `.env` files. Secrets to keep in each service `.env`:
+Every service has `<dir>/.env` (gitignored) and `<dir>/.env.example` with variables. Never commit `.env` files.
 
-- `databases/.env`: PostgreSQL/MySQL/Redis passwords
-- `proxy/.env`: ACME email, dashboard credentials
-- Shared secrets (DB passwords, `REDIS_PASSWORD`) are read from `databases/.env` into dependent services via `env_file`.
+- Every container loads **only its own** `<dir>/.env` via `env_file`. No compose file reads `../databases/.env`.
+- DB credentials are **duplicated manually** across files: `POSTGRES_USER`/`POSTGRES_PASSWORD`/`REDIS_PASSWORD` must be kept identical in `databases/.env`, `docs/.env`, `gallery/.env`, `automation/.env`, etc. Changing a password means editing every copy.
+- Gotcha: `databases/mysql-init.sql` hardcodes the MySQL `cloud` and `root` passwords in the repo (not read from `.env`).
 
 ## Database init
 
@@ -85,11 +85,11 @@ Every service has `<dir>/.env` (gitignored) and `<dir>/.env.example` with variab
 - `databases/mysql-init.sql` creates `cloud` user and grants on Seafile databases
 - PostgreSQL: `max_connections=200`, `shared_buffers=2GB`
 - MySQL: `utf8mb4` charset, `max_connections=200`
-- Redis: password required, `maxmemory 512mb`, `noeviction`, `appendonly yes`
+- Redis: password required, `maxmemory 512mb`, eviction policy `allkeys-lru`, RDB `--save` snapshots only (no AOF)
 
 ## Object storage
 
-Optional `/mnt/object-storage/data` mount. When present, gallery (Immich) mounts all 6 media subdirectories (upload, thumbs, profile, backups, library, encoded-video) from it. docs (Paperless) mounts `/mnt/object-storage/data/docs` as its data root. automation (n8n) mounts it at `/mnt/object-storage`. cloud (Seafile) and automation have optional cross-service read-only mounts into gallery/docs. Gallery subdirectories require `.immich` marker files — see `manager.sh` `setup_directories()`.
+Gallery's 6 media mounts (upload, thumbs, profile, backups, library, encoded-video) point **unconditionally** at `/mnt/object-storage/data/gallery/*` — the local `./data/gallery/*` mounts are commented out. If the mount is absent, Docker creates empty root-owned dirs there. docs (Paperless) mounts `/mnt/object-storage/data/docs` as its data root; automation mounts it at `/mnt/object-storage`; cloud and automation have read-only cross-service mounts into gallery/docs. Gallery subdirectories need `.immich` marker files — `manager.sh setup` (`setup_directories()`) creates dirs + markers only when `/mnt/object-storage/data` exists.
 
 ## Traefik
 
@@ -106,4 +106,4 @@ Optional `/mnt/object-storage/data` mount. When present, gallery (Immich) mounts
 - `completions.bash` provides shell autocomplete for `manager.sh` — `source completions.bash`
 - `.env.example` files are templates: copy to `.env` and fill
 - No test suite, no CI, no linter, no codegen. Pure Docker Compose YAML + shell scripts.
-- `manager.sh` is the primary executable; `setup.sh` scripts exist in some service dirs for additional init
+- `manager.sh` is the primary executable
