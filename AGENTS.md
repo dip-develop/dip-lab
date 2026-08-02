@@ -102,6 +102,9 @@ Gallery's 6 media mounts (upload, thumbs, profile, backups, library, encoded-vid
 ## Conventions
 
 - Every service uses `security_opt: no-new-privileges:true` + `deploy.resources.limits` for CPU/memory
+- `cloud`: seafile-mc v13 with `NON_ROOT=true` runs as **uid 8000** — data under `cloud/data/cloud/seafile/` must be owned by 8000:8000 (the compose `command` chowns on every start; `manager.sh perm` too). Older images used uid 1000 — an image swap silently breaks all libraries ("Commit ... is missing" in `seafile.log`).
+- Seafile's `setup-seafile-mysql.py` runs **only when the data dir is empty** — later `.env` changes (S3, Redis host) are NOT applied; runtime config lives in `cloud/data/cloud/seafile/conf/`. `SEAFILE_USE_S3` etc. in `cloud/.env` only matter at first init.
+- `manager.sh restart <svc>` does `docker compose restart` (no config reload) — after editing a compose file use `./manager.sh update <svc>` or `docker compose up -d` to recreate.
 - The only custom Dockerfile is `docs/Dockerfile` (extends Paperless, adds Tesseract langs)
 - `completions.bash` provides shell autocomplete for `manager.sh` — `source completions.bash`
 - `.env.example` files are templates: copy to `.env` and fill

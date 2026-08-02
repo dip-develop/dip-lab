@@ -169,10 +169,11 @@ fix_permissions() {
     chown -R 1000:1000 "$SCRIPT_DIR/automation/data/automation" 2>/dev/null || true
 
     mkdir -p "$SCRIPT_DIR/cloud/data/cloud"
-    chown -R 1000:1000 "$SCRIPT_DIR/cloud/data" 2>/dev/null || true
+    # seafile-mc v13 (NON_ROOT) runs as uid 8000
+    chown -R 8000:8000 "$SCRIPT_DIR/cloud/data" 2>/dev/null || true
     # Production data lives on object storage, not in repo
     if [ -d /mnt/object-storage/data/cloud ]; then
-        timeout 10 chown -R 1000:1000 /mnt/object-storage/data/cloud 2>/dev/null || log warn "Could not chown /mnt/object-storage/data/cloud (need root?)"
+        timeout 10 chown -R 8000:8000 /mnt/object-storage/data/cloud 2>/dev/null || log warn "Could not chown /mnt/object-storage/data/cloud (need root?)"
     fi
 
     mkdir -p "$SCRIPT_DIR/databases/data"
