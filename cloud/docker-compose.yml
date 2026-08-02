@@ -7,7 +7,7 @@ services:
       - .env
     command: >
       bash -c "
-        chown -R 1000:1000 /shared/seafile/seafile-data 2>/dev/null;
+        chown -R 8000:8000 /shared/seafile 2>/dev/null;
         exec /sbin/my_init -- /scripts/enterpoint.sh
       "
     environment:
@@ -27,6 +27,7 @@ services:
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
       - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - INIT_SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
       - INIT_SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
