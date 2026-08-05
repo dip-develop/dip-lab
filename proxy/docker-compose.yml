@@ -12,7 +12,6 @@ services:
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
       - ./dynamic:/etc/traefik/dynamic:ro
-      #- ./entrypoint.sh:/entrypoint.sh:ro
       - ./logs:/var/log/traefik
       - ./acme.json:/etc/traefik/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
