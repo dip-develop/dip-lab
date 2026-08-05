@@ -9,9 +9,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
       - ./dynamic:/etc/traefik/dynamic:ro
-      - ./entrypoint.sh:/entrypoint.sh:ro
+      #- ./entrypoint.sh:/entrypoint.sh:ro
       - ./logs:/var/log/traefik
       - ./acme.json:/etc/traefik/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -20,7 +21,7 @@ services:
       - "-c"
       - |
         chmod 600 /etc/traefik/acme.json 2>/dev/null || true;
-        /entrypoint.sh traefik
+        /usr/local/bin/entrypoint.sh traefik
     command: ""
     networks:
       - web
