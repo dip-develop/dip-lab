@@ -33,7 +33,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create the non-root user that matches the host user's UID/GID.
 # No sudo, no docker group - the container is meant to be boxed in.
 RUN groupadd -g ${DEVELOP_GID} develop \
-    && useradd -m -u ${DEVELOP_UID} -g ${DEVELOP_GID} -s /bin/bash develop
+    && useradd -m -u ${DEVELOP_UID} -g ${DEVELOP_GID} -s /bin/bash develop \
+    && mkdir -p /home/develop/.local/bin \
+    && chown -R develop:develop /home/develop/.local
 
 USER develop
 WORKDIR /home/develop
