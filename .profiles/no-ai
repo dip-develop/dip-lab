@@ -1,2 +1,6 @@
-llm
-aiagent
+# no-ai profile - everything except AI services.
+# Same as `full` but disables ai-agent (Hermes) and dev-agents
+# (opencode/Flutter). Use this on a homelab box where you don't want
+# any LLM gateway or agent runtime running.
+ai-agent
+dev-agents
