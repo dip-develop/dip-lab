@@ -14,10 +14,14 @@ LLM-driven agents and tools.
 ## Configuration
 
 - `.env` (template: `.env.example`) — `BIND_IP`, `DOMAIN`,
-  `HERMES_DASHBOARD_BASIC_AUTH_*`, `API_SERVER_KEY`,
-  `HERMES_ALLOWED_ORIGINS`, `TELEGRAM_BOT_TOKEN`,
-  `TELEGRAM_ALLOWED_USERS`, `DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`,
-  `OPENAI_API_KEY`
+  `HERMES_DASHBOARD_BASIC_AUTH_USERNAME`,
+  `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD`,
+  `HERMES_DASHBOARD_BASIC_AUTH_SECRET`, `API_SERVER_KEY`,
+  `API_SERVER_CORS_ORIGINS`, `HERMES_ALLOWED_ORIGINS`,
+  `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USERS`, `DEEPSEEK_API_KEY`,
+  `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`. Cross-service: `OPENCODE_URL`,
+  `OPENCODE_SERVER_PASSWORD`, `HERMES_OPENCODE_AUTOCALL`, `SEAFILE_*`,
+  `IMMICH_*`, `DOCS_*`, `PASSWORDS_*` (see below).
 - At minimum, set a strong `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD` and
   `API_SERVER_KEY` before exposing the service.
 - LLM provider keys are optional — the agent will only use the
@@ -79,7 +83,7 @@ depends on whether credentials are configured for that service.
 | Service | URL (from inside ai-agent) | Auth | Configured via |
 |---|---|---|---|
 | n8n (automation) | `http://automation:5678` | n8n user session | (no API key by default) |
-| opencode (dev-agents, opt-in) | `http://dev-agents:4096` | `Authorization: Bearer $OPENCODE_SERVER_PASSWORD` | `OPENCODE_*` in `.env` |
+| opencode (dev-agents) | `http://dev-agents:4096` | `Authorization: Bearer $OPENCODE_SERVER_PASSWORD` | `OPENCODE_*` in `.env` |
 | Seafile (cloud) | `http://cloud` | admin email+password **or** `Token $SEAFILE_API_TOKEN` | `SEAFILE_*` in `.env` |
 | Immich (gallery) | `http://gallery:2283` | `x-api-key: $IMMICH_API_KEY` | `IMMICH_*` in `.env` |
 | Paperless (docs) | `http://docs:8000` | `Authorization: Token $DOCS_API_TOKEN` | `DOCS_*` in `.env` |
@@ -90,9 +94,11 @@ Hermes is **not** on the `database` network, so it cannot reach
 PostgreSQL, MySQL, or Redis directly. Always go through the service's
 HTTP API.
 
-The opt-in `dev-agents` container is also on `internal` and can reach
-Hermes at `http://ai-agent:8642` (API) or `http://ai-agent:9119`
-(dashboard) for cross-agent calls. See `../dev-agents/AGENTS.md` for
+The `dev-agents` container is also on `internal` and can reach
+Hermes at `http://hermes:8642` (API) or `http://hermes:9119`
+(dashboard) for cross-agent calls. (The Docker hostname is `hermes`,
+matching the `container_name` in `ai-agent/docker-compose.yml`; the
+project directory is `ai-agent/`.) See `../dev-agents/AGENTS.md` for
 the inverse table.
 
 ### Seafile (cloud)

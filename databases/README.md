@@ -25,7 +25,7 @@ Shared PostgreSQL, MySQL, and Redis used by every other DIP-Lab service.
   `../AGENTS.md` → "Secrets & env").
 - Test credentials (`TEST_POSTGRES_*`, `TEST_MYSQL_*`, `TEST_REDIS_*`)
   are optional. If set, the databases init scripts create a `dev_test`
-  user with grants limited to `dev_test_*` databases. The opt-in
+  user with grants limited to `dev_test_*` databases. The
   `../dev-agents/` container uses these creds; mirroring them into
   `dev-agents/.env` enables isolated test runs. See
   `../dev-agents/README.md` → "Database isolation" for details.
@@ -51,12 +51,17 @@ Shared PostgreSQL, MySQL, and Redis used by every other DIP-Lab service.
 
 ## PostgreSQL tuning
 
+Tuning is applied via the `command:` block in
+`docker-compose.yml` (no separate `postgres.conf` is mounted):
+
 ```
 max_connections=200
 shared_buffers=2GB
 ```
 
 ## MySQL tuning
+
+Applied via `command:` in `docker-compose.yml`:
 
 ```
 character-set-server=utf8mb4
@@ -65,6 +70,8 @@ max_connections=200
 ```
 
 ## Redis tuning
+
+Applied via `command:` in `docker-compose.yml`:
 
 ```
 maxmemory 512mb

@@ -1,7 +1,10 @@
-# dev-agents: opt-in developer workstation container for DIP-Lab.
+# dev-agents: developer workstation container for DIP-Lab.
 #
-# NOT enabled by any built-in profile - run explicitly with:
-#   ./manager.sh start dev-agents
+# Bundles opencode CLI, Flutter SDK, Dart, and the standard
+# PostgreSQL / MySQL / Redis CLI tools. Ships with the `default`
+# profile; it can be disabled with:
+#   ./manager.sh profile disable dev-agents
+# (or switched to a smaller profile like `core` / `no-ai`).
 #
 # Container name: dev-agents (matches /home/develop/ inside).
 # Port: 4096 (opencode serve web UI/API), bound to 127.0.0.1 by default.
@@ -9,8 +12,8 @@
 # Connects to the rest of the lab via the shared `internal` network so
 # the agents can reach:
 #   - http://automation:5678   (n8n automation)
-#   - http://ai-agent:8642      (Hermes API)
-#   - http://ai-agent:9119      (Hermes dashboard)
+#   - http://hermes:8642        (Hermes API; container_name in ai-agent/)
+#   - http://hermes:9119        (Hermes dashboard)
 #   - http://postgres:5432     (databases)
 #
 # Hardened like every other service: no docker.sock, no --privileged,
@@ -80,9 +83,9 @@ services:
       - DB_SAFETY_GUARD=${DB_SAFETY_GUARD:-true}
 
     # Two networks:
-    #   internal - reach automation, ai-agent, dev-agents peers, etc.
+    #   internal - reach automation, hermes (ai-agent), and other peers
     #   database - reach postgres, mysql, redis (with the test creds
-    #              above, not the prod creds).
+    #              above, not the prod creds)
     networks:
       - internal
       - database

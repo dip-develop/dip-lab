@@ -18,7 +18,7 @@ GRANT ALL PRIVILEGES ON `seahub_db`.* TO 'cloud'@'%';
 ALTER USER 'root'@'%' IDENTIFIED WITH caching_sha2_password BY '__MYSQL_ROOT_PASSWORD__';
 FLUSH PRIVILEGES;
 
--- ── Isolated test user for the opt-in dev-agents container ─────────────
+-- ── Isolated test user for the dev-agents container ───────────────────────
 -- Grants are scoped to databases whose name starts with `dev_test_`.
 -- The dev-agents container connects as this user only. The user CANNOT
 -- drop or alter the prod databases (`cloud`, `app`, `ccnet_db`,

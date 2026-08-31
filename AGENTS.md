@@ -1,7 +1,6 @@
 # DIP-Lab — Agent Guide
 
-Docker Compose home lab. 11 services managed through `./manager.sh` (plus
-the opt-in `dev-agents` developer workstation container).
+Docker Compose home lab. 11 services managed through `./manager.sh`.
 
 ## Boot order
 
@@ -43,18 +42,19 @@ called implicitly on every `start`.
     app services. Use for first start, or a host that only runs
     infrastructure.
   - `default` — everyday stack: `core` + `passwords` + `ai-agent` +
-    `cloud` + `docs` + `gallery`. No monitoring, no automation, no
-    dev-agents.
+    `cloud` + `docs` + `gallery` + `dev-agents` (9 services). No
+    monitoring, no automation.
   - `media` — `default` + `monitoring` + `automation` (Prometheus,
-    Grafana, Loki, Promtail, cAdvisor, n8n). No dev-agents.
-  - `dev` — `default` + `automation` + `dev-agents`. Active
-    development without the heavyweight media services.
-  - `no-ai` — everything except `ai-agent` and `dev-agents`. Homelab
-    without any LLM gateway.
-  - `full` — everything enabled, including the opt-in `dev-agents`.
-- `dev-agents` is included only in `dev` and `full` profiles. In every
-  other profile you must enable it explicitly:
-  `./manager.sh profile enable dev-agents`.
+    Grafana, Loki, Promtail, cAdvisor, n8n). 9 services.
+  - `dev` — `default` + `automation`. 7 services.
+  - `no-ai` — everything except `ai-agent` and `dev-agents` (9
+    services).
+  - `full` — everything enabled (11 services).
+- `dev-agents` is included in `default`, `media`, `dev`, and `full`.
+  It is excluded from `core` (no app services) and `no-ai` (per
+  profile intent). On a host with <8 GB RAM, disable with
+  `./manager.sh profile disable dev-agents` (dev-agents idles at
+  ~2 GB).
 
 ## Service directories & images
 
@@ -70,14 +70,15 @@ called implicitly on every `start`.
 | `automation/` | n8n | `n8nio/n8n` |
 | `gallery/` | Immich server + ML | `ghcr.io/immich-app/immich-server:v3` |
 | `ai-agent/` | Hermes agent (ports 18789 API, 18790 UI) | `nousresearch/hermes-agent` |
-| `dev-agents/` | **Opt-in.** Developer workstation: Flutter + opencode CLI (port 4096) | `diplab/dev-agents:local` (built locally) |
+| `dev-agents/` | Developer workstation: Flutter + opencode CLI (port 4096) | `diplab/dev-agents:local` (built locally) |
 
 ## Networks
 
 - `web` — Traefik, ports 80/443 externally
 - `internal` — all app services, port-mapped to `0.0.0.0:{port}`.
   `dev-agents` is also on `internal` so its opencode agents can reach
-  `automation`, `ai-agent`, and `postgres` by hostname.
+  `automation`, `hermes` (the ai-agent service), and `postgres` by
+  hostname.
 - `database` — databases only (PostgreSQL, MySQL, Redis).
   `dev-agents` is also on `database` but only connects as the
   scoped `dev_test` user / `TEST_REDIS_DB` index — see
@@ -107,9 +108,9 @@ Others attach only to `internal`.
   substituted by `databases/postgres-entrypoint.sh` (the official
   postgres image lacks `envsubst`, so the wrapper uses `sed`).
 - `dev-agents/.env` carries `TEST_*_PASSWORD` values that mirror the
-  same `TEST_*_PASSWORD` values from `databases/.env` — the opt-in
-  dev workstation only ever talks to databases as the scoped
-  `dev_test` user on `dev_test_*` databases / `TEST_REDIS_DB` index.
+  same `TEST_*_PASSWORD` values from `databases/.env` — the developer
+  workstation only ever talks to databases as the scoped `dev_test`
+  user on `dev_test_*` databases / `TEST_REDIS_DB` index.
 - `dev-agents/.env` also carries a separate `OPENCODE_SERVER_PASSWORD`
   that protects the always-on `opencode serve` web UI.
 

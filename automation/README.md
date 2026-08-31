@@ -9,7 +9,8 @@ replaces Zapier / Make for self-hosted use.
 
 ## Networks
 
-- `internal` (for Traefik + opencode)
+- `internal` (for all other DIP-Lab peers, including dev-agents and
+  the databases on which the consume queue sits)
 - `database` (PostgreSQL backend)
 
 ## Configuration
@@ -61,8 +62,9 @@ data/
 
 ## Cross-service: opencode (dev-agents)
 
-If the opt-in `dev-agents` container is running, n8n workflows can
-call the opencode serve API. Fill in `OPENCODE_URL` and
+The `dev-agents` container ships with the `default` profile and
+starts alongside the rest of the lab. n8n workflows can call the
+opencode serve API. Fill in `OPENCODE_URL` and
 `OPENCODE_SERVER_PASSWORD` in `automation/.env` (same password as
 `dev-agents/.env`).
 

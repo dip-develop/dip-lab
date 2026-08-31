@@ -31,8 +31,9 @@ vim databases/.env
 ./manager.sh start
 ```
 
-The `dev-agents` container is opt-in. If you want to develop against it
-locally:
+The `dev-agents` container ships with the `default` profile. If you
+switched to a smaller profile (e.g. `core` or `no-ai`) and want to
+develop against it locally:
 
 ```bash
 cp dev-agents/.env.example dev-agents/.env
@@ -66,7 +67,7 @@ cp dev-agents/.env.example dev-agents/.env
 ├── .profiles/                 # built-in service profiles
 ├── databases/  proxy/  monitoring/  passwords/  containers/
 ├── cloud/      docs/    automation/  gallery/    ai-agent/
-└── dev-agents/                # opt-in developer workstation container
+└── dev-agents/                # developer workstation container (default profile)
 ```
 
 ## Security

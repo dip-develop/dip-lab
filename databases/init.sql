@@ -7,7 +7,7 @@ CREATE DATABASE docs;
 \c gallery;
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- ── Isolated test user for the opt-in dev-agents container ─────────────
+-- ── Isolated test user for the dev-agents container ───────────────────────
 -- Created by the postgres container's first-start initdb, with password
 -- and (optionally) initial DB name substituted in by env_file at
 -- container start. The user only has rights on databases whose name
