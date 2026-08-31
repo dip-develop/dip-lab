@@ -35,9 +35,6 @@ services:
 
     # Resource caps. A runaway agent process gets throttled/OOM-killed
     # here instead of starving the rest of the lab.
-    mem_limit: 4g
-    cpus: "2"
-    pids_limit: 512
 
     # Default 127.0.0.1 - this is a developer tool, not a public service.
     # Override BIND_IP in .env if you need LAN access (and trust the LAN).
@@ -107,8 +104,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.5'
-          memory: 2G
+          cpus: '3'
+          memory: 6G
+          pids: 512
 
 networks:
   internal:
