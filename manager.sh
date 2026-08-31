@@ -15,13 +15,13 @@ SERVICES_ALL=(
     "proxy"
     "monitoring"
     "passwords"
-    "dockerui"
+    "containers"
     "cloud"
     "docs"
     "automation"
     "gallery"
-    "llm"
-    "aiagent"
+    "ai-agent"
+    "dev-agents"
 )
 
 DRY_RUN=false
@@ -160,7 +160,7 @@ fix_permissions() {
 
     chmod 755 "$SCRIPT_DIR"
     chmod 750 "$SCRIPT_DIR/manager.sh"
-    chmod +x "$SCRIPT_DIR/proxy/entrypoint.sh" 2>/dev/null || true
+    find "$SCRIPT_DIR" -name entrypoint.sh -exec chmod +x {} \; 2>/dev/null || true
 
     find "$SCRIPT_DIR" -name ".env" -exec chmod 600 {} \; 2>/dev/null || true
     find "$SCRIPT_DIR/proxy" -name "acme.json" -exec chmod 600 {} \; 2>/dev/null || true
@@ -205,6 +205,236 @@ run_all_parallel() {
         wait "$pid" || failed=$((failed + 1))
     done
     [ $failed -gt 0 ] && log warn "$failed service(s) had issues"
+    return 0
+}
+
+# ── Pull one service's images, capture local image IDs before & after.
+# Writes two files to a temp dir: $TMP_DIR/$svc.before / $svc.after
+# Each is a sorted list of "repo:tag <sha256>" lines (one per image).
+# If the service is locally built (no pulled images), the lists may be
+# empty - caller treats that as "no remote update possible".
+pull_one_capture() {
+    local svc=$1 tmp=$2
+    if [ ! -f "$SCRIPT_DIR/$svc/docker-compose.yml" ]; then
+        return 1
+    fi
+    local log_file="$tmp/$svc.log"
+    local status_file="$tmp/$svc.status"
+
+    # Snapshot images currently referenced by this compose project.
+    (cd "$SCRIPT_DIR/$svc" && \
+        docker compose config --images 2>/dev/null \
+            | sort -u > "$tmp/$svc.images") || true
+
+    # Capture current local digests for those images.
+    : > "$tmp/$svc.before"
+    while IFS= read -r img; do
+        [ -z "$img" ] && continue
+        # `docker image inspect` returns RepoDigests for pulled images.
+        local dig
+        dig=$(docker image inspect --format '{{range .RepoDigests}}{{.}}{{"\n"}}{{end}}' "$img" 2>/dev/null | sort -u | tr '\n' '|')
+        printf '%s %s\n' "$img" "${dig%|}" >> "$tmp/$svc.before"
+    done < "$tmp/$svc.images"
+    # Pull.
+    if [ "$DRY_RUN" = true ]; then
+        log info "DRY-RUN: $svc: docker compose pull"
+        echo "DRYRUN" > "$status_file"
+        return 0
+    fi
+
+    if (cd "$SCRIPT_DIR/$svc" && docker compose pull) >"$log_file" 2>&1; then
+        # Re-snapshot digests.
+        : > "$tmp/$svc.after"
+        while IFS= read -r img; do
+            [ -z "$img" ] && continue
+            local dig
+            dig=$(docker image inspect --format '{{range .RepoDigests}}{{.}}{{"\n"}}{{end}}' "$img" 2>/dev/null | sort -u | tr '\n' '|')
+            printf '%s %s\n' "$img" "${dig%|}" >> "$tmp/$svc.after"
+        done < "$tmp/$svc.images"
+
+        if diff -q "$tmp/$svc.before" "$tmp/$svc.after" >/dev/null 2>&1; then
+            echo "uptodate" > "$status_file"
+        else
+            echo "updated" > "$status_file"
+        fi
+        return 0
+    else
+        echo "failed" > "$status_file"
+        return 1
+    fi
+}
+
+# ── update-all: smart, per-service pull + recreate with status output.
+#
+# Honors boot order (databases -> proxy -> rest), pulls every service in
+# parallel, only recreates containers whose image actually changed, prints
+# a per-service summary table at the end.
+#
+# Flags:
+#   --filter <pattern>   only update services whose name matches the
+#                        extended-regex pattern (matches whole service
+#                        name, case-insensitive)
+#   --no-recreate       pull only, do not recreate containers even if
+#                        an image changed
+#   --prune             after the run, remove dangling images
+#                        (`docker image prune -f`)
+#   --no-backup         skip the pre-flight data-dir backup prompt
+#
+# Combine with `-n` for a dry run that prints the would-be status table.
+update_all() {
+    local filter="" recreate=true prune=false do_backup=true
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --filter) filter=${2:-}; shift 2 ;;
+            --no-recreate) recreate=false; shift ;;
+            --prune) prune=true; shift ;;
+            --no-backup) do_backup=false; shift ;;
+            *) log err "Unknown update-all flag: $1"; return 1 ;;
+        esac
+    done
+
+    # Build the list of services to update, honoring the disabled list
+    # and the --filter pattern.
+    local targets=()
+    for svc in "${SERVICES_ALL[@]}"; do
+        is_disabled "$svc" && continue
+        if [ -n "$filter" ]; then
+            if ! [[ "$svc" =~ $filter ]]; then
+                continue
+            fi
+        fi
+        [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ] || continue
+        targets+=("$svc")
+    done
+
+    if [ ${#targets[@]} -eq 0 ]; then
+        log warn "No services match (filter='$filter', enabled set is empty?)"
+        return 0
+    fi
+
+    log info "update-all: ${#targets[@]} service(s)${filter:+ (filter: $filter)}"
+    for s in "${targets[@]}"; do
+        log info "  - $s"
+    done
+
+    if [ "$DRY_RUN" = true ]; then
+        log info "DRY-RUN: skipping pull, status table, recreate, backup, prune"
+        return 0
+    fi
+
+    # Pre-flight backup (skippable).
+    if [ "$do_backup" = true ]; then
+        log info "Pre-flight data-dir backup..."
+        backup_cmd "$SCRIPT_DIR/backups" || log warn "Pre-flight backup failed; continuing"
+    fi
+
+    # Pull in parallel. Each service writes its status to $TMP.
+    local tmp
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' RETURN
+
+    local pids=() failed_pulls=0
+    for svc in "${targets[@]}"; do
+        log info "$svc: pulling..."
+        pull_one_capture "$svc" "$tmp" &
+        pids+=($!)
+    done
+    for pid in "${pids[@]}"; do
+        wait "$pid" || failed_pulls=$((failed_pulls + 1))
+    done
+
+    # Build status table.
+    local updated=() uptodate=() failed=() noup=()
+    for svc in "${targets[@]}"; do
+        local s="unknown"
+        [ -f "$tmp/$svc.status" ] && s=$(cat "$tmp/$svc.status")
+        case "$s" in
+            updated)   updated+=("$svc") ;;
+            uptodate)  uptodate+=("$svc") ;;
+            failed)    failed+=("$svc") ;;
+            *)         noup+=("$svc") ;;
+        esac
+    done
+
+    log ok "Pull phase complete"
+    log info "  updated    : ${#updated[@]}"
+    log info "  up-to-date : ${#uptodate[@]}"
+    [ ${#failed[@]} -gt 0 ]   && log warn "  failed     : ${#failed[@]} (${failed[*]})"
+    [ ${#noup[@]} -gt 0 ]     && log info "  no-remote  : ${#noup[@]} (locally built, see ${tmp})"
+
+    # Decide which to recreate.
+    local to_recreate=()
+    if [ "$recreate" = true ]; then
+        to_recreate=("${updated[@]}")
+    fi
+
+    if [ ${#to_recreate[@]} -eq 0 ]; then
+        log ok "Nothing to recreate"
+    else
+        log info "Recreating ${#to_recreate[@]} service(s): ${to_recreate[*]}"
+
+        # Honor boot order: databases first (blocking), then proxy, then rest.
+        local boot_first=() boot_mid=() boot_rest=()
+        for s in "${to_recreate[@]}"; do
+            case "$s" in
+                databases) boot_first+=("$s") ;;
+                proxy)     boot_mid+=("$s") ;;
+                *)         boot_rest+=("$s") ;;
+            esac
+        done
+
+        for s in "${boot_first[@]}"; do
+            log info "$s: up -d (blocking)"
+            (cd "$SCRIPT_DIR/$s" && docker compose up -d) || log warn "$s: up -d failed"
+            wait_for_ready "$s" 180 || log warn "$s: not ready within timeout"
+        done
+        for s in "${boot_mid[@]}"; do
+            log info "$s: up -d (blocking)"
+            (cd "$SCRIPT_DIR/$s" && docker compose up -d) || log warn "$s: up -d failed"
+            wait_for_ready "$s" 120 || log warn "$s: not ready within timeout"
+        done
+        if [ ${#boot_rest[@]} -gt 0 ]; then
+            local rpids=() rfails=0
+            for s in "${boot_rest[@]}"; do
+                log info "$s: up -d"
+                (cd "$SCRIPT_DIR/$s" && docker compose up -d) &
+                rpids+=($!)
+            done
+            for pid in "${rpids[@]}"; do
+                wait "$pid" || rfails=$((rfails + 1))
+            done
+            [ $rfails -gt 0 ] && log warn "$rfails service(s) failed to recreate"
+        fi
+    fi
+
+    # Final per-service status table.
+    echo
+    log info "Per-service status:"
+    printf "  %-15s %-12s %s\n" "SERVICE" "IMAGE" "STATUS"
+    printf "  %-15s %-12s %s\n" "-------" "-----" "------"
+    for svc in "${targets[@]}"; do
+        local s="unknown"
+        [ -f "$tmp/$svc.status" ] && s=$(cat "$tmp/$svc.status")
+        local img="-"
+        if [ -f "$tmp/$svc.images" ]; then
+            local count
+            count=$(wc -l < "$tmp/$svc.images" 2>/dev/null || echo 0)
+            img="${count} image(s)"
+        fi
+        case "$s" in
+            updated)   printf "  %-15s %-12s %b%s%b\n" "$svc" "$img" "$C_GREEN" "updated"   "$C_RESET" ;;
+            uptodate)  printf "  %-15s %-12s %b%s%b\n" "$svc" "$img" "$C_BLUE"  "up-to-date" "$C_RESET" ;;
+            failed)    printf "  %-15s %-12s %b%s%b\n" "$svc" "$img" "$C_RED"   "FAILED"     "$C_RESET" ;;
+            *)         printf "  %-15s %-12s %s\n"   "$svc" "$img" "$s" ;;
+        esac
+    done
+    echo
+
+    if [ "$prune" = true ]; then
+        log info "Pruning dangling images..."
+        docker image prune -f || log warn "image prune failed"
+    fi
+
     return 0
 }
 
@@ -343,7 +573,7 @@ backup_cmd() {
     mkdir -p "$backup_dir"
     local date_str
     date_str=$(date '+%Y%m%d-%H%M%S')
-    local backup_file="$backup_dir/dm-home-backup-$date_str.tar.gz"
+    local backup_file="$backup_dir/diplab-backup-$date_str.tar.gz"
 
     log info "Creating backup: $backup_file"
     local dirs=()
@@ -406,6 +636,12 @@ Commands:
   stop [svc]        Stop all or one service (databases last)
   restart [svc]     Restart all or one service
   update [svc]      Pull images + recreate containers
+  update-all [opts] Smart pull + recreate with per-service status table.
+                   Honors boot order. Flags:
+                     --filter <regex>   only services matching regex
+                     --no-recreate     pull only, do not recreate
+                     --no-backup       skip the pre-flight data-dir backup
+                     --prune           also run "docker image prune -f"
   build <svc>       Build service image
   logs <svc>        Tail logs for a service
   status            Show container status (enabled services only)
@@ -441,9 +677,12 @@ EOF
     echo "  $0 setup                          # init everything"
     echo "  $0 start                          # start enabled services"
     echo "  $0 -n start                       # dry-run"
-    echo "  $0 start llm                      # start llm even if disabled"
-    echo "  $0 profile minimal                # switch to minimal profile"
-    echo "  $0 profile disable llm            # disable llm on the fly"
+    echo "  $0 start dev-agents               # start the developer workstation"
+    echo "  $0 update-all --filter '^auto|cloud$'  # update only automation + cloud"
+    echo "  $0 update-all --no-backup         # update everything, skip pre-flight backup"
+    echo "  $0 profile core                   # switch to core profile"
+    echo "  $0 profile dev                    # switch to dev profile (default + automation)"
+    echo "  $0 profile disable dev-agents     # disable dev-agents on the fly"
     echo "  $0 logs gallery --tail 50"
 }
 
@@ -497,6 +736,9 @@ case $ACTION in
             run_one "$1" pull
             run_one "$1" up -d
         fi
+        ;;
+    update-all)
+        update_all "$@"
         ;;
     build)
         [ -z "${1:-}" ] && { log err "Service required: $0 build <svc>"; exit 1; }

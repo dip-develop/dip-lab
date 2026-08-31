@@ -1,101 +1,106 @@
 # DIP-Lab
 
-## Structure
+A self-hosted home-lab stack of 11 services orchestrated by a single
+`manager.sh` script. Targeted at a single Linux host (12 GB RAM, 100 GB
+NVMe, optional object-storage mount) running behind a Traefik reverse
+proxy.
 
+## Services
+
+| Directory | What |
+|---|---|
+| `databases/` | PostgreSQL (pgvector), MySQL, Redis |
+| `proxy/` | Traefik v3 (reverse proxy) |
+| `monitoring/` | Grafana, Prometheus, Loki, Promtail, cAdvisor, node-exporter |
+| `passwords/` | Vaultwarden (password manager) |
+| `containers/` | Portainer CE (container management UI) |
+| `cloud/` | Seafile + memcached (file cloud) |
+| `docs/` | Paperless-ngx + Gotenberg + Tika (document management) |
+| `automation/` | n8n (automation) |
+| `gallery/` | Immich server + ML (photo gallery) |
+| `ai-agent/` | Hermes AI agent + dashboard |
+| `dev-agents/` | Developer workstation container: Flutter SDK + opencode CLI (in `default` profile) |
+
+## Quick start
+
+```bash
+git clone https://github.com/dip-develop/dip-lab.git
+cd dip-lab
+
+# Create networks and data directories
+./manager.sh setup
+
+# Fill in secrets (one .env per service, see below)
+cp databases/.env.example databases/.env
+cp proxy/.env.example proxy/.env
+# ...repeat for each service you intend to run
+
+# Fix ownership
+./manager.sh perm
+
+# Start everything
+./manager.sh start
+./manager.sh status
 ```
-├── databases/      # PostgreSQL (pgvector), MySQL, Redis
-├── proxy/          # Traefik v3 (reverse proxy)
-├── monitoring/     # Grafana, Prometheus, Loki, Promtail, cAdvisor, node-exporter
-├── passwords/      # Vaultwarden (password manager)
-├── dockerui/       # Portainer CE (Docker management UI)
-├── cloud/          # Seafile + memcached (file cloud)
-├── docs/           # Paperless-ngx + Gotenberg + Tika (document management)
-├── automation/     # n8n (automation)
-├── gallery/        # Immich server + ML (photo gallery)
-├── llm/            # llama.cpp serving Gemma 2B (OpenAI-compatible API)
-└── aiagent/        # Hermes AI agent + nginx alias
-```
 
-## Server Resources
+## Service ports (defaults)
 
-- **RAM**: 12 GB
-- **NVMe**: 100 GB (for databases and fast operations)
-- **Object Storage**: /mnt/object-storage (limited speed, permission limits)
+All services bind to `0.0.0.0` on the host; Traefik is the only one
+exposed externally (80, 443).
+
+| Service | Host port | Purpose |
+|---|---|---|
+| Passwords (Vaultwarden) | 8200 | Password manager |
+| DockerUI (Portainer) | 9000 | Docker management UI |
+| Cloud (Seafile) | 8383 | File hosting |
+| Docs (Paperless) | 8000 | Document management |
+| Automation (n8n) | 5678 | Automation |
+| Gallery (Immich) | 2283 | Photo gallery |
+| Hermes API / Dashboard | 18789 / 18790 | AI agent |
+| Grafana / Prometheus | 3000 / 9090 | Monitoring |
+| Traefik | 80, 443 | Reverse proxy (external) |
+
+The `dev-agents` container exposes `opencode serve` on
+`127.0.0.1:4096` by default — see `dev-agents/README.md`.
 
 ## Database
 
 Shared PostgreSQL, MySQL, and Redis for all services:
 
-| Service | Database | Description |
-|---------|----------|-------------|
-| databases | PostgreSQL, MySQL, Redis | Shared DBs |
-
-Databases are initialized with:
-- `databases/init.sql` — creates `gallery`, `automation`, `docs` databases, enables `pgvector`
-- `databases/mysql-init.sql` — creates `cloud` user and grants on Seafile databases
+- `databases/init.sql` — creates `gallery`, `automation`, `docs`
+  databases, enables `pgvector`
+- `databases/mysql-init.sql` — creates `cloud` user and grants on
+  Seafile databases. Passwords are placeholders; `databases/entrypoint.sh`
+  substitutes real values from `databases/.env` at container start.
 - PostgreSQL: `max_connections=200`, `shared_buffers=2GB`
 - MySQL: `utf8mb4`, `max_connections=200`
-- Redis: password required, `maxmemory 512mb`, `noeviction`, `appendonly yes`
+- Redis: password required, `maxmemory 512mb`, `allkeys-lru`, RDB only
+
+Inside the lab, services reach databases by hostname on the `database`
+Docker network (`postgres:5432`, `mysql:3306`, `redis:6379`).
 
 ## Networks
 
 - `web` — Traefik reverse proxy (80, 443 on host)
-- `internal` — all app services, port-mapped to `0.0.0.0:{port}`
+- `internal` — all app services, port-mapped to `0.0.0.0:{port}`.
+  `dev-agents` is also on `internal` so its opencode agents can reach
+  `automation`, `hermes` (the ai-agent service), and `postgres` by
+  hostname.
 - `database` — PostgreSQL, MySQL, Redis (isolated)
-- `monitoring` — Prometheus/Grafana/Loki/cAdvisor/node-exporter (defined inline, not pre-created)
+- `monitoring` — Prometheus/Grafana/Loki/cAdvisor/node-exporter
+  (defined inline, not pre-created)
 
-Services that need DB access attach to both `internal` and `database`. Others attach only to `internal`.
-
-## Access and Ports
-
-### Internal Access (0.0.0.0)
-
-All services accessible via internal network at **0.0.0.0** (except Traefik which is externally accessible):
-
-| Service | Port | Description |
-|---------|------|-------------|
-| **Services** | | |
-| Passwords (Vaultwarden) | 0.0.0.0:8200 | Password manager |
-| DockerUI (Portainer) | 0.0.0.0:9000 | Docker management UI |
-| Cloud (Seafile) | 0.0.0.0:8383 | File hosting |
-| Docs (Paperless) | 0.0.0.0:8000 | Document management |
-| Automation (n8n) | 0.0.0.0:5678 | Automation |
-| Gallery (Immich) | 0.0.0.0:2283 | Photo gallery |
-| Hermes (AI agent) | 0.0.0.0:18789 | Agent API |
-| Hermes Dashboard | 0.0.0.0:18790 | Agent Web UI |
-| LLM (llama.cpp) | 0.0.0.0:8001 | OpenAI-compatible API |
-| **Monitoring** | | |
-| Grafana | 0.0.0.0:3000 | Monitoring and logs |
-| Prometheus | 0.0.0.0:9090 | Metrics |
-| **Proxy** | | |
-| Traefik | 80, 443 (external) | Reverse proxy (HTTP/HTTPS) |
-
-### External Access (Direct)
-
-| Service | Port | Description |
-|---------|------|-------------|
-| **Traefik** | 80, 443 | Reverse proxy (HTTPS) |
-
-### Database (Internal Network)
-
-| Service | Host | Port | Description |
-|---------|------|------|-------------|
-| PostgreSQL | postgres | 5432 | Main DB (passwords, docs, automation, gallery) |
-| MySQL | mysql | 3306 | Main MySQL |
-| Redis | redis | 6379 | Cache and queues |
+Services that need DB access attach to both `internal` and `database`.
+Others attach only to `internal`.
 
 ## Management
 
-### manager.sh Script
-
-```bash
-./manager.sh <command> [service]
-```
+### `./manager.sh <command> [service]`
 
 | Command | Description |
-|---------|-------------|
-| `setup` | Create 3 Docker networks + data directories |
-| `start [svc]` | Start all (databases → proxy → rest automatically) or one service |
+|---|---|
+| `setup` | Create networks + data directories |
+| `start [svc]` | Start all (db→proxy→rest) or one service |
 | `stop [svc]` | Stop all (databases last) or one service |
 | `restart [svc]` | Restart all or one service |
 | `update [svc]` | `docker compose pull` then recreate containers |
@@ -103,156 +108,119 @@ All services accessible via internal network at **0.0.0.0** (except Traefik whic
 | `logs <svc> [--tail N]` | Follow logs for a service |
 | `status` | `docker compose ps` for every enabled service |
 | `exec <svc> <cmd>` | Run command inside a service container |
-| `perm` | Fix UID/GID ownership on data directories |
+| `perm` | Fix file permissions / ownership |
 | `profile <action>` | Manage disabled-service profiles |
-| `backup [dir]` | Backup data directories to tar.gz |
-| `restore <file>` | Restore data directories from backup |
-| `clean` | Prune unused Docker volumes/networks |
+| `backup [dir]` | Backup data directories to `diplab-backup-<timestamp>.tar.gz` |
+| `restore <file>` | Restore data from backup archive |
+| `clean` | Prune unused Docker volumes / networks |
 | `stop-all` | `docker stop` every running container |
 | `full-cleanup` | Nuke containers, images, volumes, networks |
-| `-n <command>` | Dry-run (show what would happen without executing) |
+| `-n <command>` | Dry-run (show what would happen) |
 
 ### Examples
 
 ```bash
 ./manager.sh setup           # create networks and folders
-./manager.sh start           # start all (automatic boot order)
-./manager.sh logs gallery    # logs for gallery
-./manager.sh status          # status
-./manager.sh update          # update all
-./manager.sh profile minimal # switch to minimal profile
+./manager.sh start           # start enabled services
+./manager.sh start dev-agents  # start the developer workstation
+./manager.sh logs gallery --tail 50
+./manager.sh status
+./manager.sh update
+./manager.sh profile core # switch to core profile
 ./manager.sh backup          # create backup archive
 ```
 
-### Shell Autocomplete
+### Shell autocomplete
 
 ```bash
 source completions.bash
 ```
 
-### Disabled Services & Profiles
+### Disabled services & profiles
 
-Services can be excluded from bulk commands:
+Two mechanisms to exclude a service from bulk commands:
 
-1. **`.disabled_services`** — list one service per line (gitignored; see `.disabled_services.example`)
-2. **`profile` command** — `./manager.sh profile disable llm`, `./manager.sh profile enable llm`, or `./manager.sh profile minimal`
+1. **`.disabled_services`** — list one service per line (gitignored;
+   see `.disabled_services.example`).
+2. **`profile` command** — `./manager.sh profile disable dev-agents`,
+   `./manager.sh profile enable dev-agents`, or
+   `./manager.sh profile <name>` to switch profile.
 
-Disabled services can still be targeted explicitly: `./manager.sh start llm`
+Disabled services can still be targeted explicitly:
+`./manager.sh start dev-agents`.
 
-Built-in profiles (in `.profiles/`):
-- `full` — all services enabled
-- `default` — databases + proxy + dockerui + cloud + docs + gallery
-- `minimal` — databases + proxy + dockerui
-- `media` — databases + proxy + dockerui + monitoring + cloud + docs + gallery
-- `no-ai` — all except llm + aiagent
+Built-in profiles (in `.profiles/`, listed in order of how much they
+enable):
 
-### Object Storage
+- `core` — foundation only: `databases` + `proxy` + `containers`. No
+  app services. Use for the very first start, or a host that only
+  runs infrastructure.
+- `default` — everyday stack: `core` + `passwords` + `ai-agent` +
+  `cloud` + `docs` + `gallery` + `dev-agents` (9 services).
+  Monitoring and automation are situational and are not included.
+- `media` — `default` + `monitoring` + `automation` (Prometheus,
+  Grafana, Loki, Promtail, cAdvisor, n8n). 9 services.
+- `dev` — `default` + `automation`. Active development without the
+  heavyweight media services (7 services).
+- `no-ai` — everything except `ai-agent` and `dev-agents` (9 services).
+  Use on a host where you don't want any LLM gateway or agent
+  runtime.
+- `full` — everything enabled (11 services).
+
+`dev-agents` is included in `default`, `media`, `dev`, and `full`. It
+is excluded from `core` (no app services) and `no-ai` (per the
+profile's intent). On a host with <8 GB RAM, disable it with
+`./manager.sh profile disable dev-agents`.
+
+### Object storage
 
 Optional `/mnt/object-storage/data` mount. When present:
-- Gallery (Immich) mounts upload, thumbs, profile, backups, library, encoded-video
+- Gallery (Immich) mounts upload, thumbs, profile, backups, library,
+  encoded-video
 - Docs (Paperless) mounts `/mnt/object-storage/data/docs` as data root
 - Automation (n8n) mounts at `/mnt/object-storage`
-- Cloud (Seafile) and automation have optional cross-service read-only mounts
+- Cloud (Seafile) and automation have optional cross-service read-only
+  mounts
+
+When the mount is absent, `manager.sh setup` skips the object-storage
+subdirectory creation. Docker will create empty root-owned dirs under
+the bind paths instead, which is harmless but visible.
 
 ### Traefik
 
 - Config: `proxy/traefik.yml` + `proxy/dynamic/security.yml`
-- Dashboard password: `proxy/entrypoint.sh` hashes via `htpasswd` at startup
+- Dashboard password: `proxy/entrypoint.sh` hashes via `htpasswd` at
+  startup
 - ACME certs: `proxy/acme.json` (gitignored)
-- `exposedByDefault: false` — services opt in with `traefik.enable=true` labels
-- All services have Traefik labels commented out by default (direct port access pattern)
+- `exposedByDefault: false` — services opt in with `traefik.enable=true`
+  labels
+- All services have Traefik labels commented out by default
+  (direct port access pattern)
 
 ## Security
 
-- All services accessible only via internal network (0.0.0.0) except Traefik
-- Traefik has direct internet access (for reverse proxy)
-- TLS 1.2+ with secure cipher suites
+- All services accessible only via the internal Docker network except
+  Traefik
+- Traefik has direct internet access (for reverse proxy + ACME)
+- TLS 1.2+ with secure cipher suites via `proxy/dynamic/security.yml`
 - Strict-Transport-Security headers
-- Rate limiting on Traefik
-- Passwords not in git (use .env files)
-- Strict permissions on sensitive data
-- Every service uses `security_opt: no-new-privileges:true` + `deploy.resources.limits`
+- Rate limiting on Traefik (`ratelimit` middleware, 100 req/s burst 50)
+- Secrets stay in `.env` (gitignored) — every service has a
+  `<dir>/.env.example` template
+- Strict permissions on sensitive data (`chmod 600` on `.env` and
+  `acme.json`)
+- Every service uses `security_opt: no-new-privileges:true` +
+  `deploy.resources.limits` for CPU/memory
+- `dev-agents` runs with no `docker.sock`, no `--privileged`, and
+  `opencode` agents are denied at the permission level from reading
+  `.env` files, SSH keys, WireGuard configs, or pushing to `main`
 
-## Deployment from Scratch
+See `SECURITY.md` for the responsible-disclosure policy.
 
-```bash
-# 1. Clone repository
-git clone https://github.com/Dimoshka/DIP-Lab.git
-cd DIP-Lab
+## License
 
-# 2. Create networks and directories
-./manager.sh setup
+MIT. See `LICENSE`.
 
-# 3. Fill passwords in .env files
-vim databases/.env
-vim proxy/.env
+## Contributing
 
-# 4. Fix permissions
-./manager.sh perm
-
-# 5. Start everything
-./manager.sh start
-
-# 6. Check status
-./manager.sh status
-```
-
-## Service Access
-
-### Internal Connection
-
-All services accessible only via internal network at **0.0.0.0**:
-
-```bash
-# Passwords (Vaultwarden)
-http://0.0.0.0:8200
-
-# Docker UI (Portainer)
-http://0.0.0.0:9000
-
-# Cloud (Seafile)
-http://0.0.0.0:8383
-
-# Docs (Paperless)
-http://0.0.0.0:8000
-
-# Automation (n8n)
-http://0.0.0.0:5678
-
-# Gallery (Immich)
-http://0.0.0.0:2283
-
-# Hermes (AI agent)
-http://0.0.0.0:18789  # API
-http://0.0.0.0:18790  # Web UI
-
-# LLM (llama.cpp)
-http://0.0.0.0:8001
-
-# Monitoring
-http://0.0.0.0:3000  # Grafana
-http://0.0.0.0:9090  # Prometheus
-```
-
-### API Access
-
-```bash
-# LLM OpenAI-compatible API (inside docker network)
-http://llm:8000/v1/chat/completions
-
-# or via internal network
-http://0.0.0.0:8001/v1/chat/completions
-```
-
-## Notes
-
-- Services isolated in `internal` network, ports bound to 0.0.0.0
-- `./manager.sh start` handles boot order automatically (databases → proxy → rest)
-- Traefik listens on 80, 443 (external access) for reverse proxy
-- Logs in `proxy/logs/`
-- TLS certificates in `proxy/acme.json` (do not commit)
-- Without DNS, add entries to `/etc/hosts` on client
-- Every service has `<dir>/.env` (gitignored) and `<dir>/.env.example` with variables
-- Shared secrets (DB passwords, `REDIS_PASSWORD`) are read from `databases/.env` via `env_file`
-- The only custom Dockerfile is `docs/Dockerfile` (extends Paperless, adds Tesseract OCR langs)
-- `.env.example` files are templates: copy to `.env` and fill
+See `CONTRIBUTING.md`.

@@ -1,0 +1,12 @@
+# core profile - bare minimum.
+# Just databases + proxy + containers (Portainer).
+# No app services at all. Use this for the very first start, or for
+# a host that only runs infrastructure.
+passwords
+ai-agent
+automation
+monitoring
+cloud
+docs
+gallery
+dev-agents

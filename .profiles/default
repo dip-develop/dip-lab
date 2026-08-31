@@ -1,5 +1,16 @@
+# default profile - everyday stack.
+# Foundation (DB + proxy + containers) plus the services most people run
+# 24/7: passwords (Vaultwarden), ai-agent (Hermes), cloud (Seafile),
+# docs (Paperless), gallery (Immich), dev-agents (opencode/Flutter
+# workstation).
+#
+# Disabled here because they are situational:
+#   monitoring  - only needed when you want to watch resource usage
+#   automation  - only needed when you actively run n8n workflows
+#
+# Resource note: dev-agents uses ~2 GB RAM at idle (Flutter SDK +
+# Chromium). On a host with <8 GB RAM, disable it with
+# `./manager.sh profile disable dev-agents` after switching to this
+# profile.
 monitoring
-passwords
 automation
-llm
-aiagent
