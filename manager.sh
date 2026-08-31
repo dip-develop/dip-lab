@@ -733,8 +733,15 @@ case $ACTION in
             log info "Recreating containers..."
             start_all
         else
-            run_one "$1" pull
-            run_one "$1" up -d
+            local svc="$1"
+            # Check if service has a local build (build: section in compose)
+            if [ -f "$SCRIPT_DIR/$svc/docker-compose.yml" ] && grep -q '^\s*build:' "$SCRIPT_DIR/$svc/docker-compose.yml"; then
+                log info "$svc is locally built — skipping pull, rebuilding instead"
+                run_one "$svc" build
+            else
+                run_one "$svc" pull
+            fi
+            run_one "$svc" up -d
         fi
         ;;
     update-all)
