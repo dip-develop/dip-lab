@@ -1,6 +1,6 @@
-# Contributing to Home Lab
+# Contributing to DIP-Lab
 
-Thank you for your interest in contributing!
+Thanks for your interest in contributing!
 
 ## How to Contribute
 
@@ -14,14 +14,13 @@ Thank you for your interest in contributing!
 ## Development Setup
 
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/dm-lab.git
-cd dm-lab
+git clone https://github.com/dip-develop/dip-lab.git
+cd dip-lab
 
-# Copy environment template
+# Copy the env template for each service you intend to run
 cp databases/.env.example databases/.env
-cp automation/.env.example automation/.env
-# ... copy other .env files as needed
+cp proxy/.env.example proxy/.env
+# ... repeat per service
 
 # Edit with your configuration
 vim databases/.env
@@ -32,20 +31,52 @@ vim databases/.env
 ./manager.sh start
 ```
 
+The `dev-agents` container ships with the `default` profile. If you
+switched to a smaller profile (e.g. `core` or `no-ai`) and want to
+develop against it locally:
+
+```bash
+cp dev-agents/.env.example dev-agents/.env
+# fill in DEVELOP_UID, DEVELOP_GID, OPENCODE_SERVER_PASSWORD
+./manager.sh start dev-agents
+```
+
 ## Guidelines
 
-- Follow existing code style and conventions
+- Follow existing code style and conventions (Compose, shell, Markdown)
 - Use descriptive commit messages
-- Test your changes before submitting
-- Update documentation when needed
-- Keep security in mind (don't commit secrets)
+- Test your changes before submitting (start the affected service, check
+  logs, exercise the change)
+- Update documentation when needed (`AGENTS.md`, `README.md`,
+  service-specific READMEs)
+- Keep security in mind — never commit secrets
+
+## Project layout
+
+```
+.
+├── manager.sh                 # primary entrypoint script
+├── AGENTS.md                  # contributor/operator agent guide
+├── README.md                  # user-facing docs
+├── SECURITY.md                # vulnerability disclosure
+├── CONTRIBUTING.md            # this file
+├── LICENSE                    # MIT
+├── completions.bash           # bash tab-completion
+├── networks.yml               # (currently unused; networks live in manager.sh)
+├── .disabled_services.example # template for the .disabled_services file
+├── .profiles/                 # built-in service profiles
+├── databases/  proxy/  monitoring/  passwords/  containers/
+├── cloud/      docs/    automation/  gallery/    ai-agent/
+└── dev-agents/                # developer workstation container (default profile)
+```
 
 ## Security
 
-- Never commit actual passwords or API keys
-- Use `.env` files for sensitive data (already in .gitignore)
-- Report security issues via GitHub Issues or email
+- Never commit real passwords, API keys, or tokens
+- Use `.env` files for sensitive data (already in `.gitignore`)
+- Report security issues via `SECURITY.md`, not GitHub Issues
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed
+under the MIT License.

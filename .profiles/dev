@@ -1,0 +1,12 @@
+# dev profile - active development.
+# Same as `default` but turns on automation (n8n) so you can run
+# workflows without remembering to enable it by hand.
+#
+# Disabled: monitoring, cloud, docs, gallery - heavyweight services
+# you don't need while iterating on code.
+#
+# dev-agents is included here too (it ships with `default`).
+monitoring
+cloud
+docs
+gallery

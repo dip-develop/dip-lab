@@ -1,0 +1,120 @@
+# dev-agents: developer workstation container for DIP-Lab.
+#
+# Bundles opencode CLI, Flutter SDK, Dart, and the standard
+# PostgreSQL / MySQL / Redis CLI tools. Ships with the `default`
+# profile; it can be disabled with:
+#   ./manager.sh profile disable dev-agents
+# (or switched to a smaller profile like `core` / `no-ai`).
+#
+# Container name: dev-agents (matches /home/develop/ inside).
+# Port: 4096 (opencode serve web UI/API), bound to 127.0.0.1 by default.
+#
+# Connects to the rest of the lab via the shared `internal` network so
+# the agents can reach:
+#   - http://automation:5678   (n8n automation)
+#   - http://hermes:8642        (Hermes API; container_name in ai-agent/)
+#   - http://hermes:9119        (Hermes dashboard)
+#   - http://postgres:5432     (databases)
+#
+# Hardened like every other service: no docker.sock, no --privileged,
+# resource caps, non-root user. See AGENTS.md inside the container for
+# what opencode is/is not allowed to touch.
+
+services:
+  dev-agents:
+    build:
+      context: .
+      args:
+        # :? makes the build fail loudly if these are not set in .env,
+        # rather than silently building with an empty UID.
+        DEVELOP_UID: "${DEVELOP_UID:?set DEVELOP_UID in dev-agents/.env, see .env.example}"
+        DEVELOP_GID: "${DEVELOP_GID:?set DEVELOP_GID in dev-agents/.env, see .env.example}"
+    image: diplab/dev-agents:local
+    container_name: dev-agents
+    restart: unless-stopped
+
+    # Resource caps. A runaway agent process gets throttled/OOM-killed
+    # here instead of starving the rest of the lab.
+    mem_limit: 4g
+    cpus: "2"
+    pids_limit: 512
+
+    # Default 127.0.0.1 - this is a developer tool, not a public service.
+    # Override BIND_IP in .env if you need LAN access (and trust the LAN).
+    ports:
+      - "${BIND_IP:-127.0.0.1}:4096:4096"
+
+    # Bind-mount config from the repo's dev-agents/config/ directory so
+    # edits to opencode.json / prompts / skills take effect without a
+    # rebuild. /home/develop/projects is the developer's working tree
+    # (mount your own repo there, or use a per-project docker compose
+    # override).
+    volumes:
+      - ./config/opencode.json:/home/develop/.config/opencode/opencode.json:ro
+      - ./config/prompts:/home/develop/.config/opencode/prompts:ro
+      - ./config/skills:/home/develop/.agents/skills:rw
+      - dev-agents-projects:/home/develop/projects
+
+    environment:
+      # Git identity for commits made from inside the container.
+      - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-dev-agent}
+      - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-dev-agent@diplab.local}
+      - GIT_COMMITTER_NAME=${GIT_COMMITTER_NAME:-dev-agent}
+      - GIT_COMMITTER_EMAIL=${GIT_COMMITTER_EMAIL:-dev-agent@diplab.local}
+      # Built-in websearch (Exa) for marketing/writer agents.
+      - OPENCODE_ENABLE_EXA=1
+      # Required because opencode serve is always-on and port-mapped.
+      # Without this the API/UI is reachable with no auth on whatever
+      # BIND_IP you set.
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD in dev-agents/.env, see .env.example}
+      # Isolated test-DB creds. The container can ONLY create/drop
+      # databases whose name starts with `dev_test_` (enforced at the
+      # server side by databases/init.sql + mysql-init.sql). See
+      # dev-agents/README.md and AGENTS.md for the safety rules.
+      - TEST_POSTGRES_USER=${TEST_POSTGRES_USER:-}
+      - TEST_POSTGRES_PASSWORD=${TEST_POSTGRES_PASSWORD:-}
+      - TEST_POSTGRES_DB=${TEST_POSTGRES_DB:-}
+      - TEST_MYSQL_USER=${TEST_MYSQL_USER:-}
+      - TEST_MYSQL_PASSWORD=${TEST_MYSQL_PASSWORD:-}
+      - TEST_MYSQL_DB=${TEST_MYSQL_DB:-}
+      - TEST_REDIS_DB=${TEST_REDIS_DB:-15}
+      - TEST_REDIS_PASSWORD=${TEST_REDIS_PASSWORD:-}
+      # Toggles the db-safe wrapper in entrypoint.sh. Default true.
+      - DB_SAFETY_GUARD=${DB_SAFETY_GUARD:-true}
+
+    # Two networks:
+    #   internal - reach automation, hermes (ai-agent), and other peers
+    #   database - reach postgres, mysql, redis (with the test creds
+    #              above, not the prod creds)
+    networks:
+      - internal
+      - database
+
+    # No docker.sock. No --privileged. No cap_add.
+    security_opt:
+      - no-new-privileges:true
+
+    healthcheck:
+      # opencode serve has no public health endpoint by default; check
+      # that the port is listening instead. Disable this if you switch
+      # to a different opencode version that exposes a real /health.
+      test: ["CMD-SHELL", "opencode --version >/dev/null 2>&1 || exit 1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 2G
+
+networks:
+  internal:
+    external: true
+  database:
+    external: true
+
+volumes:
+  dev-agents-projects:

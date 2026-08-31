@@ -1,0 +1,39 @@
+services:
+  # Portainer is the current implementation; the service directory
+  # is named `containers` to keep the door open for swapping it
+  # (Lazydocker, a custom UI, etc.) without renaming the directory
+  # or breaking automation that depends on it.
+  containers-ui:
+    image: portainer/portainer-ce:latest
+    container_name: containers-ui
+    restart: always
+    command: --http-enabled --bind :9000
+    ports:
+      - "${BIND_IP:-0.0.0.0}:9000:9000"
+    env_file:
+      - .env
+    environment:
+      - PORTAINER_ADMIN_PASSWORD=${CONTAINERS_ADMIN_PASSWORD:-${DOCKERUI_ADMIN_PASSWORD:-}}
+    volumes:
+      - ./data/containers:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - internal
+    security_opt:
+      - no-new-privileges:true
+    # no healthcheck: portainer image has no shell/wget/curl to probe with
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.containers.rule=Host(`${DOMAIN:-admin.example.com}`)"
+    #   - "traefik.http.routers.containers.entrypoints=websecure"
+    #   - "traefik.http.routers.containers.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.containers.loadbalancer.server.port=9000"
+
+networks:
+  internal:
+    external: true

@@ -1,0 +1,73 @@
+services:
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes
+    command: gateway run
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${BIND_IP:-0.0.0.0}:18789:8642"
+      - "${BIND_IP:-0.0.0.0}:18790:9119"
+    volumes:
+      - ./data/aiagent:/opt/data
+    environment:
+      - HERMES_UID=1000
+      - HERMES_GID=1000
+      # Pass the dev-agents (opencode) integration through to the
+      # container. Both come from .env via env_file; we re-declare
+      # them here so a missing value in .env does not silently break
+      # the cross-service call. See .env.example for details.
+      - OPENCODE_URL=${OPENCODE_URL:-http://dev-agents:4096}
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-}
+      - HERMES_OPENCODE_AUTOCALL=${HERMES_OPENCODE_AUTOCALL:-false}
+      # Cross-service: Seafile (cloud). Leave creds empty to disable.
+      - SEAFILE_URL=${SEAFILE_URL:-http://cloud}
+      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL:-}
+      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD:-}
+      - SEAFILE_API_TOKEN=${SEAFILE_API_TOKEN:-}
+      # Cross-service: Immich (gallery). Leave API key empty to disable.
+      - IMMICH_URL=${IMMICH_URL:-http://gallery:2283}
+      - IMMICH_API_KEY=${IMMICH_API_KEY:-}
+      # Cross-service: Paperless (docs). Leave token empty to disable.
+      - DOCS_URL=${DOCS_URL:-http://docs:8000}
+      - DOCS_API_TOKEN=${DOCS_API_TOKEN:-}
+      # Cross-service: Vaultwarden (passwords). Leave key empty to disable.
+      - PASSWORDS_URL=${PASSWORDS_URL:-http://passwords}
+      - PASSWORDS_API_KEY=${PASSWORDS_API_KEY:-}
+    networks:
+      - internal
+    tty: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8642/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.hermes.rule=Host(`${DOMAIN:-ai.example.com}`)"
+    #   - "traefik.http.routers.hermes.entrypoints=websecure"
+    #   - "traefik.http.routers.hermes.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.hermes.loadbalancer.server.port=8642"
+
+  #ai-agent:
+  # Note: kept for backward compatibility as an alias for the hermes
+  # service (so an old `ai-agent` hostname / DNS still resolves inside
+  # the internal network). Uncomment if you need it.
+  #  image: nginx:alpine
+  #  container_name: ai-agent-alias
+  #  restart: always
+  #  networks:
+  #    - internal
+
+networks:
+  internal:
+    external: true

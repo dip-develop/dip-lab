@@ -18,9 +18,10 @@ proxy/certs/
 # Disabled services (user-specific)
 .disabled_services
 
-# OpenCode
+# OpenCode / dev-agents
 .opencode/
 .env.opencode
+dev-agents/data/
 
 # IDE
 .idea/
@@ -36,3 +37,4 @@ Thumbs.db
 *.bak
 *.backup
 *.old
+backups/
