@@ -677,11 +677,11 @@ EOF
     echo "  $0 setup                          # init everything"
     echo "  $0 start                          # start enabled services"
     echo "  $0 -n start                       # dry-run"
-    echo "  $0 start dev-agents               # start the opt-in dev workstation"
+    echo "  $0 start dev-agents               # start the developer workstation"
     echo "  $0 update-all --filter '^auto|cloud$'  # update only automation + cloud"
     echo "  $0 update-all --no-backup         # update everything, skip pre-flight backup"
     echo "  $0 profile core                   # switch to core profile"
-    echo "  $0 profile dev                    # switch to dev profile (dev-agents enabled)"
+    echo "  $0 profile dev                    # switch to dev profile (default + automation)"
     echo "  $0 profile disable dev-agents     # disable dev-agents on the fly"
     echo "  $0 logs gallery --tail 50"
 }

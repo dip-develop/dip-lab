@@ -35,7 +35,7 @@ When deploying DIP-Lab:
 6. **Enable firewall** - Only expose ports 80 and 443 (and any other
    port you intentionally need) to the internet
 7. **Rotate `OPENCODE_SERVER_PASSWORD`** in `dev-agents/.env` if the
-   opt-in developer container has been reachable on anything other than
+   developer container has been reachable on anything other than
    `127.0.0.1`
 
 ## Known Considerations
@@ -58,7 +58,7 @@ When deploying DIP-Lab:
   Portainer, Vaultwarden, Grafana, Loki, Promtail, Prometheus,
   cAdvisor, node-exporter, Paperless, Hermes). Pin to a digest in
   production deployments where reproducibility matters.
-- **dev-agents container** - The opt-in developer workstation has
+- **dev-agents container** - The developer workstation has
   `opencode serve` always on. By default it binds to `127.0.0.1`. If
   you set `BIND_IP=0.0.0.0`, the `OPENCODE_SERVER_PASSWORD` is your
   only authentication.

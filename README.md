@@ -19,7 +19,7 @@ proxy.
 | `automation/` | n8n (automation) |
 | `gallery/` | Immich server + ML (photo gallery) |
 | `ai-agent/` | Hermes AI agent + dashboard |
-| `dev-agents/` | **Opt-in.** Developer workstation container: Flutter SDK + opencode CLI |
+| `dev-agents/` | Developer workstation container: Flutter SDK + opencode CLI (in `default` profile) |
 
 ## Quick start
 
@@ -60,7 +60,7 @@ exposed externally (80, 443).
 | Grafana / Prometheus | 3000 / 9090 | Monitoring |
 | Traefik | 80, 443 | Reverse proxy (external) |
 
-The optional `dev-agents` container exposes `opencode serve` on
+The `dev-agents` container exposes `opencode serve` on
 `127.0.0.1:4096` by default — see `dev-agents/README.md`.
 
 ## Database
@@ -84,7 +84,8 @@ Docker network (`postgres:5432`, `mysql:3306`, `redis:6379`).
 - `web` — Traefik reverse proxy (80, 443 on host)
 - `internal` — all app services, port-mapped to `0.0.0.0:{port}`.
   `dev-agents` is also on `internal` so its opencode agents can reach
-  `automation`, `ai-agent`, and `postgres` by hostname.
+  `automation`, `hermes` (the ai-agent service), and `postgres` by
+  hostname.
 - `database` — PostgreSQL, MySQL, Redis (isolated)
 - `monitoring` — Prometheus/Grafana/Loki/cAdvisor/node-exporter
   (defined inline, not pre-created)
@@ -121,7 +122,7 @@ Others attach only to `internal`.
 ```bash
 ./manager.sh setup           # create networks and folders
 ./manager.sh start           # start enabled services
-./manager.sh start dev-agents # start the opt-in developer workstation
+./manager.sh start dev-agents  # start the developer workstation
 ./manager.sh logs gallery --tail 50
 ./manager.sh status
 ./manager.sh update
@@ -155,19 +156,21 @@ enable):
   app services. Use for the very first start, or a host that only
   runs infrastructure.
 - `default` — everyday stack: `core` + `passwords` + `ai-agent` +
-  `cloud` + `docs` + `gallery`. No monitoring, no automation, no
-  dev-agents.
+  `cloud` + `docs` + `gallery` + `dev-agents` (9 services).
+  Monitoring and automation are situational and are not included.
 - `media` — `default` + `monitoring` + `automation` (Prometheus,
-  Grafana, Loki, Promtail, cAdvisor, n8n). No dev-agents.
-- `dev` — `default` + `automation` + `dev-agents`. Active
-  development without the heavyweight media services.
-- `no-ai` — everything except `ai-agent` and `dev-agents`. Homelab
-  without any LLM gateway.
-- `full` — everything enabled, including the opt-in `dev-agents`.
+  Grafana, Loki, Promtail, cAdvisor, n8n). 9 services.
+- `dev` — `default` + `automation`. Active development without the
+  heavyweight media services (7 services).
+- `no-ai` — everything except `ai-agent` and `dev-agents` (9 services).
+  Use on a host where you don't want any LLM gateway or agent
+  runtime.
+- `full` — everything enabled (11 services).
 
-`dev-agents` is included only in `dev` and `full`. In every other
-profile you must enable it explicitly:
-`./manager.sh profile enable dev-agents`.
+`dev-agents` is included in `default`, `media`, `dev`, and `full`. It
+is excluded from `core` (no app services) and `no-ai` (per the
+profile's intent). On a host with <8 GB RAM, disable it with
+`./manager.sh profile disable dev-agents`.
 
 ### Object storage
 

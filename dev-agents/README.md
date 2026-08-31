@@ -1,14 +1,14 @@
 # dev-agents
 
-Opt-in developer workstation container for DIP-Lab. Bundles the opencode
+Developer workstation container for DIP-Lab. Bundles the opencode
 CLI (with multi-agent config), Flutter SDK, Dart, a standalone
 Tailwind binary, and the standard PostgreSQL / MySQL / Redis CLI tools.
 Runs `opencode serve` as its main process on port **4096** (default
 bound to `127.0.0.1`).
 
-This is **not** a service that other DIP-Lab services depend on - it is a
-developer tool for the operator. It is intentionally excluded from every
-built-in profile. To use it:
+The container ships with the `default` profile and starts alongside
+the other lab services. If you switched to a smaller profile (e.g.
+`core` or `no-ai`), start it explicitly:
 
 ```bash
 cp dev-agents/.env.example dev-agents/.env

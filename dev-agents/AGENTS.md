@@ -19,9 +19,9 @@ hostname:
 |---|---|
 | Automation (n8n) | `http://automation:5678` |
 | n8n health | `http://automation:5678/healthz` |
-| Hermes API | `http://ai-agent:8642` |
-| Hermes API health | `http://ai-agent:8642/health` |
-| Hermes Dashboard | `http://ai-agent:9119` |
+| Hermes API | `http://hermes:8642` |
+| Hermes API health | `http://hermes:8642/health` |
+| Hermes Dashboard | `http://hermes:9119` |
 | PostgreSQL (test user only) | `postgres:5432` (use `TEST_POSTGRES_USER` / `TEST_POSTGRES_PASSWORD` from `dev-agents/.env`) |
 | MySQL (test user only) | `mysql:3306` (use `TEST_MYSQL_USER` / `TEST_MYSQL_PASSWORD` from `dev-agents/.env`) |
 | Redis (test DB index only) | `redis:6379` (use `TEST_REDIS_PASSWORD` and `TEST_REDIS_DB` from `dev-agents/.env`) |
@@ -101,7 +101,7 @@ values (see `~/.config/dev-agents/env.sh`).
 - Never run `docker`, `sudo`, `systemctl`, or firewall commands.
 - Never push to `main` or delete branches.
 - Never touch other DIP-Lab services' Docker containers (automation,
-  ai-agent, gallery, etc.). Only reach them over HTTP/TCP from inside
+  hermes, gallery, etc.). Only reach them over HTTP/TCP from inside
   the container, as documented in the **Network** table above.
 - Never `DROP DATABASE` / `TRUNCATE` / `FLUSHDB` against a
   non-`dev_test_` PostgreSQL/MySQL database, or a non-`TEST_REDIS_DB`
