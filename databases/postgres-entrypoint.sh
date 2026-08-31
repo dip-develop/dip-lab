@@ -9,7 +9,7 @@ set -e
 
 INIT_DIR="/docker-entrypoint-initdb.d"
 TEMPLATE="$INIT_DIR/init.sql"
-RENDERED="/tmp/init.rendered.sql"
+RENDERED="$INIT_DIR/init-rendered.sql"
 
 # Use sed here (not envsubst) because we need to handle quoted SQL
 # tokens like '${TEST_POSTGRES_PASSWORD}' that envsubst may mis-parse
@@ -31,7 +31,6 @@ render() {
 if [ -f "$TEMPLATE" ]; then
     render "$RENDERED"
     chmod 600 "$RENDERED"
-    mv "$RENDERED" "$TEMPLATE"
 fi
 
 exec /usr/local/bin/docker-entrypoint.sh "$@"
