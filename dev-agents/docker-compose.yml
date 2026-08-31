@@ -47,9 +47,9 @@ services:
     # (mount your own repo there, or use a per-project docker compose
     # override).
     volumes:
-      - ./config/opencode.json:/home/develop/.config/opencode/opencode.json:ro
-      - ./config/prompts:/home/develop/.config/opencode/prompts:ro
-      - ./config/skills:/home/develop/.agents/skills:rw
+      - ./config/opencode.json:/home/develop/.config/opencode/opencode.json
+      - ./config/prompts:/home/develop/.config/opencode/prompts
+      - ./config/skills:/home/develop/.agents/skills
       - dev-agents-projects:/home/develop/projects
 
     environment:
