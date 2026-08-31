@@ -27,7 +27,6 @@ ARG DEVELOP_GID
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates git openssh-client tmux unzip xz-utils \
         chromium libglu1-mesa clang cmake ninja-build pkg-config \
-        libgtk-3-dev \
         postgresql-client default-mysql-client redis-tools \
     && rm -rf /var/lib/apt/lists/*
 
@@ -38,15 +37,6 @@ RUN groupadd -g ${DEVELOP_GID} develop \
 
 USER develop
 WORKDIR /home/develop
-
-# Standalone Tailwind CLI binary (Jaspr + Tailwind projects).
-# No Node/npm chain at all. Pin to a real version in production
-# (replace "latest") so a Tailwind major bump doesn't silently
-# change generated CSS.
-RUN mkdir -p /home/develop/.local/bin \
-    && curl -fsSL -o /home/develop/.local/bin/tailwindcss \
-        https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 \
-    && chmod +x /home/develop/.local/bin/tailwindcss
 
 # `db-safe` wrapper - shadows psql, mysql, mariadb, redis-cli.
 # Refuses to talk to a non-test database unless the operator has
@@ -60,19 +50,6 @@ RUN for tool in psql mysql mariadb redis-cli; do \
     done
 
 ENV PATH="/home/develop/.local/bin:${PATH}"
-
-# Flutter SDK (bundles its own Dart SDK - covers Dart-only Serverpod
-# backend work and Flutter/Jaspr frontend work).
-# Pin to a specific tag once you settle on one (e.g. 3.35.5 instead
-# of "stable") so a Flutter upgrade doesn't silently change agent
-# behavior mid-project.
-RUN git clone --depth 1 -b stable https://github.com/flutter/flutter.git /home/develop/flutter
-ENV PATH="/home/develop/flutter/bin:/home/develop/.pub-cache/bin:${PATH}"
-ENV CHROME_EXECUTABLE=/usr/bin/chromium
-
-RUN flutter config --no-analytics --no-cli-animations \
-    && dart --disable-analytics \
-    && flutter precache --web --linux
 
 # opencode - the first agent CLI in this box, not the only one.
 # Add more CLI installs here later without touching anything above.
