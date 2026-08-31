@@ -8,7 +8,7 @@ set -e
 
 INIT_DIR="/docker-entrypoint-initdb.d"
 TEMPLATE="$INIT_DIR/mysql-init.sql"
-RENDERED="/tmp/mysql-init.rendered.sql"
+RENDERED="$INIT_DIR/mysql-init-rendered.sql"
 
 # Required env: MYSQL_CLOUD_PASSWORD, MYSQL_ROOT_PASSWORD.
 # Test creds are optional - if TEST_MYSQL_USER is empty the test-related
@@ -34,7 +34,6 @@ render() {
 if [ -f "$TEMPLATE" ]; then
     render "$RENDERED"
     chmod 600 "$RENDERED"
-    mv "$RENDERED" "$TEMPLATE"
 fi
 
 exec /usr/local/bin/docker-entrypoint.sh "$@"

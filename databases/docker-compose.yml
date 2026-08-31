@@ -17,7 +17,7 @@ services:
       - TEST_POSTGRES_DB=${TEST_POSTGRES_DB:-}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./postgres-entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     networks:
       - database
@@ -63,7 +63,7 @@ services:
       - TEST_MYSQL_DB=${TEST_MYSQL_DB:-}
     volumes:
       - ./data/mysql:/var/lib/mysql
-      - ./mysql-init.sql:/docker-entrypoint-initdb.d/mysql-init.sql:ro
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/mysql-init.sql
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
     networks:
       - database
