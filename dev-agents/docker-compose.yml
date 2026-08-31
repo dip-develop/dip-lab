@@ -50,7 +50,7 @@ services:
       - ./config/opencode.json:/home/develop/.config/opencode/opencode.json
       - ./config/prompts:/home/develop/.config/opencode/prompts
       - ./config/skills:/home/develop/.agents/skills
-      - dev-agents-projects:/home/develop/projects
+      - ./data/projects:/home/develop/projects
 
     environment:
       # Git identity for commits made from inside the container.
