@@ -1,4 +1,10 @@
+# media profile - the default stack plus monitoring and automation.
+# Same as `default` but turns on:
+#   monitoring  - Prometheus + Grafana + Loki + Promtail + cAdvisor
+#   automation  - n8n
+# Use this when you want to actually see what your stack is doing and
+# run workflows.
+#
+# dev-agents is included here too (it ships with `default`).
 passwords
-automation
-llm
-aiagent
+ai-agent
