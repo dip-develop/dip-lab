@@ -1,7 +1,7 @@
-# dev-agents/AGENTS.md
+# Developer Workstation — Agent Guide
 
 This file is read by opencode when you open a project inside the
-`dev-agents` container. It defines what agents are allowed to do.
+developer workstation container. It defines what agents are allowed to do.
 
 ## Stack
 
@@ -12,16 +12,16 @@ This file is read by opencode when you open a project inside the
 ## Network
 
 The container is attached to the `internal` and `database` Docker
-networks. From inside the container, DIP-Lab services are reachable by
+networks. From inside the container, services are reachable by
 hostname:
 
 | Service | URL (inside this container) |
 |---|---|
 | Automation (n8n) | `http://automation:5678` |
 | n8n health | `http://automation:5678/healthz` |
-| Hermes API | `http://hermes:8642` |
-| Hermes API health | `http://hermes:8642/health` |
-| Hermes Dashboard | `http://hermes:9119` |
+| API Gateway | `http://gateway:8642` |
+| API Gateway health | `http://gateway:8642/health` |
+| API Gateway Dashboard | `http://gateway:9119` |
 | PostgreSQL (test user only) | `postgres:5432` (use `TEST_POSTGRES_USER` / `TEST_POSTGRES_PASSWORD` from `dev-agents/.env`) |
 | MySQL (test user only) | `mysql:3306` (use `TEST_MYSQL_USER` / `TEST_MYSQL_PASSWORD` from `dev-agents/.env`) |
 | Redis (test DB index only) | `redis:6379` (use `TEST_REDIS_PASSWORD` and `TEST_REDIS_DB` from `dev-agents/.env`) |
@@ -35,16 +35,16 @@ by `OPENCODE_SERVER_PASSWORD` from `dev-agents/.env`.
 **The container has database access, but it is strictly isolated:**
 
 - You connect as `TEST_POSTGRES_USER` / `TEST_MYSQL_USER` (not the
-  prod `app` / `cloud` users). These test users have server-side
+  prod users). These test users have server-side
   grants ONLY on databases whose name starts with `dev_test_`.
 - A bash wrapper (`db-safe`, symlinked to `psql` / `mysql` /
   `mariadb` / `redis-cli` on PATH) refuses to talk to any non-test
   database. Examples that will be rejected:
-  - `psql -d gallery`            → exit 1
-  - `psql -d app`                → exit 1
-  - `mysql -D cloud`             → exit 1
-  - `redis-cli -n 0`             → exit 1
-  - `redis-cli SELECT 2`         → exit 1
+  - `psql -d production`            → exit 1
+  - `psql -d app`                   → exit 1
+  - `mysql -D cloud`                → exit 1
+  - `redis-cli -n 0`                → exit 1
+  - `redis-cli SELECT 2`            → exit 1
 - The wrapper can be disabled per-command with `DBSAFE=0 ...` or
   globally by setting `DB_SAFETY_GUARD=false` in `dev-agents/.env`.
   Don't disable it without a reason - the prod creds are NOT
@@ -100,8 +100,7 @@ values (see `~/.config/dev-agents/env.sh`).
   outside the project working directory mounted at `/home/develop/projects`.
 - Never run `docker`, `sudo`, `systemctl`, or firewall commands.
 - Never push to `main` or delete branches.
-- Never touch other DIP-Lab services' Docker containers (automation,
-  hermes, gallery, etc.). Only reach them over HTTP/TCP from inside
+- Never touch other services' Docker containers. Only reach them over HTTP/TCP from inside
   the container, as documented in the **Network** table above.
 - Never `DROP DATABASE` / `TRUNCATE` / `FLUSHDB` against a
   non-`dev_test_` PostgreSQL/MySQL database, or a non-`TEST_REDIS_DB`
@@ -117,7 +116,7 @@ values (see `~/.config/dev-agents/env.sh`).
 - Run `dart analyze` and `dart test` (or the project's equivalents) before
   calling a change done. Delegate to the `tester` subagent.
 - Use `flutter analyze` / `flutter test` for Flutter projects.
-- For projects that need a real database (Serverpod, etc.): the
+- For projects that need a real database: the
   `tester` subagent should use the test creds documented above. Use
   a per-feature test database (e.g. `dev_test_<feature>`) and drop
   it after the run.

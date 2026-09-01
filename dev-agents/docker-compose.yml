@@ -113,6 +113,3 @@ networks:
     external: true
   database:
     external: true
-
-volumes:
-  dev-agents-projects:
