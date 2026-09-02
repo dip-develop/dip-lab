@@ -1,0 +1,149 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // NOTE: the unscoped npm name "opencode-tps-meter" is reported (by other
+  // TPS-meter plugin authors' own docs) to already be owned by an unrelated
+  // package. Verify what's actually installed on the VPS right now before
+  // trusting this — this points at a real, actively maintained scoped fork
+  // instead, pinned to a specific release rather than "@latest".
+  "plugin": [
+    "@devinoldenburg/opencode-tps-meter@0.1.8"
+  ],
+
+  "model": "opencode/mimo-v2.5-free",
+  "small_model": "opencode/ling-3.0-flash-fin-free",
+  "default_agent": "orchestrator",
+  "share": "manual",
+
+  // subagent_depth intentionally omitted -> defaults to 1, which is exactly
+  // "primary can call subagents, subagents can't call further subagents".
+  // Every subagent below also explicitly sets task: deny, so this is now
+  // belt-and-suspenders rather than the only thing closing that gap.
+
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 10000
+  },
+
+  "permission": {
+    "external_directory": {
+      "~/.config/opencode/**": "ask",
+      "/home/develop/projects/**": "allow",
+      "*": "ask"
+    },
+
+    // Secrets stay unreadable by default, even for agents with otherwise
+    // broad read access.
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    },
+
+    // Shared baseline for ad-hoc/manual sessions using this config directly
+    // (e.g. default_agent with no agent .md override). Each agent .md file
+    // repeats the subset it needs rather than relying on partial merge with
+    // this block -- confirm merge granularity on your opencode version
+    // before trying to de-duplicate further.
+    "bash": {
+      "*": "ask",
+      "ls": "allow",
+      "ls *": "allow",
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "grep *": "allow",
+      "rg *": "allow",
+      "find *": "allow",
+      "tree *": "allow",
+      "wc *": "allow",
+      "less *": "allow",
+      "stat *": "allow",
+      "file *": "allow",
+      "pwd": "allow",
+      "pwd *": "allow",
+      "du *": "allow",
+      "echo *": "allow",
+      "date *": "allow",
+      "which *": "allow",
+      "uname *": "allow",
+      "env *": "allow",
+      "diff *": "allow",
+      "sort *": "allow",
+      "uniq *": "allow",
+      "mkdir *": "allow",
+      "cp *": "allow",
+      "mv *": "allow",
+      "chmod *": "allow",
+      "ln *": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git show *": "allow",
+      "git branch *": "allow",
+      "git checkout *": "allow",
+      "git stash *": "allow",
+      "git add *": "allow",
+      "git commit *": "allow",
+      "git merge *": "allow",
+      "git rebase *": "allow",
+      "git tag *": "allow",
+      "git fetch *": "allow",
+      "git pull*": "allow",
+      "git remote *": "allow",
+      "dart analyze*": "allow",
+      "dart format*": "allow",
+      "dart test*": "allow",
+      "dart pub *": "allow",
+      "flutter test*": "allow",
+      "flutter analyze*": "allow",
+      "flutter --version*": "allow",
+      "serverpod generate*": "allow",
+      "jaspr build*": "allow",
+
+      // git push: allowed in general, hard-denied to protected branches and
+      // force-pushes at the permission layer (not just via prompt wording).
+      // Rules are evaluated in order with the LAST match winning, so the
+      // specific denies must come after the general allow. These are simple
+      // glob patterns, not full argument parsing -- test them against your
+      // real usage before relying on them.
+      "git push *": "allow",
+      "git push * main*": "deny",
+      "git push * master*": "deny",
+      "git push*--force*": "deny",
+      "git push*-f*": "deny"
+    }
+  },
+
+  "lsp": {
+    "dart": {
+      "command": ["dart", "language-server", "--client-id=opencode"]
+    }
+  },
+
+  "mcp": {
+    "jaspr": {
+      "type": "remote",
+      "url": "https://docs.jaspr.site/mcp",
+      "enabled": true
+    },
+    "dart": {
+      "type": "local",
+      "command": ["/home/develop/dart-sdk/bin/dart", "mcp-server"],
+      "enabled": true
+    },
+    "serverpod": {
+      "type": "local",
+      "command": [
+        "/home/develop/dart-sdk/bin/dart",
+        "pub",
+        "global",
+        "run",
+        "serverpod_mcp:serverpod_mcp"
+      ],
+      "enabled": true
+    }
+  }
+}
