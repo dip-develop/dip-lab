@@ -31,6 +31,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         sudo \
     && rm -rf /var/lib/apt/lists/*
 
+# GitHub CLI (gh) - required for PR/issue operations from inside the container.
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update && apt-get install -y gh \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create the non-root user. If the host UID/GID are not specified, the
 # default 1000:1000 is used. The user is added to the sudo group so
 # they can install packages inside the container.
