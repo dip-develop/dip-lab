@@ -49,7 +49,8 @@ services:
     volumes:
       - ./config/opencode.json:/home/develop/.config/opencode/opencode.json
       - ./config/prompts:/home/develop/.config/opencode/prompts
-      - ./config/skills:/home/develop/.agents/skills
+      - ./config/skills:/home/develop/.config/opencode/skills
+      - ./config/agents:/home/develop/.config/opencode/agents
       - ./data/projects:/home/develop/projects
 
     environment:
