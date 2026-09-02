@@ -4,17 +4,17 @@
 # CLI installed in it, not the only one - add other CLIs below without
 # renaming anything.
 #
-# BUILD-TIME ARGS (required): DEVELOP_UID, DEVELOP_GID - the host user's
-# UID/GID so bind-mounted files keep matching ownership. The build fails
-# loudly if these aren't set in .env (see docker-compose.yml).
+# BUILD-TIME ARGS (optional): DEVELOP_UID, DEVELOP_GID - the host user's
+# UID/GID so bind-mounted files keep matching ownership. Defaults to
+# 1000:1000 if not set (see docker-compose.yml).
 #
 # Runtime configuration (opencode.json, prompts, skills) is bind-mounted
 # from config/ on the host - no rebuild required to tweak agent config.
 
 FROM debian:bookworm-slim
 
-ARG DEVELOP_UID
-ARG DEVELOP_GID
+ARG DEVELOP_UID=1000
+ARG DEVELOP_GID=1000
 
 # Base tooling. Nothing here is opencode-specific - the same image could
 # host Claude Code, Cursor CLI, etc. Add their deps here later.
@@ -28,12 +28,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates git openssh-client tmux unzip xz-utils \
         chromium libglu1-mesa clang cmake ninja-build pkg-config \
         postgresql-client default-mysql-client redis-tools \
+        sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# Create the non-root user that matches the host user's UID/GID.
-# No sudo, no docker group - the container is meant to be boxed in.
+# Create the non-root user. If the host UID/GID are not specified, the
+# default 1000:1000 is used. The user is added to the sudo group so
+# they can install packages inside the container.
 RUN groupadd -g ${DEVELOP_GID} develop \
     && useradd -m -u ${DEVELOP_UID} -g ${DEVELOP_GID} -s /bin/bash develop \
+    && usermod -aG sudo develop \
+    && echo 'develop ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/develop \
     && mkdir -p /home/develop/.local/bin \
     && chown -R develop:develop /home/develop/.local
 

@@ -25,10 +25,10 @@ services:
     build:
       context: .
       args:
-        # :? makes the build fail loudly if these are not set in .env,
-        # rather than silently building with an empty UID.
-        DEVELOP_UID: "${DEVELOP_UID:?set DEVELOP_UID in dev-agents/.env, see .env.example}"
-        DEVELOP_GID: "${DEVELOP_GID:?set DEVELOP_GID in dev-agents/.env, see .env.example}"
+        # Optional: set to match your host user's UID/GID so bind-mounted
+        # files keep matching ownership. Defaults to 1000:1000 if not set.
+        DEVELOP_UID: "${DEVELOP_UID:-1000}"
+        DEVELOP_GID: "${DEVELOP_GID:-1000}"
     image: diplab/dev-agents:local
     container_name: dev-agents
     restart: unless-stopped
