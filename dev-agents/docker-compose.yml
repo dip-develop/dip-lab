@@ -47,7 +47,7 @@ services:
     # (mount your own repo there, or use a per-project docker compose
     # override).
     volumes:
-      - ./config:/home/develop/.config/opencode
+      - ./data/config:/home/develop/.config/opencode
       - ./data/projects:/home/develop/projects
 
     environment:
