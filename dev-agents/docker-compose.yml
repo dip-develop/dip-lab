@@ -17,7 +17,9 @@
 #   - http://postgres:5432     (databases)
 #
 # Hardened like every other service: no docker.sock, no --privileged,
-# resource caps, non-root user. See AGENTS.md inside the container for
+# resource caps, non-root user. Unlike other services, no-new-privileges
+# is intentionally omitted so sudo works for package installation.
+# See AGENTS.md inside the container for
 # what opencode is/is not allowed to touch.
 
 services:
@@ -29,6 +31,9 @@ services:
         # files keep matching ownership. Defaults to 1000:1000 if not set.
         DEVELOP_UID: "${DEVELOP_UID:-1000}"
         DEVELOP_GID: "${DEVELOP_GID:-1000}"
+        # Optional: pin the opencode CLI version for reproducible builds.
+        # Defaults to "latest" (the current release).
+        OPENCODE_VERSION: "${OPENCODE_VERSION:-latest}"
     image: diplab/dev-agents:local
     container_name: dev-agents
     restart: unless-stopped
@@ -86,14 +91,15 @@ services:
       - database
 
     # No docker.sock. No --privileged. No cap_add.
-    security_opt:
-      - no-new-privileges:true
+    # NOTE: no-new-privileges is deliberately NOT set here — it blocks
+    # setuid elevation and would make the in-image passwordless sudo
+    # unusable. Agents rely on sudo to install packages (see Dockerfile).
 
     healthcheck:
-      # opencode serve has no public health endpoint by default; check
-      # that the port is listening instead. Disable this if you switch
-      # to a different opencode version that exposes a real /health.
-      test: ["CMD-SHELL", "opencode --version >/dev/null 2>&1 || exit 1"]
+      # Check the opencode serve port actually answers. Any HTTP
+      # response counts (even 401 Unauthorized from password auth) -
+      # what matters is that the listener is up.
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:4096 || exit 1"]
       interval: 1m
       timeout: 10s
       retries: 3
@@ -102,7 +108,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '3'
+          cpus: '4'
           memory: 6G
           pids: 512
 
