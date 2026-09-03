@@ -19,9 +19,9 @@ hostname:
 |---|---|
 | Automation (n8n) | `http://automation:5678` |
 | n8n health | `http://automation:5678/healthz` |
-| API Gateway | `http://gateway:8642` |
-| API Gateway health | `http://gateway:8642/health` |
-| API Gateway Dashboard | `http://gateway:9119` |
+| Hermes API Gateway | `http://hermes:8642` |
+| Hermes API Gateway health | `http://hermes:8642/health` |
+| Hermes API Gateway Dashboard | `http://hermes:9119` |
 | PostgreSQL (test user only) | `postgres:5432` (use `TEST_POSTGRES_USER` / `TEST_POSTGRES_PASSWORD` from `dev-agents/.env`) |
 | MySQL (test user only) | `mysql:3306` (use `TEST_MYSQL_USER` / `TEST_MYSQL_PASSWORD` from `dev-agents/.env`) |
 | Redis (test DB index only) | `redis:6379` (use `TEST_REDIS_PASSWORD` and `TEST_REDIS_DB` from `dev-agents/.env`) |
@@ -98,7 +98,10 @@ values (see `~/.config/dev-agents/env.sh`).
 
 - Never edit `.env`, secrets, SSH keys, WireGuard config, or anything
   outside the project working directory mounted at `/home/develop/projects`.
-- Never run `docker`, `sudo`, `systemctl`, or firewall commands.
+- Never run `docker`, `systemctl`, or firewall commands. `sudo` is
+  allowed for installing packages/tools inside the container
+  (e.g. `sudo apt-get install ...`), never for altering system/network
+  config or anything outside the container.
 - Never push to `main` or delete branches.
 - Never touch other services' Docker containers. Only reach them over HTTP/TCP from inside
   the container, as documented in the **Network** table above.
