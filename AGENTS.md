@@ -1,134 +1,99 @@
 # Docker Compose Lab — Agent Guide
 
-This project uses a `manager.sh` script to orchestrate multiple Docker Compose services. Services are organized in subdirectories, each with their own `docker-compose.yml` and `.env` files.
+Self-hosted home-lab: 11 Docker Compose services on a single Linux host, orchestrated by `manager.sh`. Each service is a subdirectory with its own `docker-compose.yml`, gitignored `.env`, and `.env.example` template. Pure YAML + shell — no test suite, CI, linter, or codegen. Verify `manager.sh`/compose changes with the global dry-run flag: `./manager.sh -n <command>`.
 
-## Boot Order
+## Boot Order (matters)
 
-`./manager.sh start` starts services in stages:
-1. **Databases** (PostgreSQL, MySQL, Redis, etc.) — blocking, waits for health checks
-2. **Proxy** (Traefik/NGINX) — blocking, waits for health checks
-3. **All remaining services** — parallel startup
+`./manager.sh start` (all services) runs in stages:
+1. **databases** — blocking, waits for health checks
+2. **proxy** — blocking, waits for health checks
+3. Everything else — in parallel
 
-`./manager.sh setup` is called implicitly on every `start` to create networks and data directories.
+- `start` only calls `setup_nets` (creates `web`/`internal`/`database` networks). It does **not** create data dirs or run `<svc>/setup.sh` — run `./manager.sh setup` first for fresh setups.
+- `stop` runs in reverse order; databases stop last.
+- `restart <svc>` is `docker compose restart` — **no config reload**. After editing a compose file use `./manager.sh update <svc>` (pull/build + `up -d`) or `docker compose up -d` in the service dir.
 
 ## Key Commands
 
 | Command | Description |
 |---------|-------------|
-| `./manager.sh setup` | Create Docker networks + data dirs; runs `<svc>/setup.sh` |
+| `./manager.sh setup` | Create Docker networks + data dirs; runs `<svc>/setup.sh` when present |
 | `./manager.sh start [svc]` | Start all (db→proxy→rest) or one service |
 | `./manager.sh stop [svc]` | Stop all (databases last) or one service |
 | `./manager.sh restart [svc]` | Restart all or one service |
 | `./manager.sh update [svc]` | Pull/rebuild images then recreate containers |
+| `./manager.sh update-all [--filter <regex>] [--no-recreate] [--prune] [--no-backup]` | Bulk-update enabled services: parallel pulls, digest checks, recreate only changed images, honors boot order, optional preflight backup |
 | `./manager.sh build <svc>` | Build service image |
 | `./manager.sh logs <svc> [--tail N]` | Follow service logs |
 | `./manager.sh status` | Show container status for enabled services |
 | `./manager.sh exec <svc> <cmd>` | Run command in service container |
 | `./manager.sh perm` | Fix UID/GID ownership on data dirs |
-| `./manager.sh profile <action>` | Manage disabled-service profiles |
-| `./manager.sh backup [dir]` | Backup data dirs to tar.gz |
-| `./manager.sh restore <file>` | Restore data dirs from backup |
-| `./manager.sh -n start` | Dry-run: show what would happen |
+| `./manager.sh profile list` | List available profiles |
+| `./manager.sh profile show` | Show current/active disabled-service state |
+| `./manager.sh profile <name>` | Apply a named profile from `.profiles/` |
+| `./manager.sh profile enable <svc>` | Remove a service from `.disabled_services` |
+| `./manager.sh profile disable <svc>` | Add a service to `.disabled_services` |
+| `./manager.sh backup [dir]` | Backup data dirs to `backups/diplab-backup-<timestamp>.tar.gz` (gitignored) |
+| `./manager.sh restore <file>` | Restore data dirs from backup (**overwrites data dirs** — stop services first; prompts for confirmation) |
+| `./manager.sh -n start` | Dry-run: show what would happen (`-n`/`--dry-run` is global) |
 | `./manager.sh clean` | Prune unused Docker volumes/networks |
 | `./manager.sh stop-all` | `docker stop` every running container |
 | `./manager.sh full-cleanup` | Nuke containers, images, volumes, networks |
 
-## Disabled Services & Profiles
+Examples: `./manager.sh update-all --filter '^auto|cloud$'` (regex is unanchored — use `^`/`$` to match whole service names), `--no-recreate` (pull only), `--no-backup`.
 
-- **`.disabled_services`** — one service per line in project root (gitignored). Explicit targeting still works: `./manager.sh start <service>`.
-- **`profile` command** — `./manager.sh profile disable <svc>`, `enable <svc>`, or `./manager.sh profile <name>` to switch profile.
-- Profiles live in `.profiles/` — each file lists services to disable (one per line). Profiles are applied by copying to `.disabled_services`.
+## Services & Profiles
 
-Example profiles:
-- `core` — infrastructure only (databases + proxy + container mgmt)
-- `default` — everyday stack (core + app services)
-- `full` — all services enabled
+Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `proxy`, `monitoring`, `passwords`, `containers`, `cloud`, `docs`, `automation`, `gallery`, `ai-agent`, `dev-agents`. Not every directory is a service — `llm/` is data-only and `networks.yml` is unused (networks live in `manager.sh`).
 
-## Service Structure
-
-Each service lives in its own directory:
-
-```
-<service-name>/
-├── docker-compose.yml    # Required
-├── .env.example          # Template for .env
-├── .env                  # Gitignored, copy from .env.example
-├── setup.sh              # Optional, run by manager.sh setup
-├── entrypoint.sh         # Optional, container entrypoint
-└── Dockerfile            # Optional, for locally built images
-```
-
-Services define their own:
-- Networks (attach to shared `internal`, `database`, `web` networks)
-- Volumes (data persisted in `<service>/data/`)
-- Resource limits (CPU, memory, pids)
-- Health checks
-- Security options (`no-new-privileges:true`)
-
-## Networks
-
-Standard networks (created by `setup_nets`):
-- `web` — Reverse proxy, ports 80/443 externally
-- `internal` — All app services, inter-service communication
-- `database` — Databases only (PostgreSQL, MySQL, Redis)
-- `monitoring` — Observability stack (created inline in monitoring compose)
-
-Services needing DB access attach to both `internal` and `database`.
-
-## Secrets & Environment
-
-- Every service has `<dir>/.env` (gitignored) and `<dir>/.env.example`.
-- Never commit `.env` files.
-- Each container loads **only its own** `<dir>/.env` via `env_file`.
-- Shared credentials (DB passwords, etc.) must be kept identical across all service `.env` files.
-- Use placeholder substitution in init scripts (e.g., `__MYSQL_PASSWORD__` in SQL, replaced by entrypoint.sh from `.env`).
-
-## Database Initialization
-
-- `init.sql` files create application databases and extensions.
-- Test users/databases can be created conditionally via `TEST_*` env vars.
-- Redis: dedicated DB index for test clients (e.g., `TEST_REDIS_DB=15`).
-- Configure connection limits, buffers, charset as needed.
-
-## Object Storage (Optional)
-
-Services can mount external object storage at `/mnt/object-storage/data/<service>/`:
-- Create marker files (e.g., `.immich`) in subdirectories if required by the application.
-- `manager.sh setup` creates directories + markers when `/mnt/object-storage/data` exists.
-- Local `./data/` mounts can be used as fallback (commented out by default).
-
-## Reverse Proxy (Traefik/NGINX)
-
-- Config in `proxy/` directory.
-- Dashboard protected by htpasswd (generated at startup).
-- ACME certs in `proxy/acme.json` (gitignored).
-- `exposedByDefault: false` — services opt in with labels.
-- Labels commented out by default for direct port access pattern.
+- **`.disabled_services`** (project root, gitignored) — one service per line; comments/blank lines ignored. Disabled services can still be targeted explicitly: `./manager.sh start <svc>`.
+- `./manager.sh profile <name>` **overwrites** `.disabled_services` with a copy of `.profiles/<name>` (not a merge).
+- Available profiles:
+  - `core` — infrastructure only: `databases` + `proxy` + `containers`
+  - `default` — everyday stack; disables `monitoring` and `automation`, includes `dev-agents`
+  - `dev` — disables `monitoring`, `cloud`, `docs`, `gallery`
+  - `media` — disables `passwords` and `ai-agent`
+  - `no-ai` — disables `ai-agent` and `dev-agents`
+  - `full` — all services enabled (empty file)
 
 ## Conventions
 
-- Every service: `security_opt: no-new-privileges:true` + `deploy.resources.limits`
-- Non-root users where possible (specify UID/GID in compose or Dockerfile)
-- `manager.sh restart <svc>` does `docker compose restart` (no config reload) — after editing compose, use `./manager.sh update <svc>` or `docker compose up -d`
-- `.env.example` files are templates: copy to `.env` and fill
-- Pure Docker Compose YAML + shell scripts — no test suite, CI, linter, or codegen required
-- `manager.sh` is the primary executable
-- Shell autocomplete: `source completions.bash`
+- Every service: `security_opt: no-new-privileges:true`, `deploy.resources.limits`, health checks, non-root user with explicit UID/GID where possible (known gaps: `proxy` has no resource limits, `cloud` has no healthchecks, `dev-agents` intentionally omits `no-new-privileges` (passwordless `sudo` for package installs)).
+- Data persisted in `<svc>/data/` (gitignored).
+- Networks: `web` (reverse proxy, ports 80/443 externally) · `internal` (all app services) · `database` (DBs only). Services needing DB access attach to both `internal` and `database`. The `monitoring` network is defined inline in `monitoring/docker-compose.yml`, not by `setup_nets`.
+- Optional per-service files: `setup.sh` (run by `setup`), `entrypoint.sh`, `Dockerfile`.
+- `.env.example` files are templates: copy to `.env` and fill before first start.
+- Shell autocomplete: `source completions.bash`.
 
-## For Locally Built Images
+## Secrets & Environment
 
-Services with a `build:` section in docker-compose.yml:
-- Use `./manager.sh build <svc>` to build/rebuild
-- Use `./manager.sh update <svc>` — detects local build and runs build instead of pull
-- Image tag should be local (e.g., `myorg/my-service:local`)
+- Each container loads **only its own** `<dir>/.env` via `env_file`. Never commit `.env` files.
+- Shared credentials (DB passwords, etc.) must be kept identical across all service `.env` files (e.g. `MYSQL_PASSWORD` in both `databases/.env` and `cloud/.env`).
+- Init SQL uses `__TOKEN__` placeholders (e.g. `__MYSQL_CLOUD_PASSWORD__`, `__TEST_MYSQL_USER__`), substituted by `databases/entrypoint.sh` from `databases/.env` at container start.
 
-## Extending
+## Database Initialization
 
-Add new services by:
-1. Creating `<service>/docker-compose.yml`
-2. Adding service to `SERVICES_ALL` array in `manager.sh`
-3. Creating `<service>/.env.example`
-4. Running `./manager.sh setup` to create networks/dirs
-5. Running `./manager.sh start <service>` to start
+- `databases/init.sql` + `databases/mysql-init.sql` create application databases/extensions on first container start.
+- Test users/databases are created conditionally via `TEST_*` env vars from `databases/.env` (defaults: user `dev_test`, DB `dev_test_main`, `TEST_REDIS_DB=15`).
+- Postgres/MySQL test grants are scoped to `dev_test_%` databases — they cannot drop or alter production databases. Redis test clients use a dedicated DB index.
+- Inside the `dev-agents` workstation, DB access goes through the `db-safe` wrapper (test creds only) — see `dev-agents/AGENTS.md` for container rules (no docker.sock, test-only databases, no pushes to `main`).
 
-Disable by default by adding to a profile in `.profiles/` or `.disabled_services`.
+## Locally Built Images
+
+`dev-agents` and `docs` have `build:` sections (local tags like `diplab/dev-agents:local`):
+- `./manager.sh build <svc>` to build/rebuild.
+- `./manager.sh update <svc>` detects `build:` and rebuilds instead of pulling.
+
+## Operational Gotchas
+
+- `update-all` runs a pre-flight data-dir backup before pulling (skip with `--no-backup`). With `-n` it only prints the target list — no pull, recreate, backup, or status table.
+- `perm` fixes ownership: postgres/mysql `999:999`, redis `6379:6379`, seafile `8000:8000`, automation `1000:1000`; chmod `600` on `.env` and `proxy/acme.json`. Run after fresh setup.
+- Object storage: when `/mnt/object-storage/data` exists, `setup` creates per-service subdirs + Immich `.immich` markers. Local `./data/` fallback mounts are commented out in compose files.
+- Traefik: config in `proxy/traefik.yml` + `proxy/dynamic/`; dashboard htpasswd generated by `proxy/entrypoint.sh` at startup; `acme.json` gitignored; `exposedByDefault: false` — Traefik labels are commented out by default (direct-port access pattern).
+
+## Adding a Service
+
+1. Create `<service>/docker-compose.yml` and `.env.example` (optional: `setup.sh`, `Dockerfile`, `entrypoint.sh`)
+2. Register the service in `SERVICES_ALL` in `manager.sh`
+3. `./manager.sh setup` → `./manager.sh start <service>`
+4. To disable it by default, add it to the relevant `.profiles/` files

@@ -1,8 +1,8 @@
 # dev-agents
 
 Developer workstation container for DIP-Lab. Bundles the opencode
-CLI (with multi-agent config), Flutter SDK, Dart, a standalone
-Tailwind binary, and the standard PostgreSQL / MySQL / Redis CLI tools.
+CLI (with multi-agent config), Flutter SDK, Dart, and the standard
+PostgreSQL / MySQL / Redis CLI tools.
 Runs `opencode serve` as its main process on port **4096** (default
 bound to `127.0.0.1`).
 
@@ -28,10 +28,12 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
   host user that owns the bind-mounted directories)
 - Flutter SDK (stable channel)
 - Dart (bundled with Flutter)
-- `opencode` CLI installed via the official installer
-- Standalone `tailwindcss` binary on `PATH` (no Node/npm)
+- `opencode` CLI installed via the official installer (version
+  pinning supported via the `OPENCODE_VERSION` build arg)
 - Chromium + GTK for `flutter test` web integration tests
-- `tmux`, `git`, `openssh-client`, build-essential for ad-hoc work
+- `tmux`, `git`, `gh`, `openssh-client`, `clang`/`cmake`/`ninja-build`/`pkg-config`
+  build toolchain for ad-hoc work
+- DB clients: `psql`, `mysql`, `mariadb`, `redis-cli`
 
 ## Files in this directory
 
@@ -40,17 +42,16 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 | `Dockerfile` | Image build (see args above) |
 | `docker-compose.yml` | Service definition, joins the `internal` network |
 | `.env.example` | Template - copy to `.env` and fill in |
-| `setup.sh` | Creates `config/prompts/` and `config/skills/` if missing |
+| `setup.sh` | Creates `data/config/agents/` if missing |
 | `AGENTS.md` | Read by opencode when you open a project - agent rules |
-| `config/opencode.json` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, marketing, writer |
-| `config/prompts/` | Per-agent system prompts |
-| `config/skills/` | Shared Agent Skills library (bind-mounted rw so you can edit from the host) |
+| `data/config/opencode.jsonc` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
+| `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host) |
 
 ## What the agents can do
 
-- Read your source tree at `/home/develop/projects` (a named Docker volume
-  - replace it with a bind mount to your real project path via override
-  compose, or `docker cp` files in)
+- Read your source tree at `/home/develop/projects` (a bind mount of
+  `./data/projects` - point your repo there via `.env` or a compose
+  override)
 - Use the Dart language server and the `dart` MCP server for analysis,
   pub search, running tests
 - Reach other DIP-Lab services by hostname (see `AGENTS.md` for the
@@ -59,6 +60,8 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 - **Connect to the shared PostgreSQL, MySQL, and Redis instances, but
   only as the `TEST_*` users and only on `dev_test_*` databases.**
   See "Database isolation" below.
+- Install packages/tools inside the container via passwordless
+  `sudo` (e.g. `sudo apt-get install <pkg>`)
 
 ## Database isolation (read this before enabling DB access)
 
@@ -113,20 +116,23 @@ test state, and `DROP DATABASE` it when done.
 ## What the agents cannot do
 
 - No `docker` / `docker compose` (the binary is not even installed)
-- No `sudo` / `systemctl` / firewall commands
+- No `systemctl` / firewall commands
 - No pushing to `main`
 - No reading `*.env`, `*.key`, `*.pem`, SSH keys, or WireGuard configs
-- No editing files outside `/home/develop/projects` (other than skills
-  under `config/skills/`, which is rw)
+- No editing files outside `/home/develop/projects` (other than the
+  opencode config under `data/config/`, which is rw)
 - No connecting to a non-`dev_test_` database (enforced at both the
   server side by the test-user grants and at the client side by the
   `db-safe` wrapper)
 
 ## Hardening
 
-Same posture as every other DIP-Lab service:
-- `security_opt: no-new-privileges:true`
-- Resource caps: 1.5 CPU, 2 GB RAM, 512 PIDs
+Same posture as every other DIP-Lab service, with one deliberate
+exception:
+- `no-new-privileges` is deliberately NOT set (it would block setuid
+  elevation and break the in-image passwordless `sudo` that agents use
+  for package installs); the rest of the posture still applies
+- Resource caps: 4 CPU, 6 GB RAM, 512 PIDs
 - No `docker.sock` mount, no `--privileged`, no `cap_add`
 - Port 4096 bound to `127.0.0.1` by default; password-protected at the
   application layer (`OPENCODE_SERVER_PASSWORD`)
@@ -136,15 +142,15 @@ Same posture as every other DIP-Lab service:
 
 ## Customizing model IDs
 
-`config/opencode.json` ships with `<set-...-model-id>` placeholders.
+`data/config/opencode.jsonc` ships with `<set-...-model-id>` placeholders.
 After starting the container and opening the web UI:
 
 1. Run `/connect` and pick your model provider.
 2. Run `/models` to list the real model IDs your provider offers.
-3. Replace the placeholders in `config/opencode.json` (it is bind-mounted
-   read-only from the host - edit on the host, then restart the container
-   or just reopen the project in opencode).
-4. Restart with `./manager.sh restart dev-agents`.
+3. Replace the placeholders in `data/config/opencode.jsonc` (it is
+   bind-mounted read-write from the host - edit on the host, then
+   reopen the project in opencode or restart the container to pick
+   the changes up).
 
 ## Differences from a stock opencode install
 
