@@ -6,10 +6,12 @@
 #
 # BUILD-TIME ARGS (optional): DEVELOP_UID, DEVELOP_GID - the host user's
 # UID/GID so bind-mounted files keep matching ownership. Defaults to
-# 1000:1000 if not set (see docker-compose.yml).
+# 1000:1000 if not set (see docker-compose.yml). OPENCODE_VERSION pins
+# the opencode CLI release ("latest" by default). Flutter (stable) is
+# installed in-image, so containers start offline-ready.
 #
-# Runtime configuration (opencode.json, prompts, skills) is bind-mounted
-# from config/ on the host - no rebuild required to tweak agent config.
+# Runtime configuration (opencode.jsonc, agents/) is bind-mounted
+# from data/config/ on the host - no rebuild required to tweak agent config.
 
 FROM debian:bookworm-slim
 
@@ -41,8 +43,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && rm -rf /var/lib/apt/lists/*
 
 # Create the non-root user. If the host UID/GID are not specified, the
-# default 1000:1000 is used. The user is added to the sudo group so
-# they can install packages inside the container.
+# default 1000:1000 is used. sudo + NOPASSWD is intentional: opencode
+# agents use it to install packages/tools inside the container
+# (e.g. `sudo apt-get install <pkg>`). no-new-privileges is therefore
+# deliberately NOT set in docker-compose.yml, since it would block
+# setuid elevation and make sudo unusable.
 RUN groupadd -g ${DEVELOP_GID} develop \
     && useradd -m -u ${DEVELOP_UID} -g ${DEVELOP_GID} -s /bin/bash develop \
     && usermod -aG sudo develop \
@@ -68,8 +73,47 @@ ENV PATH="/home/develop/.local/bin:${PATH}"
 
 # opencode - the first agent CLI in this box, not the only one.
 # Add more CLI installs here later without touching anything above.
-RUN curl -fsSL https://opencode.ai/install | bash
+# Pin with OPENCODE_VERSION (e.g. 1.0.180) for reproducible builds.
+# "latest" (default) installs the current release.
+ARG OPENCODE_VERSION=latest
+RUN if [ "$OPENCODE_VERSION" = "latest" ]; then \
+        curl -fsSL https://opencode.ai/install | bash; \
+    else \
+        curl -fsSL https://opencode.ai/install | bash -s -- --version "$OPENCODE_VERSION"; \
+    fi
 ENV PATH="/home/develop/.opencode/bin:${PATH}"
+
+# Standalone Dart SDK (stable channel) - kept independent of the Flutter
+# checkout below so pure-Dart projects (Serverpod, CLIs) get a `dart` on
+# PATH that does not depend on Flutter. Flutter still uses its own bundled
+# Dart via its launcher. Pin with DART_VERSION (e.g. 3.5.4); "latest"
+# (default) installs the current stable release.
+ARG DART_VERSION=latest
+ARG TARGETARCH
+RUN set -eux; \
+    case "$TARGETARCH" in \
+        amd64) DART_ARCH=x64 ;; \
+        arm64) DART_ARCH=arm64 ;; \
+        *) echo "ERROR: unsupported TARGETARCH '${TARGETARCH}' for the Dart SDK (expected amd64 or arm64)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o /tmp/dartsdk.zip \
+        "https://storage.googleapis.com/dart-archive/channels/stable/release/${DART_VERSION}/sdk/dartsdk-linux-${DART_ARCH}-release.zip" \
+    && sudo unzip -q /tmp/dartsdk.zip -d /opt \
+    && rm /tmp/dartsdk.zip
+ENV PATH="/opt/dart-sdk/bin:${PATH}"
+
+# Flutter SDK (stable channel). Cloned as the develop user so the flutter
+# tool can write its cache/version files next to the SDK. `flutter
+# --version` warms the Dart SDK + artifacts cache into the image so
+# containers start offline-ready.
+RUN git clone --depth 1 -b stable https://github.com/flutter/flutter.git /home/develop/flutter \
+    && /home/develop/flutter/bin/flutter --version \
+    && /home/develop/flutter/bin/flutter config --no-analytics \
+    && /home/develop/flutter/bin/flutter precache --universal --linux --web
+# Appended (not prepended) so the standalone Dart SDK above intentionally
+# shadows Flutter's bundled dart shim. Safe: the flutter launcher always
+# uses its own bundled SDK regardless of PATH order.
+ENV PATH="${PATH}:/home/develop/flutter/bin"
 
 # Bash profile snippet that exports the test-cred env vars into
 # every interactive shell. The file is sourced from ~/.bashrc (added
