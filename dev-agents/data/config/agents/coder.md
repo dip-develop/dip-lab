@@ -15,8 +15,14 @@ permission:
     "tail *": allow
     "grep *": allow
     "rg *": allow
+    "sed *": allow
     "find *": allow
     "stat *": allow
+    "mkdir *": allow
+    "less *": allow
+    "sort *": allow
+    "uniq *": allow
+    "wc *": allow
     pwd: allow
     "git status*": allow
     "git diff*": allow
@@ -31,11 +37,7 @@ permission:
     "gh pr create*": allow
     "gh pr list*": allow
     "gh pr view*": allow
-    "gh pr merge*": allow
-    "gh issue create*": allow
     "gh issue list*": allow
-    "gh repo *": allow
-    "gh api *": allow
     "dart analyze*": allow
     "dart format*": allow
     "dart test*": allow

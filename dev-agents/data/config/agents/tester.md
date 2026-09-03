@@ -8,6 +8,13 @@ permission:
   task: deny
   bash:
     "*": ask
+    "grep *": allow
+    "rg *": allow
+    "head *": allow
+    "tail *": allow
+    "less *": allow
+    "file *": allow
+    "stat *": allow
     ls: allow
     "ls *": allow
     "cat *": allow
