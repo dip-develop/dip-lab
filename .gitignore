@@ -2,8 +2,9 @@
 *.env
 */*.env
 
-# Data directories (local)
-*/data/
+# Data directories (local) - exclude service data, keep dev-agents/config
+*/data/*
+!dev-agents/data/config/
 
 # Proxy (sensitive)
 proxy/acme.json
@@ -21,7 +22,6 @@ proxy/certs/
 # OpenCode / dev-agents
 .opencode/
 .env.opencode
-dev-agents/data/
 
 # IDE
 .idea/
