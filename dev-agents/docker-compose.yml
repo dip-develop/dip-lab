@@ -25,10 +25,10 @@ services:
     build:
       context: .
       args:
-        # :? makes the build fail loudly if these are not set in .env,
-        # rather than silently building with an empty UID.
-        DEVELOP_UID: "${DEVELOP_UID:?set DEVELOP_UID in dev-agents/.env, see .env.example}"
-        DEVELOP_GID: "${DEVELOP_GID:?set DEVELOP_GID in dev-agents/.env, see .env.example}"
+        # Optional: set to match your host user's UID/GID so bind-mounted
+        # files keep matching ownership. Defaults to 1000:1000 if not set.
+        DEVELOP_UID: "${DEVELOP_UID:-1000}"
+        DEVELOP_GID: "${DEVELOP_GID:-1000}"
     image: diplab/dev-agents:local
     container_name: dev-agents
     restart: unless-stopped
@@ -41,16 +41,13 @@ services:
     ports:
       - "${BIND_IP:-127.0.0.1}:4096:4096"
 
-    # Bind-mount config from the repo's dev-agents/config/ directory so
-    # edits to opencode.json / prompts / skills take effect without a
+    # Bind-mount the entire opencode config directory so edits to
+    # opencode.json / prompts / skills / agents take effect without a
     # rebuild. /home/develop/projects is the developer's working tree
     # (mount your own repo there, or use a per-project docker compose
     # override).
     volumes:
-      - ./config/opencode.jsonc:/home/develop/.config/opencode/opencode.jsonc
-      - ./config/prompts:/home/develop/.config/opencode/prompts
-      - ./config/skills:/home/develop/.config/opencode/skills
-      - ./config/agents:/home/develop/.config/opencode/agents
+      - ./data/config:/home/develop/.config/opencode
       - ./data/projects:/home/develop/projects
 
     environment:
