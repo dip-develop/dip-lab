@@ -53,7 +53,7 @@ permission:
     "gh pr create*": allow
     "gh pr list*": allow
     "gh pr view*": allow
-    "gh pr merge*": allow
+    "gh pr merge*": ask
     "gh issue create*": allow
     "gh issue list*": allow
     "gh repo *": allow

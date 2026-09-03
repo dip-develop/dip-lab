@@ -3,7 +3,9 @@ description: Business/marketing strategist for positioning, pricing, outreach. N
 mode: primary
 model: opencode/mimo-v2.5-free
 permission:
-  edit: deny
+  edit:
+    "notes/marketing/**": allow
+    "*": deny
   bash: deny
   task: deny
 ---

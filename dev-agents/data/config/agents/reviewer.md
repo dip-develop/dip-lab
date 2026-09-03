@@ -22,6 +22,8 @@ permission:
     "tail *": allow
     "uniq *": allow
     "wc *": allow
+    "less *": allow
+    "tree *": allow
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -30,7 +32,6 @@ permission:
     "gh pr create*": allow
     "gh pr list*": allow
     "gh pr view*": allow
-    "gh pr merge*": allow
     "gh issue create*": allow
     "gh issue list*": allow
     "gh repo *": allow
