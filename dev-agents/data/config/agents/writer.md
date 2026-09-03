@@ -13,11 +13,22 @@ permission:
     "gh pr create*": allow
     "gh pr list*": allow
     "gh pr view*": allow
-    "gh pr merge*": allow
     "gh issue create*": allow
     "gh issue list*": allow
     "gh repo *": allow
     "gh api *": allow
+    ls: allow
+    "ls *": allow
+    "cat *": allow
+    "find *": allow
+    "grep *": allow
+    "rg *": allow
+    "head *": allow
+    "tail *": allow
+    "wc *": allow
+    "git status*": allow
+    "git diff*": allow
+    "git log*": allow
 ---
 
 You are a writer helping with articles, documentation, and marketing copy.

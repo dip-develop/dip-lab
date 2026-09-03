@@ -1,13 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  // NOTE: the unscoped npm name "opencode-tps-meter" is reported (by other
-  // TPS-meter plugin authors' own docs) to already be owned by an unrelated
-  // package. Verify what's actually installed on the VPS right now before
-  // trusting this — this points at a real, actively maintained scoped fork
-  // instead, pinned to a specific release rather than "@latest".
-  "plugin": [
-    "@devinoldenburg/opencode-tps-meter@0.1.8"
-  ],
   "model": "opencode/mimo-v2.5-free",
   "small_model": "opencode/ling-3.0-flash-fin-free",
   "default_agent": "orchestrator",
@@ -16,16 +8,10 @@
   // "primary can call subagents, subagents can't call further subagents".
   // Every subagent below also explicitly sets task: deny, so this is now
   // belt-and-suspenders rather than the only thing closing that gap.
-  "compaction": {
-    "auto": true,
-    "prune": true,
-    "reserved": 10000
-  },
   "permission": {
     "external_directory": {
-      "~/.config/opencode/**": "ask",
-      "/home/develop/projects/**": "allow",
-      "*": "ask"
+      "*": "ask",
+      "/home/develop/projects/**": "allow"
     },
     // Secrets stay unreadable by default, even for agents with otherwise
     // broad read access.
@@ -49,6 +35,7 @@
       "tail *": "allow",
       "grep *": "allow",
       "rg *": "allow",
+      "sed *": "allow",
       "find *": "allow",
       "tree *": "allow",
       "wc *": "allow",
