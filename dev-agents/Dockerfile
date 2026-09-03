@@ -133,6 +133,15 @@ EOF
 RUN printf '\n# dev-agents test-DB env\n[ -f ~/.config/dev-agents/env.sh ] && . ~/.config/dev-agents/env.sh\n' \
         >> /home/develop/.bashrc
 
+# Toolchain PATH for interactive shells. The image ENV above already
+# exports these for every process, but login shells and `su - develop`
+# reset PATH, so re-export here. Order mirrors the ENV lines: the
+# standalone Dart SDK shadows Flutter's bundled dart shim, Flutter's
+# launcher dir is appended, then the pub-global and Dart-managed
+# install dirs (created lazily by `dart pub global` / IDE tooling).
+RUN printf '\n# dev-agents toolchain PATH\nexport PATH="/opt/dart-sdk/bin:$PATH"\nexport PATH="$PATH:/home/develop/flutter/bin"\nexport PATH="$PATH":"$HOME/.local/state/Dart/install/bin"\nexport PATH="$PATH":"$HOME/.pub-cache/bin"\n' \
+        >> /home/develop/.bashrc
+
 WORKDIR /home/develop/projects
 
 # `opencode serve` runs as the container's main process. A detached
