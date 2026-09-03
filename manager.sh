@@ -181,6 +181,19 @@ fix_permissions() {
     chown -R 999:999 "$SCRIPT_DIR/databases/data/mysql" 2>/dev/null || true
     chown -R 6379:6379 "$SCRIPT_DIR/databases/data/redis" 2>/dev/null || true
 
+    # dev-agents: ownership must match the container user. UID/GID are
+    # configurable via dev-agents/.env (DEVELOP_UID/DEVELOP_GID,
+    # defaults 1000:1000) and are baked into the image at build time.
+    local da_uid=1000 da_gid=1000
+    if [ -f "$SCRIPT_DIR/dev-agents/.env" ]; then
+        da_uid=$(grep -E '^DEVELOP_UID=' "$SCRIPT_DIR/dev-agents/.env" | cut -d= -f2 | tr -d '[:space:]')
+        da_gid=$(grep -E '^DEVELOP_GID=' "$SCRIPT_DIR/dev-agents/.env" | cut -d= -f2 | tr -d '[:space:]')
+    fi
+    da_uid=${da_uid:-1000}
+    da_gid=${da_gid:-1000}
+    mkdir -p "$SCRIPT_DIR/dev-agents/data/projects" "$SCRIPT_DIR/dev-agents/data/config"
+    chown -R "$da_uid:$da_gid" "$SCRIPT_DIR/dev-agents/data/projects" "$SCRIPT_DIR/dev-agents/data/config" 2>/dev/null || true
+
     log ok "Permissions fixed"
 }
 
