@@ -1,9 +1,15 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "opencode/mimo-v2.5-free",
-  "small_model": "opencode/ling-3.0-flash-fin-free",
+  //"model": "opencode/mimo-v2.5-free",
+  //"small_model": "opencode/ling-3.0-flash-fin-free",
   "default_agent": "orchestrator",
   "share": "manual",
+  // Global instruction files injected into every agent's system prompt
+  // (primary and subagents). Paths resolve relative to this config
+  // directory (bind-mounted at ~/.config/opencode in the container).
+  "instructions": [
+    "instructions/*.md"
+  ],
   // subagent_depth intentionally omitted -> defaults to 1, which is exactly
   // "primary can call subagents, subagents can't call further subagents".
   // Every subagent below also explicitly sets task: deny, so this is now
@@ -28,6 +34,8 @@
     // before trying to de-duplicate further.
     "bash": {
       "*": "ask",
+      "sleep": "allow",
+      "sleep *": "allow",
       "ls": "allow",
       "ls *": "allow",
       "cat *": "allow",
@@ -38,6 +46,7 @@
       "sed *": "allow",
       "find *": "allow",
       "tree *": "allow",
+      "xargs *": "allow",
       "wc *": "allow",
       "less *": "allow",
       "stat *": "allow",
@@ -58,6 +67,7 @@
       "mv *": "allow",
       "chmod *": "allow",
       "ln *": "allow",
+      "git -C *": "allow",
       "git status*": "allow",
       "git diff*": "allow",
       "git log*": "allow",
@@ -84,6 +94,8 @@
       "jaspr build*": "allow",
       // git push: allowed in general, hard-denied to protected branches and
       // force-pushes at the permission layer (not just via prompt wording).
+      // This covers direct pushes and refspec forms (e.g. HEAD:main,
+      // :develop branch deletions).
       // Rules are evaluated in order with the LAST match winning, so the
       // specific denies must come after the general allow. These are simple
       // glob patterns, not full argument parsing -- test them against your
@@ -91,8 +103,12 @@
       "git push *": "allow",
       "git push * main*": "deny",
       "git push * master*": "deny",
+      "git push * develop*": "deny",
       "git push*--force*": "deny",
-      "git push*-f*": "deny"
+      "git push*-f*": "deny",
+      "git push*:main*": "deny",
+      "git push*:master*": "deny",
+      "git push*:develop*": "deny"
     }
   },
   "lsp": {
@@ -101,6 +117,12 @@
         "dart",
         "language-server",
         "--client-id=opencode"
+      ]
+    },
+    "serverpod": {
+      "command": [
+        "serverpod",
+        "language-server"
       ]
     }
   },
