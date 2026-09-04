@@ -1,7 +1,7 @@
 ---
 description: Drafts articles, docs and marketing copy. Edits only markdown/text under docs/business.
 mode: primary
-model: opencode/mimo-v2.5-free
+#model: opencode/mimo-v2.5-free
 permission:
   task: deny
   edit:
@@ -23,6 +23,7 @@ permission:
     "find *": allow
     "grep *": allow
     "rg *": allow
+    "xargs *": allow
     "head *": allow
     "tail *": allow
     "wc *": allow

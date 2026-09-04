@@ -1,7 +1,7 @@
 ---
 description: Reviews diffs for correctness, style and open-core boundaries.
 mode: subagent
-model: opencode/ling-3.0-flash-fin-free
+#model: opencode/ling-3.0-flash-fin-free
 hidden: true
 permission:
   edit: deny
@@ -15,6 +15,9 @@ permission:
     "file *": allow
     "find *": allow
     "grep *": allow
+    "xargs *": allow
+    "printf *": allow
+    "echo *": allow
     "head *": allow
     "rg *": allow
     "sort *": allow
