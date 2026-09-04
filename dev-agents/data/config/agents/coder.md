@@ -1,7 +1,7 @@
 ---
 description: Executes one narrow coding step (one file/function). Use for implementation.
 mode: subagent
-#model: opencode/mimo-v2.5-free
+model: b_ai/qwen3.8-flash
 hidden: true
 permission:
   edit: allow

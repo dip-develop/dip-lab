@@ -1,9 +1,33 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  //"model": "opencode/mimo-v2.5-free",
-  //"small_model": "opencode/ling-3.0-flash-fin-free",
+  "model": "b_ai/glm-5.3-flash",
+  "small_model": "b_ai/hy3",
   "default_agent": "orchestrator",
   "share": "manual",
+  "provider": {
+    "b_ai": {
+      "type": "openai",
+      "name": "B.AI Provider",
+      "options": {
+        "baseURL": "https://api.b.ai/v1",
+        "apiKey": "sk-73zlvqiksx68jq2iqu4edsb78ejej3dc"
+      },
+      "models": {
+        "glm-5.3-flash": {
+          "name": "GLM 5.3 Flash"
+        },
+        "qwen3.8-flash": {
+          "name": "Qwen 3.8 Flash"
+        },
+        "hy3": {
+          "name": "HY3"
+        },
+        "mimo-v2.5": {
+          "name": "MiMo V2.5"
+        }
+      }
+    }
+  },
   // Global instruction files injected into every agent's system prompt
   // (primary and subagents). Paths resolve relative to this config
   // directory (bind-mounted at ~/.config/opencode in the container).

@@ -1,7 +1,7 @@
 ---
 description: Runs test/lint/build commands and reports results. Use after edits.
 mode: subagent
-#model: opencode/ling-3.0-flash-fin-free
+model: b_ai/qwen3.8-flash
 hidden: true
 permission:
   edit: deny
