@@ -7,8 +7,9 @@
 # BUILD-TIME ARGS (optional): DEVELOP_UID, DEVELOP_GID - the host user's
 # UID/GID so bind-mounted files keep matching ownership. Defaults to
 # 1000:1000 if not set (see docker-compose.yml). OPENCODE_VERSION pins
-# the opencode CLI release ("latest" by default). Flutter (stable) is
-# installed in-image, so containers start offline-ready.
+# the opencode CLI release ("latest" by default). SERVERPOD_CLI_VERSION
+# pins the serverpod CLI release (default 4.0.0-rc.1). Flutter (stable)
+# is installed in-image, so containers start offline-ready.
 #
 # Runtime configuration (opencode.jsonc, agents/) is bind-mounted
 # from data/config/ on the host - no rebuild required to tweak agent config.
@@ -28,10 +29,15 @@ ARG DEVELOP_GID=1000
 # non-test database (see dev-agents/db-safe.sh).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates git openssh-client tmux unzip xz-utils \
-        chromium libglu1-mesa clang cmake ninja-build pkg-config \
+        chromium libglu1-mesa libgtk-3-dev mesa-utils clang cmake \
+        ninja-build pkg-config \
         postgresql-client default-mysql-client redis-tools \
         sudo \
     && rm -rf /var/lib/apt/lists/*
+
+# Chromium is installed in the base apt block, but flutter doctor and the
+# web tooling look for `google-chrome` unless pointed at the binary.
+ENV CHROME_EXECUTABLE=/usr/bin/chromium
 
 # GitHub CLI (gh) - required for PR/issue operations from inside the container.
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -102,6 +108,24 @@ RUN set -eux; \
     && rm /tmp/dartsdk.zip
 ENV PATH="/opt/dart-sdk/bin:${PATH}"
 
+# Global Dart CLIs, installed with the standalone Dart SDK (runs as the
+# develop user; binaries land in /home/develop/.pub-cache/bin).
+# - skills: per-project AI skills installer; only the CLI is baked in
+#   (`skills get <pkg>` is run inside projects at runtime, not at build).
+# - serverpod CLI: pinned via SERVERPOD_CLI_VERSION — provides `serverpod`
+#   and `serverpod language-server`.
+# - serverpod_mcp: separate package providing the `serverpod_mcp` binary
+#   referenced by the mcp block in opencode.jsonc.
+# - jaspr CLI: provides `jaspr` (create/serve/build).
+ARG SERVERPOD_CLI_VERSION=4.0.0-rc.1
+RUN dart pub global activate skills \
+    && dart pub global activate serverpod_cli "$SERVERPOD_CLI_VERSION" \
+    && dart pub global activate serverpod_mcp \
+    && dart pub global activate jaspr_cli
+# Exported at image level (not just .bashrc) so opencode serve, its bash
+# tool, and docker exec see the binaries without a login shell.
+ENV PATH="/home/develop/.pub-cache/bin:${PATH}"
+
 # Flutter SDK (stable channel). Cloned as the develop user so the flutter
 # tool can write its cache/version files next to the SDK. `flutter
 # --version` warms the Dart SDK + artifacts cache into the image so
@@ -138,8 +162,9 @@ RUN printf '\n# dev-agents test-DB env\n[ -f ~/.config/dev-agents/env.sh ] && . 
 # reset PATH, so re-export here. Order mirrors the ENV lines: the
 # standalone Dart SDK shadows Flutter's bundled dart shim, Flutter's
 # launcher dir is appended, then the pub-global and Dart-managed
-# install dirs (created lazily by `dart pub global` / IDE tooling).
-RUN printf '\n# dev-agents toolchain PATH\nexport PATH="/opt/dart-sdk/bin:$PATH"\nexport PATH="$PATH:/home/develop/flutter/bin"\nexport PATH="$PATH":"$HOME/.local/state/Dart/install/bin"\nexport PATH="$PATH":"$HOME/.pub-cache/bin"\n' \
+# install dirs (pre-populated at build time by the global CLI installs
+# above / IDE tooling).
+RUN printf '\n# dev-agents toolchain PATH\nexport PATH="/opt/dart-sdk/bin:$PATH"\nexport PATH="$PATH:/home/develop/flutter/bin"\nexport PATH="$PATH":"$HOME/.local/state/Dart/install/bin"\nexport PATH="$PATH":"$HOME/.pub-cache/bin"\n# Flutter web tooling: point flutter doctor / chrome driver at the apt-installed chromium.\nexport CHROME_EXECUTABLE="/usr/bin/chromium"\n' \
         >> /home/develop/.bashrc
 
 WORKDIR /home/develop/projects
