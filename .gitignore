@@ -38,3 +38,4 @@ Thumbs.db
 *.backup
 *.old
 backups/
+dev-agents/data/config/skills/

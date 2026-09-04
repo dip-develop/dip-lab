@@ -1,7 +1,7 @@
 ---
 description: Drafts articles, docs and marketing copy. Edits only markdown/text under docs/business.
 mode: primary
-#model: opencode/mimo-v2.5-free
+model: b_ai/glm-5.3-flash
 permission:
   task: deny
   edit:

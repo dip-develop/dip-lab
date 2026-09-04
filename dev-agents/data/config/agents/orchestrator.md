@@ -1,7 +1,7 @@
 ---
 description: Coordinates development work by delegating to planner/coder/tester/reviewer subagents. Use for any non-trivial feature or fix.
 mode: primary
-#model: opencode/mimo-v2.5-free
+model: b_ai/glm-5.3-flash
 permission:
   task: allow
   bash:
