@@ -34,6 +34,8 @@ services:
         # Optional: pin the opencode CLI version for reproducible builds.
         # Defaults to "latest" (the current release).
         OPENCODE_VERSION: "${OPENCODE_VERSION:-latest}"
+        # Optional: pin the serverpod CLI release for reproducible builds.
+        SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0-rc.1}"
     image: diplab/dev-agents:local
     container_name: dev-agents
     restart: unless-stopped
