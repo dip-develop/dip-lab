@@ -34,6 +34,9 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 - `tmux`, `git`, `gh`, `openssh-client`, `clang`/`cmake`/`ninja-build`/`pkg-config`
   build toolchain for ad-hoc work
 - DB clients: `psql`, `mysql`, `mariadb`, `redis-cli`
+- GTK 3.0 dev libraries and mesa-utils (eglinfo) for Linux desktop builds / flutter doctor
+- Chromium wired up for flutter web via CHROME_EXECUTABLE=/usr/bin/chromium
+- Global Dart CLIs: skills, serverpod (pinned via SERVERPOD_CLI_VERSION build arg, default 4.0.0-rc.1), serverpod_mcp, jaspr — skills get <pkg> is run per-project at runtime; the pinned RC CLI generates code for Serverpod 4.0.0-rc.* packages
 
 ## Files in this directory
 
@@ -42,10 +45,11 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 | `Dockerfile` | Image build (see args above) |
 | `docker-compose.yml` | Service definition, joins the `internal` network |
 | `.env.example` | Template - copy to `.env` and fill in |
-| `setup.sh` | Creates `data/config/agents/` if missing |
+| `setup.sh` | Creates `data/config/agents/` and `data/config/instructions/` if missing |
 | `AGENTS.md` | Read by opencode when you open a project - agent rules |
 | `data/config/opencode.jsonc` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host) |
+| `data/config/instructions/` | Global instruction files injected into every agent's system prompt (e.g. the docs-before-sources package policy) |
 
 ## What the agents can do
 
@@ -117,7 +121,7 @@ test state, and `DROP DATABASE` it when done.
 
 - No `docker` / `docker compose` (the binary is not even installed)
 - No `systemctl` / firewall commands
-- No pushing to `main`
+- No pushing to `main` or `develop`
 - No reading `*.env`, `*.key`, `*.pem`, SSH keys, or WireGuard configs
 - No editing files outside `/home/develop/projects` (other than the
   opencode config under `data/config/`, which is rw)
@@ -162,3 +166,9 @@ After starting the container and opening the web UI:
   local `.opencode/opencode.json`.
 - Permission baseline blocks destructive shell and secret access by
   default; loosen in your fork as needed.
+- Global "docs before sources" package policy injected via the config's `instructions` key (`data/config/instructions/`); agents consult MCP doc tools / README / pub.dev before reading `~/.pub-cache` sources. Source reading is not hard-denied — it stays a documented last resort (bash reads like `rg`/`cat` are allow-listed; the read tool may prompt since `~/.pub-cache` falls under `external_directory: ask`).
+- Git Flow policy (`main` + `develop`, `feature/`/`bugfix/`/`hotfix/`/`release/`
+  branches, PR-only integration) injected into every agent via
+  `data/config/instructions/git-flow.md`; pushes to `main` and `develop` are
+  hard-denied at the permission layer, including refspec forms
+  (`HEAD:develop`, `:develop` deletions).

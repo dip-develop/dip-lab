@@ -85,14 +85,26 @@ values (see `~/.config/dev-agents/env.sh`).
   the operator will run those steps or grant a scoped exception. Do not
   try to work around the permission denial.
 
-## Git workflow
+## Git workflow (Git Flow)
 
-- Always branch from `main` as `agent/<topic>`.
+- Long-lived branches: `main` (production, tagged releases) and
+  `develop` (integration). Supporting branches: `feature/<topic>`
+  and `bugfix/<topic>` branch from `develop`; `hotfix/<topic>`
+  branches from `main`; `release/<version>` branches from
+  `develop`. The full policy is injected into every agent as
+  `instructions/git-flow.md`.
+- Always branch from the correct base — `develop` for
+  feature/bugfix/release work, `main` only for hotfixes. Never
+  commit directly to `main` or `develop`.
 - Small, single-purpose commits with clear messages.
-- Do not merge, rebase onto `main`, or force-push.
-- Stop after pushing the branch and summarize what's ready for review.
-- Pushing to `main` is denied at the permission level. The operator
-  reviews and pushes manually.
+- Push your branch and open a PR with `gh pr create --base develop`
+  (hotfix/release: one PR into `main` AND one into `develop`). Then
+  stop and summarize what's ready for review.
+- Do not merge into `main`/`develop`, tag releases, or force-push —
+  release merges and tagging are operator actions.
+- Pushing to `main` and `develop` is denied at the permission level
+  (including refspec forms like `HEAD:develop`); the operator
+  reviews and merges PRs manually.
 
 ## Things to never do
 
@@ -102,7 +114,7 @@ values (see `~/.config/dev-agents/env.sh`).
   allowed for installing packages/tools inside the container
   (e.g. `sudo apt-get install ...`), never for altering system/network
   config or anything outside the container.
-- Never push to `main` or delete branches.
+- Never push to `main`/`develop` or delete branches.
 - Never touch other services' Docker containers. Only reach them over HTTP/TCP from inside
   the container, as documented in the **Network** table above.
 - Never `DROP DATABASE` / `TRUNCATE` / `FLUSHDB` against a
@@ -113,6 +125,18 @@ values (see `~/.config/dev-agents/env.sh`).
   users do not have privileges on prod DBs, so the server will
   reject the SQL - but if a future change widens the grant, the
   history here says "do not do this".
+
+## Package research policy
+
+When you need information about a third-party package, consult
+documentation before reading its sources:
+
+- Use the MCP doc servers (`dart`, `serverpod`, `jaspr`) when they
+  cover the package.
+- Otherwise use the package's README / `example/` / pub.dev docs.
+- Read sources under `~/.pub-cache` only as a last resort, and only
+  targeted searches (e.g. `rg` for a specific symbol), never
+  whole-file browsing.
 
 ## Testing expectations
 
