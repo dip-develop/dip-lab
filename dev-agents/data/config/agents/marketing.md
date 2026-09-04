@@ -1,7 +1,7 @@
 ---
 description: Business/marketing strategist for positioning, pricing, outreach. No code edits.
 mode: primary
-model: opencode/mimo-v2.5-free
+#model: opencode/mimo-v2.5-free
 permission:
   edit:
     "notes/marketing/**": allow

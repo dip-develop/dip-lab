@@ -1,7 +1,7 @@
 ---
 description: Runs test/lint/build commands and reports results. Use after edits.
 mode: subagent
-model: opencode/ling-3.0-flash-fin-free
+#model: opencode/ling-3.0-flash-fin-free
 hidden: true
 permission:
   edit: deny
@@ -11,6 +11,7 @@ permission:
     "grep *": allow
     "rg *": allow
     "head *": allow
+    "xargs *": allow
     "tail *": allow
     "less *": allow
     "file *": allow
@@ -23,6 +24,8 @@ permission:
     "sort *": allow
     "tree *": allow
     "uniq *": allow
+    "sleep": allow
+    "sleep *": allow
     "wc *": allow
     "git status*": allow
     "git diff*": allow
@@ -44,4 +47,5 @@ Job: after a batch of edits, run project test/lint/build commands and report res
 - Detect project type: dart test, flutter test, dart analyze, dart format --set-exit-if-changed, jaspr, serverpod checks.
 - Run commands via bash, capture output.
 - Summarize pass/fail, failures with file:line, and suggest fixes.
+- If a failure stems from unfamiliar package behavior, check its docs first (MCP doc tools, README/examples) before reading its sources under ~/.pub-cache.
 - Do not edit code unless explicitly asked — only verify.
