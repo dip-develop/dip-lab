@@ -6,6 +6,8 @@ hidden: true
 permission:
   edit: allow
   task: deny
+  webfetch:
+    "*": allow
   bash:
     "*": ask
     ls: allow
@@ -37,6 +39,11 @@ permission:
     "flutter *": allow
     "serverpod *": allow
     "jaspr *": allow
+    # Package installs inside the container are allowed by AGENTS.md;
+    # granting them keeps implementation steps from stalling on approval.
+    "sudo apt-get update*": allow
+    "sudo apt-get install *": allow
+    "sudo apt-get -y install *": allow
     "git push* main*": deny
     "git push* master*": deny
     "git push* develop*": deny
@@ -45,6 +52,14 @@ permission:
     "git push*:main*": deny
     "git push*:master*": deny
     "git push*:develop*": deny
+    # Last-match-wins env-file guards; see the note in opencode.jsonc.
+    "cat *.env*": deny
+    "head *.env*": deny
+    "tail *.env*": deny
+    "less *.env*": deny
+    "sed *.env*": deny
+    "rg *.env*": deny
+    "grep *.env*": deny
 ---
 
 You are the coder subagent. Execute ONE narrow step delegated by orchestrator.

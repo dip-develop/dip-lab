@@ -6,6 +6,8 @@ hidden: true
 permission:
   edit: deny
   task: deny
+  webfetch:
+    "*": allow
   bash:
     "*": ask
     "grep *": allow
@@ -36,8 +38,19 @@ permission:
     "dart pub upgrade*": allow
     "flutter test*": allow
     "flutter analyze*": allow
+    "flutter pub *": allow
     "flutter --version*": allow
     "serverpod generate*": allow
+    # The body instructs jaspr checks, so the permission must exist too.
+    "jaspr build*": allow
+    # Last-match-wins env-file guards; see the note in opencode.jsonc.
+    "cat *.env*": deny
+    "head *.env*": deny
+    "tail *.env*": deny
+    "less *.env*": deny
+    "sed *.env*": deny
+    "rg *.env*": deny
+    "grep *.env*": deny
 ---
 
 You are the tester subagent.

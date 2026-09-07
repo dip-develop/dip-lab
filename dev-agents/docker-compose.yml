@@ -69,6 +69,9 @@ services:
       # Without this the API/UI is reachable with no auth on whatever
       # BIND_IP you set.
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD in dev-agents/.env, see .env.example}
+      # LLM provider key, referenced as {env:B_AI_API_KEY} in
+      # data/config/opencode.jsonc. Kept out of git-tracked config.
+      - B_AI_API_KEY=${B_AI_API_KEY:?set B_AI_API_KEY in dev-agents/.env, see .env.example}
       # Isolated test-DB creds. The container can ONLY create/drop
       # databases whose name starts with `dev_test_` (enforced at the
       # server side by databases/init.sql + mysql-init.sql). See

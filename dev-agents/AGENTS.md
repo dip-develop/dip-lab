@@ -87,24 +87,24 @@ values (see `~/.config/dev-agents/env.sh`).
 
 ## Git workflow (Git Flow)
 
-- Long-lived branches: `main` (production, tagged releases) and
-  `develop` (integration). Supporting branches: `feature/<topic>`
-  and `bugfix/<topic>` branch from `develop`; `hotfix/<topic>`
-  branches from `main`; `release/<version>` branches from
-  `develop`. The full policy is injected into every agent as
-  `instructions/git-flow.md`.
-- Always branch from the correct base — `develop` for
-  feature/bugfix/release work, `main` only for hotfixes. Never
-  commit directly to `main` or `develop`.
-- Small, single-purpose commits with clear messages.
-- Push your branch and open a PR with `gh pr create --base develop`
-  (hotfix/release: one PR into `main` AND one into `develop`). Then
-  stop and summarize what's ready for review.
-- Do not merge into `main`/`develop`, tag releases, or force-push —
-  release merges and tagging are operator actions.
-- Pushing to `main` and `develop` is denied at the permission level
-  (including refspec forms like `HEAD:develop`); the operator
-  reviews and merges PRs manually.
+- The full branch/PR policy is injected into every agent as
+  `instructions/git-flow.md` — it is the single source of truth; this
+  section only summarizes the consequences.
+- Supporting branches (`feature/`, `bugfix/`, `release/`) base on
+  `develop`; `hotfix/` bases on `main`. Never commit directly to
+  `main`/`develop`.
+- Push your branch, open a PR with `gh pr create --base develop`
+  (hotfix/release: two PRs — into `main` AND `develop`), then stop
+  and summarize what's ready for review.
+- Merging into `main`/`develop`, tagging releases, and force-pushes
+  are operator actions. Pushes to `main`/`develop` (including refspec
+  forms like `HEAD:develop`) are denied at the permission level.
+
+## Roadmap & TODO
+
+- Long-lived plans and ideas go to GitHub issues; the current working
+  list is `TODO.md` in the project root. Details:
+  `instructions/roadmap.md` (injected into every agent).
 
 ## Things to never do
 
@@ -128,15 +128,10 @@ values (see `~/.config/dev-agents/env.sh`).
 
 ## Package research policy
 
-When you need information about a third-party package, consult
-documentation before reading its sources:
-
-- Use the MCP doc servers (`dart`, `serverpod`, `jaspr`) when they
-  cover the package.
-- Otherwise use the package's README / `example/` / pub.dev docs.
-- Read sources under `~/.pub-cache` only as a last resort, and only
-  targeted searches (e.g. `rg` for a specific symbol), never
-  whole-file browsing.
+- Docs before sources: the full policy is injected into every agent as
+  `instructions/package-docs-first.md` — MCP doc servers first, then
+  README / `example/` / pub.dev docs; `~/.pub-cache` sources only as a
+  surgical last resort (search for a symbol, never whole-file browsing).
 
 ## Testing expectations
 

@@ -10,7 +10,9 @@
       "name": "B.AI Provider",
       "options": {
         "baseURL": "https://api.b.ai/v1",
-        "apiKey": "REDACTED_BAI_API_KEY"
+        // Read from the container environment (dev-agents/.env -> compose
+        // environment). Never commit the key here: this file is in git.
+        "apiKey": "{env:B_AI_API_KEY}"
       },
       "models": {
         "glm-5.3-flash": {
@@ -41,7 +43,15 @@
   "permission": {
     "external_directory": {
       "*": "ask",
-      "/home/develop/projects/**": "allow"
+      "/home/develop/projects/**": "allow",
+      // Package research policy allows surgical ~/.pub-cache reads as a
+      // last resort; without this every one of them asks for approval.
+      "/home/develop/.pub-cache/**": "allow"
+    },
+    // Docs-first research policy requires web access in every role
+    // (planner/coder/tester ground package steps via web docs).
+    "webfetch": {
+      "*": "allow"
     },
     // Secrets stay unreadable by default, even for agents with otherwise
     // broad read access.
@@ -103,10 +113,11 @@
       "git commit *": "allow",
       "git merge *": "allow",
       "git rebase *": "allow",
-      "git tag *": "allow",
+      "git tag *": "ask",
       "git fetch *": "allow",
       "git pull*": "allow",
       "git remote *": "allow",
+      "git grep *": "allow",
       "dart analyze*": "allow",
       "dart format*": "allow",
       "dart test*": "allow",
@@ -132,7 +143,19 @@
       "git push*-f*": "deny",
       "git push*:main*": "deny",
       "git push*:master*": "deny",
-      "git push*:develop*": "deny"
+      "git push*:develop*": "deny",
+      // Env files: bash-side mirror of the read policy above. Last match
+      // wins, so these trail the broad read allows. Best-effort only
+      // (xargs / find -exec bypass globs); the real backstop is that no
+      // .env is mounted into the container. Templates (*.env.example)
+      // stay readable via the Read tool.
+      "cat *.env*": "deny",
+      "head *.env*": "deny",
+      "tail *.env*": "deny",
+      "less *.env*": "deny",
+      "sed *.env*": "deny",
+      "rg *.env*": "deny",
+      "grep *.env*": "deny"
     }
   },
   "lsp": {

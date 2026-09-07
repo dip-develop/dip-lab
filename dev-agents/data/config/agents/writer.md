@@ -30,6 +30,14 @@ permission:
     "git status*": allow
     "git diff*": allow
     "git log*": allow
+    # Last-match-wins env-file guards; see the note in opencode.jsonc.
+    "cat *.env*": deny
+    "head *.env*": deny
+    "tail *.env*": deny
+    "less *.env*": deny
+    "sed *.env*": deny
+    "rg *.env*": deny
+    "grep *.env*": deny
 ---
 
 You are a writer helping with articles, documentation, and marketing copy.

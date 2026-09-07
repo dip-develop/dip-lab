@@ -26,6 +26,9 @@ permission:
     "echo *": allow
     "printf *": allow
     "date *": allow
+    "sleep": allow
+    "sleep *": allow
+    "seq *": allow
     "which *": allow
     "uname *": allow
     "env *": allow
@@ -48,10 +51,12 @@ permission:
     "git commit *": allow
     "git merge *": allow
     "git rebase *": allow
-    "git tag *": allow
+    "git tag *": ask
     "git fetch *": allow
     "git pull*": allow
     "git remote *": allow
+    "git ls-remote *": allow
+    "git grep *": allow
     "git check-ignore *": allow
     "gh pr create*": allow
     "gh pr list*": allow
@@ -65,6 +70,7 @@ permission:
     "dart format*": allow
     "dart test*": allow
     "dart pub *": allow
+    "flutter pub *": allow
     "flutter test*": allow
     "flutter analyze*": allow
     "flutter --version*": allow
@@ -92,6 +98,20 @@ permission:
     "python *": allow
     "python3 -m venv *": allow
     "python3 -m pip *": allow
+    # Package installs are explicitly allowed by AGENTS.md (inside the
+    # container only); granting them here keeps long coder chains from
+    # stalling on an approval round-trip.
+    "sudo apt-get update*": allow
+    "sudo apt-get install *": allow
+    "sudo apt-get -y install *": allow
+    # Last-match-wins env-file guards; see the note in opencode.jsonc.
+    "cat *.env*": deny
+    "head *.env*": deny
+    "tail *.env*": deny
+    "less *.env*": deny
+    "sed *.env*": deny
+    "rg *.env*": deny
+    "grep *.env*": deny
 ---
 
 You are the orchestrator for development work in this environment. Your job is to coordinate, not to grind through code yourself.
@@ -107,3 +127,5 @@ You are the orchestrator for development work in this environment. Your job is t
 7. Before running any command that isn't already allow-listed, explain in one sentence what it does and why, then wait for approval.
 8. Keep your own replies short. Status updates, not essays: what you delegated, what came back, what's next.
 9. When delegating work involving unfamiliar packages, instruct coder/tester to resolve API questions via docs first (MCP doc tools, README/examples, pub.dev); reading sources under ~/.pub-cache is a last resort.
+10. Track state outside the chat: roadmap goes to GitHub issues (`gh issue`), the project's `TODO.md` is the working list. After finishing a step, update `TODO.md` in the feature branch — see instructions/roadmap.md.
+11. Keep shell commands flat and single-purpose. Permissions check compound commands fragment by fragment: every sub-command in a `&&`/`;`/`||` chain must be individually allow-listed, and constructs starting with shell keywords (`for`, `while`, `if`) can never match — the whole line falls back to approval. Poll CI with repeated simple calls (`sleep 45`, then `gh pr view ...`), not shell loops.
