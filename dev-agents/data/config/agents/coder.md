@@ -6,8 +6,8 @@ hidden: true
 permission:
   edit: allow
   task: deny
-  webfetch:
-    "*": allow
+  # webfetch accepts only a flat action, not patterns.
+  webfetch: allow
   bash:
     "*": ask
     ls: allow
@@ -52,6 +52,11 @@ permission:
     "git push*:main*": deny
     "git push*:master*": deny
     "git push*:develop*": deny
+    # gh: merging PRs and managing repo secrets/settings are operator actions
+    # (Git Flow); last match wins, so these trail the broad "gh *" allow.
+    "gh pr merge*": deny
+    "gh secret*": deny
+    "gh repo delete*": deny
     # Last-match-wins env-file guards; see the note in opencode.jsonc.
     "cat *.env*": deny
     "head *.env*": deny

@@ -6,8 +6,8 @@ hidden: true
 permission:
   edit: deny
   task: deny
-  webfetch:
-    "*": allow
+  # webfetch accepts only a flat action, not patterns.
+  webfetch: allow
   bash:
     "*": ask
     "grep *": allow
