@@ -7,8 +7,8 @@ permission:
   edit: deny
   bash: deny
   task: deny
-  webfetch:
-    "*": allow
+  # webfetch accepts only a flat action, not patterns.
+  webfetch: allow
 ---
 
 You are the planner subagent for the orchestrator.

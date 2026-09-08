@@ -4,6 +4,9 @@
   "small_model": "b_ai/hy3",
   "default_agent": "orchestrator",
   "share": "manual",
+  // Keep runtime in sync with the pinned OPENCODE_VERSION in the image:
+  // in-container self-update would drift from the built image.
+  "autoupdate": false,
   "provider": {
     "b_ai": {
       "type": "openai",
@@ -50,9 +53,10 @@
     },
     // Docs-first research policy requires web access in every role
     // (planner/coder/tester ground package steps via web docs).
-    "webfetch": {
-      "*": "allow"
-    },
+    // NOTE: webfetch/websearch accept only a flat action (allow/ask/deny);
+    // per-pattern objects are rejected by the config schema.
+    "webfetch": "allow",
+    "websearch": "allow",
     // Secrets stay unreadable by default, even for agents with otherwise
     // broad read access.
     "read": {
@@ -117,6 +121,7 @@
       "git fetch *": "allow",
       "git pull*": "allow",
       "git remote *": "allow",
+      "git ls-remote*": "allow",
       "git grep *": "allow",
       "dart analyze*": "allow",
       "dart format*": "allow",
@@ -155,7 +160,12 @@
       "less *.env*": "deny",
       "sed *.env*": "deny",
       "rg *.env*": "deny",
-      "grep *.env*": "deny"
+      "grep *.env*": "deny",
+      // Secrets also live in exported env vars (B_AI_API_KEY, TEST_*_PASSWORD).
+      // Last match wins, so this trails the broad allows above. Best-effort:
+      // piped forms like "env | grep KEY" still bypass glob guards -- the
+      // real backstop is no secret-bearing .env mounted into the container.
+      "printenv*": "deny"
     }
   },
   "lsp": {
