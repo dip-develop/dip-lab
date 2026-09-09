@@ -27,6 +27,15 @@ permission:
     "wc *": allow
     "less *": allow
     "tree *": allow
+    "cd": allow
+    "cd *": allow
+    "cut *": allow
+    "awk *": allow
+    "tr *": allow
+    "jq *": allow
+    "basename *": allow
+    "dirname *": allow
+    "realpath *": allow
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -43,8 +52,39 @@ permission:
     "git -C * grep *": allow
     "git -C * remote *": allow
     "git -C * ls-remote *": allow
+    "git remote": allow
+    "git branch": allow
+    "git rev-parse*": allow
+    "git ls-files*": allow
+    "git describe*": allow
+    "git merge-base*": allow
+    "git blame*": allow
+    "git shortlog*": allow
+    "git cat-file*": allow
+    "git rev-list*": allow
+    "git for-each-ref*": allow
+    "git worktree list*": allow
+    "git config --get*": allow
+    "git config --get-regexp*": allow
+    "git config --list*": allow
+    "git -C * rev-parse*": allow
+    "git -C * ls-files*": allow
+    "git -C * describe*": allow
+    "git -C * merge-base*": allow
+    "git -C * blame*": allow
+    "git -C * shortlog*": allow
+    "git -C * cat-file*": allow
+    "git -C * rev-list*": allow
+    "git -C * for-each-ref*": allow
+    "git -C * worktree list*": allow
+    "git -C * config --get*": allow
+    "git -C * config --get-regexp*": allow
+    "git -C * config --list*": allow
     "gh pr list*": allow
     "gh pr view*": allow
+    "gh pr checks*": allow
+    "gh pr diff*": allow
+    "gh issue view*": allow
     "gh issue list*": allow
     "gh repo *": allow
     "gh api *": allow

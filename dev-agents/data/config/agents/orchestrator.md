@@ -26,11 +26,13 @@ permission:
     "echo *": allow
     "printf *": allow
     "date *": allow
+    "date": allow
     "sleep": allow
     "sleep *": allow
     "seq *": allow
     "which *": allow
     "uname *": allow
+    "uname": allow
     "env *": allow
     "diff *": allow
     "sort *": allow
@@ -40,6 +42,27 @@ permission:
     "mv *": allow
     "chmod *": allow
     "ln *": allow
+    "cd": allow
+    "cd *": allow
+    "cut *": allow
+    "awk *": allow
+    "tr *": allow
+    "jq *": allow
+    "type *": allow
+    "basename *": allow
+    "dirname *": allow
+    "realpath *": allow
+    "readlink *": allow
+    "md5sum *": allow
+    "sha256sum *": allow
+    "ps *": allow
+    "df *": allow
+    "free *": allow
+    "test *": allow
+    "id": allow
+    "whoami": allow
+    "hostname": allow
+    "nproc": allow
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -59,6 +82,23 @@ permission:
     "git grep *": allow
     "git check-ignore *": allow
     "git -C *": allow
+    "git remote": allow
+    "git branch": allow
+    "git fetch": allow
+    "git ls-remote": allow
+    "git rev-parse*": allow
+    "git ls-files*": allow
+    "git describe*": allow
+    "git merge-base*": allow
+    "git blame*": allow
+    "git shortlog*": allow
+    "git cat-file*": allow
+    "git rev-list*": allow
+    "git for-each-ref*": allow
+    "git worktree list*": allow
+    "git config --get*": allow
+    "git config --get-regexp*": allow
+    "git config --list*": allow
     "gh pr create*": allow
     "gh pr list*": allow
     "gh pr view*": allow
@@ -67,6 +107,11 @@ permission:
     "gh issue list*": allow
     "gh repo *": allow
     "gh api *": allow
+    "gh pr checks*": allow
+    "gh pr diff*": allow
+    "gh issue view*": allow
+    "gh run list*": allow
+    "gh run view*": allow
     "dart analyze*": allow
     "dart format*": allow
     "dart test*": allow
@@ -76,6 +121,9 @@ permission:
     "flutter analyze*": allow
     "flutter --version*": allow
     "serverpod generate*": allow
+    "serverpod analyze*": allow
+    "flutter doctor*": allow
+    "flutter devices*": allow
     "jaspr build*": allow
     "git push *": allow
     "git push * main*": deny

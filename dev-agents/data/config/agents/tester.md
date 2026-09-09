@@ -29,8 +29,23 @@ permission:
     "sleep": allow
     "sleep *": allow
     "wc *": allow
+    "cd": allow
+    "cd *": allow
+    "cut *": allow
+    "tr *": allow
+    "jq *": allow
+    "basename *": allow
+    "dirname *": allow
+    "realpath *": allow
+    "test *": allow
     "git status*": allow
     "git diff*": allow
+    "git log*": allow
+    "git rev-parse*": allow
+    "git branch": allow
+    "git branch *": allow
+    "git ls-files*": allow
+    "git config --get*": allow
     "dart analyze*": allow
     "dart format*": allow
     "dart test*": allow
@@ -41,6 +56,9 @@ permission:
     "flutter pub *": allow
     "flutter --version*": allow
     "serverpod generate*": allow
+    "serverpod analyze*": allow
+    "flutter doctor*": allow
+    "flutter devices*": allow
     # The body instructs jaspr checks, so the permission must exist too.
     "jaspr build*": allow
     # Last-match-wins env-file guards; see the note in opencode.jsonc.

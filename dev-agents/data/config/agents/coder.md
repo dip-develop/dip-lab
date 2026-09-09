@@ -39,6 +39,13 @@ permission:
     "flutter *": allow
     "serverpod *": allow
     "jaspr *": allow
+    "cd": allow
+    "cd *": allow
+    "type *": allow
+    "realpath *": allow
+    "readlink *": allow
+    "md5sum *": allow
+    "sha256sum *": allow
     # Package installs inside the container are allowed by AGENTS.md;
     # granting them keeps implementation steps from stalling on approval.
     "sudo apt-get update*": allow
