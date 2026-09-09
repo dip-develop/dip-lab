@@ -61,8 +61,33 @@ RUN groupadd -g ${DEVELOP_GID} develop \
     && mkdir -p /home/develop/.local/bin \
     && chown -R develop:develop /home/develop/.local
 
+# Pre-create state dirs that will be backed by named volumes in
+# docker-compose.yml. If they don't exist in the image, Docker creates
+# the mountpoint as root:root and the develop user could not write to
+# them. Copy-on-first-use then seeds the volumes with these
+# (owned-by-develop) directories.
+# NOTE: .pub-cache is intentionally omitted here - it is created later
+# by the `dart pub global activate` block below, which also seeds the
+# named volume with the global Dart CLIs baked at build time.
+RUN mkdir -p /home/develop/.ssh /home/develop/.local/share/opencode \
+             /home/develop/.dartServer /home/develop/.dart-tool \
+    && chmod 700 /home/develop/.ssh \
+    && chown -R develop:develop /home/develop/.ssh \
+             /home/develop/.local/share/opencode \
+             /home/develop/.dartServer /home/develop/.dart-tool
+
 USER develop
 WORKDIR /home/develop
+
+# Sane global git defaults baked into the image. Identity (user.name /
+# user.email) is intentionally NOT set here - it comes from the
+# GIT_AUTHOR_* / GIT_COMMITTER_* env vars at runtime (see
+# .env.example). Defaults survive container recreation for free since
+# they live in the image, not in container state.
+RUN git config --global init.defaultBranch main \
+    && git config --global push.autoSetupRemote true \
+    && git config --global fetch.prune true \
+    && git config --global pull.rebase true
 
 # `db-safe` wrapper - shadows psql, mysql, mariadb, redis-cli.
 # Refuses to talk to a non-test database unless the operator has

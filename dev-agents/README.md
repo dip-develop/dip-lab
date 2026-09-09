@@ -38,6 +38,60 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 - Chromium wired up for flutter web via CHROME_EXECUTABLE=/usr/bin/chromium
 - Global Dart CLIs: skills, serverpod (pinned via SERVERPOD_CLI_VERSION build arg, default 4.0.0-rc.1), serverpod_mcp, jaspr — skills get <pkg> is run per-project at runtime; the pinned RC CLI generates code for Serverpod 4.0.0-rc.* packages
 
+## State & persistence
+
+Nothing important lives in the container's writable layer: every path
+the agents care about is mounted out, so `./manager.sh update
+dev-agents` (a recreate) keeps your work and your state. There are two
+kinds of mounts:
+
+| Container path | Backed by | In `./manager.sh backup`? | Holds |
+|---|---|---|---|
+| `~/.config/opencode` | bind `./data/config` (gitignored) | yes | agent config — edit from the host, no rebuild |
+| `~/projects` | bind `./data/projects` (gitignored) | yes | working repos |
+| `~/.local/share/opencode` | volume `opencode-data` | no | opencode auth (`auth.json` from `/connect`) + session history |
+| `~/.ssh` | volume `ssh` | no | SSH keys / `known_hosts` (`ssh-keygen` once inside) |
+| `~/.pub-cache` | volume `pub-cache` | no | pub packages + global Dart CLIs |
+| `~/.dartServer` | volume `dart-server` | no | Dart analysis-server cache |
+| `~/.dart-tool` | volume `dart-tool` | no | Dart tooling cache |
+
+- **Bind mounts** (`./data/…`) are ordinary gitignored host dirs, so
+  they ride along in `./manager.sh backup`.
+- **Named volumes** survive recreate and image updates but are **not**
+  picked up by `./manager.sh backup` (which only tars `<svc>/data/`).
+  That is fine — everything in them is re-creatable: re-auth, a fresh
+  `ssh-keygen`, warm caches. The Dart caches (`dart-server`,
+  `dart-tool`) specifically spare you a costly re-index after every
+  update.
+
+**Why `pub-cache` is a named volume, not a bind:** on first use Docker
+seeds the volume from the image, so the global Dart CLIs baked at build
+time are already there. A bind mount would shadow those binaries with an
+empty host dir.
+
+**Caveat:** once the `pub-cache` volume exists, its contents are *not*
+refreshed by a later image update — you keep the old global CLI versions.
+To force a reseed, drop the volume (confirm the exact name with
+`docker volume ls`):
+
+```bash
+docker volume rm dev-agents_pub-cache && ./manager.sh update dev-agents
+```
+
+The same trick resets any other state volume when you want a clean slate.
+
+**Not persisted, by design:** packages installed with `sudo apt` at
+runtime live only in the writable layer and vanish on recreate — add a
+package to the Dockerfile if you need it permanently. Git identity
+(user.name / user.email) is not persisted either; it comes from the
+`GIT_AUTHOR_*` / `GIT_COMMITTER_*` env vars (defaulted in the compose
+file).
+
+**GitHub auth:** prefer `GH_TOKEN` in `dev-agents/.env` (see
+`.env.example`) — it is passed through the environment, so it survives
+recreation. An interactive `gh auth login` works too, but its
+`hosts.yml` is not persisted and is lost on the next recreate.
+
 ## Files in this directory
 
 | File | Purpose |
