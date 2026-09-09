@@ -104,6 +104,28 @@ recreation. An interactive `gh auth login` works too, but its
 | `data/config/opencode.jsonc` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host) |
 | `data/config/instructions/` | Global instruction files injected into every agent's system prompt (e.g. the docs-before-sources package policy) |
+| `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
+
+## Slash commands
+
+Three custom slash commands ship in `data/config/commands/` and are
+available in both the TUI and the web UI:
+
+- `/test` - run the project's test suite in an isolated `dev_test_`
+  database (delegates to the `tester` subagent).
+- `/review` - review the branch diff for correctness, style, and leaked
+  secrets (delegates to the `reviewer` subagent, read-only).
+- `/pr` - commit, push the current branch, and open a pull request
+  following the repo's Git Flow rules.
+
+Each command is a markdown file whose frontmatter defines at least
+`description`, with optional `agent`, `subtask`, and `model` fields
+(format: see the opencode commands docs); the body
+is the prompt template and `$ARGUMENTS` expands to whatever you type after
+the command. Because the whole `data/config/` tree is bind-mounted to
+`~/.config/opencode/`, these files can be edited from the host without a
+rebuild - restart the container or reopen the project so opencode picks
+up changes.
 
 ## What the agents can do
 
