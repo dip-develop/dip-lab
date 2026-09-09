@@ -56,6 +56,20 @@ services:
     volumes:
       - ./data/config:/home/develop/.config/opencode
       - ./data/projects:/home/develop/projects
+      # State that must survive container recreation (./manager.sh update):
+      # opencode auth (auth.json from /connect) + session history.
+      - opencode-data:/home/develop/.local/share/opencode
+      # SSH keys / known_hosts, generated once inside the container.
+      - ssh:/home/develop/.ssh
+      # pub-cache: named volume ON PURPOSE - on first use Docker copies
+      # the image content into it (global Dart CLIs baked at build time);
+      # a bind mount would shadow those binaries. See README for the
+      # stale-volume caveat after image updates.
+      - pub-cache:/home/develop/.pub-cache
+      # Dart analysis-server and dart-tool caches: avoid a costly
+      # re-index after every image update.
+      - dart-server:/home/develop/.dartServer
+      - dart-tool:/home/develop/.dart-tool
 
     environment:
       # Git identity for commits made from inside the container.
@@ -72,6 +86,13 @@ services:
       # LLM provider key, referenced as {env:B_AI_API_KEY} in
       # data/config/opencode.jsonc. Kept out of git-tracked config.
       - B_AI_API_KEY=${B_AI_API_KEY:?set B_AI_API_KEY in dev-agents/.env, see .env.example}
+      # GitHub token for the `gh` CLI. Passed via env so authentication
+      # survives container recreation without persisting a token inside
+      # the container (hosts.yml from `gh auth login` is ephemeral by
+      # design). Leave empty and use `gh auth login` interactively if
+      # you prefer - that login then lasts only for the container's
+      # lifetime.
+      - GH_TOKEN=${GH_TOKEN:-}
       # Isolated test-DB creds. The container can ONLY create/drop
       # databases whose name starts with `dev_test_` (enforced at the
       # server side by databases/init.sql + mysql-init.sql). See
@@ -122,3 +143,13 @@ networks:
     external: true
   database:
     external: true
+
+# Named state volumes (survive container recreation / image updates;
+# NOT included in `./manager.sh backup`, which only tars <svc>/data/ -
+# everything here is re-creatable: re-auth, new ssh-keygen, fresh caches).
+volumes:
+  opencode-data:
+  ssh:
+  pub-cache:
+  dart-server:
+  dart-tool:
