@@ -33,6 +33,16 @@ permission:
     "git show *": allow
     "git branch *": allow
     "git grep *": allow
+    "git remote *": allow
+    "git ls-remote *": allow
+    "git -C * status*": allow
+    "git -C * diff*": allow
+    "git -C * log*": allow
+    "git -C * show *": allow
+    "git -C * branch *": allow
+    "git -C * grep *": allow
+    "git -C * remote *": allow
+    "git -C * ls-remote *": allow
     "gh pr list*": allow
     "gh pr view*": allow
     "gh issue list*": allow

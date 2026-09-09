@@ -58,6 +58,7 @@ permission:
     "git ls-remote *": allow
     "git grep *": allow
     "git check-ignore *": allow
+    "git -C *": allow
     "gh pr create*": allow
     "gh pr list*": allow
     "gh pr view*": allow
@@ -85,6 +86,15 @@ permission:
     "git push*:main*": deny
     "git push*:master*": deny
     "git push*:develop*": deny
+    "git -C * push * main*": deny
+    "git -C * push * master*": deny
+    "git -C * push * develop*": deny
+    "git -C * push*--force*": deny
+    "git -C * push*-f*": deny
+    "git -C * push*:main*": deny
+    "git -C * push*:master*": deny
+    "git -C * push*:develop*": deny
+    "git -C * tag *": ask
     "pip3 install *": allow
     "pip3 uninstall *": allow
     "pip3 list *": allow
