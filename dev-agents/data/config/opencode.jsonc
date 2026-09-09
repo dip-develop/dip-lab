@@ -7,6 +7,21 @@
   // Keep runtime in sync with the pinned OPENCODE_VERSION in the image:
   // in-container self-update would drift from the built image.
   "autoupdate": false,
+  // Keep the file watcher away from build artifacts and generated code:
+  // build_runner / serverpod generate / flutter build rewrite these
+  // constantly and burn the container's CPU/pid budget for no benefit.
+  // Depth-agnostic globs so they match inside any project in ~/projects.
+  "watcher": {
+    "ignore": [
+      "**/.git/**",
+      "**/.dart_tool/**",
+      "**/build/**",
+      "**/node_modules/**",
+      "**/generated/**",
+      "**/*.g.dart",
+      "**/*.freezed.dart"
+    ]
+  },
   "provider": {
     "b_ai": {
       "type": "openai",
