@@ -118,6 +118,11 @@ permission:
     "gh issue view*": allow
     "gh run list*": allow
     "gh run view*": allow
+    # Closing a PR is reversible (gh pr reopen), so agents may do it (e.g.
+    # superseded PRs); --delete-branch on top is not -- branch deletion is an
+    # operator action per instructions/git-flow.md. Last match wins.
+    "gh pr close*": allow
+    "gh pr close*--delete-branch*": deny
     "dart analyze*": allow
     "dart format*": allow
     "dart test*": allow
@@ -145,6 +150,15 @@ permission:
     "git push*:main*": deny
     "git push*:master*": deny
     "git push*:develop*": deny
+    # Branch-deletion forms (flag / delete-refspec, anchored to token starts
+    # so mid-token colons like HEAD:branch are unaffected): git-flow makes
+    # branch deletion an operator action, but before these only the
+    # :main/:master/:develop refspec denies existed and --delete fell through
+    # the general allow.
+    "git push --delete*": deny
+    "git push * --delete*": deny
+    "git push :*": deny
+    "git push * :*": deny
     "git -C * push * main*": deny
     "git -C * push * master*": deny
     "git -C * push * develop*": deny
@@ -154,6 +168,10 @@ permission:
     "git -C * push*:main*": deny
     "git -C * push*:master*": deny
     "git -C * push*:develop*": deny
+    "git -C * push --delete*": deny
+    "git -C * push * --delete*": deny
+    "git -C * push :*": deny
+    "git -C * push * :*": deny
     "git -C * tag *": ask
     "pip3 install *": allow
     "pip3 uninstall *": allow
