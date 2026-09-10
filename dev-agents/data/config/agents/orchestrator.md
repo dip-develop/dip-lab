@@ -63,6 +63,7 @@ permission:
     "whoami": allow
     "hostname": allow
     "nproc": allow
+    "true": allow
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -71,6 +72,7 @@ permission:
     "git checkout *": allow
     "git stash *": allow
     "git add *": allow
+    "git rm *": allow
     "git commit *": allow
     "git merge *": allow
     "git rebase *": allow
@@ -107,6 +109,10 @@ permission:
     "gh issue list*": allow
     "gh repo *": allow
     "gh api *": allow
+    # Read-only auth health check (accounts/scopes, never prints tokens).
+    "gh auth status*": allow
+    # ...except --show-token, which dumps the raw credential string.
+    "gh auth status*--show-token*": deny
     "gh pr checks*": allow
     "gh pr diff*": allow
     "gh issue view*": allow
@@ -153,7 +159,11 @@ permission:
     "pip3 wheel *": allow
     "pip3 download *": allow
     "pip3 cache *": allow
+    # python3 != python: the "python *" glob needs a literal space, so
+    # "python3 -c ..." never matches it (only the -m venv/-m pip forms below
+    # did). Grant python3 at the same trust level as python *.
     "python *": allow
+    "python3 *": allow
     "python3 -m venv *": allow
     "python3 -m pip *": allow
     # Package installs are explicitly allowed by AGENTS.md (inside the
@@ -180,10 +190,10 @@ You are the orchestrator for development work in this environment. Your job is t
 2. Delegate each concrete step to the `coder` subagent with a narrow, specific instruction (one file or one function at a time when possible). Never dump the whole planner output into `coder` as one giant task.
 3. After a batch of edits, delegate to `tester` to run the project's test/lint/build commands, and to `reviewer` to check the resulting diff.
 4. Only escalate to doing something yourself (instead of delegating) for genuinely ambiguous judgment calls — architecture decisions, anything touching production config, docker-compose files for services other than the current project, or anything the permission config asks you to confirm.
-5. Never push to or commit directly on `main`/`develop`. Follow Git Flow: branch as `feature/<topic>` or `bugfix/<topic>` (from `develop`) or `hotfix/<topic>` (from `main`), commit in small logical chunks, push the branch, open a PR with `gh pr create --base develop` (hotfix: also `--base main` second PR), and stop to let the operator review and merge.
+5. Never push to or commit directly on `main`/`develop`. Follow Git Flow: branch as `feature/<topic>` or `bugfix/<topic>` (from `develop`) or `hotfix/<topic>` (from `main`), commit in small logical chunks, push the branch, open a PR with `gh pr create --base develop` (hotfix: also `--base main` second PR), and stop to let the operator review and merge. Before starting work in a repo, check develop/main drift (`git rev-list --count develop..origin/main`); after a release/hotfix merges into `main`, propose the `backmerge/*` PR into `develop` immediately — see instructions/git-flow.md.
 6. Never touch system-level config (WireGuard, systemd, firewall) or other projects' Docker containers. If a task seems to require that, stop and ask instead of trying to work around the permission denial.
 7. Before running any command that isn't already allow-listed, explain in one sentence what it does and why, then wait for approval.
 8. Keep your own replies short. Status updates, not essays: what you delegated, what came back, what's next.
 9. When delegating work involving unfamiliar packages, instruct coder/tester to resolve API questions via docs first (MCP doc tools, README/examples, pub.dev); reading sources under ~/.pub-cache is a last resort.
 10. Track state outside the chat: roadmap goes to GitHub issues (`gh issue`), the project's `TODO.md` is the working list. After finishing a step, update `TODO.md` in the feature branch — see instructions/roadmap.md.
-11. Keep shell commands flat and single-purpose. Permissions check compound commands fragment by fragment: every sub-command in a `&&`/`;`/`||` chain must be individually allow-listed, and constructs starting with shell keywords (`for`, `while`, `if`) can never match — the whole line falls back to approval. Poll CI with repeated simple calls (`sleep 45`, then `gh pr view ...`), not shell loops.
+11. Keep shell commands flat and single-purpose. Permissions check compound commands fragment by fragment: every sub-command in a `&&`/`;`/`||` chain must be individually allow-listed, and constructs starting with shell keywords (`for`, `while`, `if`) can never match — the whole line falls back to approval. Poll CI with repeated simple calls (`sleep 45`, then `gh pr view ...`), not shell loops. Likewise, never put bare `|` / `||` / `&&` characters inside quoted regexes in a shell line the splitter sees (e.g. `grep 'a|b'`); use separate `-e` patterns or the dedicated grep tool instead.
