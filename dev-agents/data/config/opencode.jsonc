@@ -143,6 +143,7 @@
       "whoami": "allow",
       "hostname": "allow",
       "nproc": "allow",
+      "true": "allow",
       "git -C *": "allow",
       "git status*": "allow",
       "git diff*": "allow",
@@ -152,6 +153,7 @@
       "git checkout *": "allow",
       "git stash *": "allow",
       "git add *": "allow",
+      "git rm *": "allow",
       "git commit *": "allow",
       "git merge *": "allow",
       "git rebase *": "allow",
@@ -184,6 +186,14 @@
       "gh issue view*": "allow",
       "gh run list*": "allow",
       "gh run view*": "allow",
+      // Closing a PR is reversible (gh pr reopen); --delete-branch on top is
+      // an operator action (git-flow). Last match wins, so the deny trails.
+      "gh pr close*": "allow",
+      "gh pr close*--delete-branch*": "deny",
+      // Read-only auth health check (accounts/scopes, never prints tokens).
+      "gh auth status*": "allow",
+      // ...except --show-token, which dumps the raw credential string.
+      "gh auth status*--show-token*": "deny",
       "dart analyze*": "allow",
       "dart format*": "allow",
       "dart test*": "allow",
@@ -209,10 +219,24 @@
       "git push * master*": "deny",
       "git push * develop*": "deny",
       "git push*--force*": "deny",
-      "git push*-f*": "deny",
+      // The -f guard is anchored to token boundaries ("-f" at end of line
+      // or "-f" followed by a space). The previous "git push*-f*" form also
+      // hard-denied legitimate pushes where "-f" merely appeared inside an
+      // argument (e.g. branch names like feature/git-flow-*).
+      // Residual gap: bundled short flags (-uf/-fu) slip through, as before;
+      // server-side branch protection is the real backstop.
+      "git push*-f": "deny",
+      "git push*-f *": "deny",
       "git push*:main*": "deny",
       "git push*:master*": "deny",
       "git push*:develop*": "deny",
+      // Branch-deletion forms (flag / delete-refspec, token-anchored):
+      // git-flow makes branch deletion an operator action; before these,
+      // "--delete" fell through the general "git push *" allow.
+      "git push --delete*": "deny",
+      "git push * --delete*": "deny",
+      "git push :*": "deny",
+      "git push * :*": "deny",
       // Mirror the protected-push guards onto the "git -C <path> push ..."
       // form: the guards above anchor on "git push", so without these the
       // -C variant would bypass them.
@@ -220,10 +244,15 @@
       "git -C * push * master*": "deny",
       "git -C * push * develop*": "deny",
       "git -C * push*--force*": "deny",
-      "git -C * push*-f*": "deny",
+      "git -C * push*-f": "deny",
+      "git -C * push*-f *": "deny",
       "git -C * push*:main*": "deny",
       "git -C * push*:master*": "deny",
       "git -C * push*:develop*": "deny",
+      "git -C * push --delete*": "deny",
+      "git -C * push * --delete*": "deny",
+      "git -C * push :*": "deny",
+      "git -C * push * :*": "deny",
       "git -C * tag *": "ask",
       // Env files: bash-side mirror of the read policy above. Last match
       // wins, so these trail the broad read allows. Best-effort only

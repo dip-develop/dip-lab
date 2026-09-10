@@ -55,15 +55,45 @@ permission:
     "git push* master*": deny
     "git push* develop*": deny
     "git push*--force*": deny
-    "git push*-f*": deny
+    # -f guard anchored to token boundaries; the old "git push*-f*" form
+    # also denied legitimate pushes whose branch name merely contains "-f"
+    # (e.g. feature/git-flow-*). See notes in opencode.jsonc.
+    "git push*-f": deny
+    "git push*-f *": deny
     "git push*:main*": deny
     "git push*:master*": deny
     "git push*:develop*": deny
+    # Branch-deletion pushes are operator actions (git-flow) and would
+    # otherwise match only the broad "git *" allow.
+    "git push --delete*": deny
+    "git push * --delete*": deny
+    "git push :*": deny
+    "git push * :*": deny
+    # The guards above anchor on "git push", but "git *" allows the
+    # "git -C <path> push ..." form too -- mirror the complete deny set,
+    # or every protected-push rule is bypassable by prefixing "-C .".
+    "git -C * push * main*": deny
+    "git -C * push * master*": deny
+    "git -C * push * develop*": deny
+    "git -C * push*--force*": deny
+    "git -C * push*-f": deny
+    "git -C * push*-f *": deny
+    "git -C * push*:main*": deny
+    "git -C * push*:master*": deny
+    "git -C * push*:develop*": deny
+    "git -C * push --delete*": deny
+    "git -C * push * --delete*": deny
+    "git -C * push :*": deny
+    "git -C * push * :*": deny
     # gh: merging PRs and managing repo secrets/settings are operator actions
     # (Git Flow); last match wins, so these trail the broad "gh *" allow.
     "gh pr merge*": deny
     "gh secret*": deny
     "gh repo delete*": deny
+    # Close is fine (reversible via gh pr reopen); deleting the head branch
+    # and printing the raw token are not (see notes in opencode.jsonc).
+    "gh pr close*--delete-branch*": deny
+    "gh auth status*--show-token*": deny
     # Last-match-wins env-file guards; see the note in opencode.jsonc.
     "cat *.env*": deny
     "head *.env*": deny

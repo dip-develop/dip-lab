@@ -99,12 +99,20 @@ values (see `~/.config/dev-agents/env.sh`).
 - Merging into `main`/`develop`, tagging releases, and force-pushes
   are operator actions. Pushes to `main`/`develop` (including refspec
   forms like `HEAD:develop`) are denied at the permission level.
+- After a release/hotfix lands on `main`, propose the back-merge PR
+  (`backmerge/*` cut from `origin/main`, base `develop`) right away;
+  dependency/CI maintenance targets `develop`
+  (`target-branch: develop`). Details in `instructions/git-flow.md`.
 
 ## Roadmap & TODO
 
 - Long-lived plans and ideas go to GitHub issues; the current working
   list is `TODO.md` in the project root. Details:
   `instructions/roadmap.md` (injected into every agent).
+- Multi-step plans get a tracking issue before implementation (the
+  operator approves filing); PR bodies link it via `Refs #<n>` and
+  the orchestrator closes it after the merge — GitHub's `Closes`
+  keyword does not fire for develop-based merges.
 
 ## Things to never do
 
