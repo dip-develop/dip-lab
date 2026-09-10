@@ -33,6 +33,9 @@ permission:
     "awk *": allow
     "tr *": allow
     "jq *": allow
+    # Log slicing and the "|| true" idiom (fragment-checked compounds).
+    "sed *": allow
+    "true": allow
     "basename *": allow
     "dirname *": allow
     "realpath *": allow
@@ -52,6 +55,17 @@ permission:
     "git -C * grep *": allow
     "git -C * remote *": allow
     "git -C * ls-remote *": allow
+    # Stale origin/* refs give wrong drift/back-merge verdicts; fetch only
+    # updates refs, never the working tree.
+    "git fetch": allow
+    "git fetch *": allow
+    "git -C * fetch *": allow
+    # Inspecting stashed WIP is review context; only the read forms are
+    # granted -- push/pop/apply/drop mutate the working tree and stay at ask.
+    "git stash list*": allow
+    "git stash show*": allow
+    "git -C * stash list*": allow
+    "git -C * stash show*": allow
     "git remote": allow
     "git branch": allow
     "git rev-parse*": allow
@@ -86,8 +100,14 @@ permission:
     "gh pr diff*": allow
     "gh issue view*": allow
     "gh issue list*": allow
-    "gh repo *": allow
-    "gh api *": allow
+    # "gh repo *" and "gh api *" removed: the reviewer is read-only by role,
+    # and those globs let through mutations -- "gh repo delete", and
+    # "gh api .../pulls/N/merge -X PUT" bypasses the gh-pr-merge gating.
+    "gh repo view*": allow
+    # CI status vs failure detail: pr checks only shows pass/fail, the
+    # run logs distinguish lint from test failures.
+    "gh run list*": allow
+    "gh run view*": allow
     "dart analyze*": allow
     "dart format*": allow
     # Last-match-wins env-file guards; see the note in opencode.jsonc.
