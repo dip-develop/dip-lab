@@ -136,7 +136,12 @@ permission:
     "git push * master*": deny
     "git push * develop*": deny
     "git push*--force*": deny
-    "git push*-f*": deny
+    # -f guard anchored to token boundaries ("-f" at end or "-f " with a
+    # space); "git push*-f*" used to hard-deny legit pushes whose branch
+    # name merely contains "-f" (feature/git-flow-*). Bundled -uf/-fu still
+    # slip through -- server-side branch protection is the real backstop.
+    "git push*-f": deny
+    "git push*-f *": deny
     "git push*:main*": deny
     "git push*:master*": deny
     "git push*:develop*": deny
@@ -144,7 +149,8 @@ permission:
     "git -C * push * master*": deny
     "git -C * push * develop*": deny
     "git -C * push*--force*": deny
-    "git -C * push*-f*": deny
+    "git -C * push*-f": deny
+    "git -C * push*-f *": deny
     "git -C * push*:main*": deny
     "git -C * push*:master*": deny
     "git -C * push*:develop*": deny

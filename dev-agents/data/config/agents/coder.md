@@ -55,7 +55,11 @@ permission:
     "git push* master*": deny
     "git push* develop*": deny
     "git push*--force*": deny
-    "git push*-f*": deny
+    # -f guard anchored to token boundaries; the old "git push*-f*" form
+    # also denied legitimate pushes whose branch name merely contains "-f"
+    # (e.g. feature/git-flow-*). See notes in opencode.jsonc.
+    "git push*-f": deny
+    "git push*-f *": deny
     "git push*:main*": deny
     "git push*:master*": deny
     "git push*:develop*": deny

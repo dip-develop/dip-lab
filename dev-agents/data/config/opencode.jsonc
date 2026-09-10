@@ -200,7 +200,14 @@
       "git push * master*": "deny",
       "git push * develop*": "deny",
       "git push*--force*": "deny",
-      "git push*-f*": "deny",
+      // The -f guard is anchored to token boundaries ("-f" at end of line
+      // or "-f" followed by a space). The previous "git push*-f*" form also
+      // hard-denied legitimate pushes where "-f" merely appeared inside an
+      // argument (e.g. branch names like feature/git-flow-*).
+      // Residual gap: bundled short flags (-uf/-fu) slip through, as before;
+      // server-side branch protection is the real backstop.
+      "git push*-f": "deny",
+      "git push*-f *": "deny",
       "git push*:main*": "deny",
       "git push*:master*": "deny",
       "git push*:develop*": "deny",
@@ -211,7 +218,8 @@
       "git -C * push * master*": "deny",
       "git -C * push * develop*": "deny",
       "git -C * push*--force*": "deny",
-      "git -C * push*-f*": "deny",
+      "git -C * push*-f": "deny",
+      "git -C * push*-f *": "deny",
       "git -C * push*:main*": "deny",
       "git -C * push*:master*": "deny",
       "git -C * push*:develop*": "deny",
