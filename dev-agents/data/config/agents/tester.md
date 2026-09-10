@@ -61,6 +61,31 @@ permission:
     "flutter devices*": allow
     # The body instructs jaspr checks, so the permission must exist too.
     "jaspr build*": allow
+    # Log markers and no-ops: compound lines are fragment-checked, so
+    # "|| true" and echo separators need allows too.
+    "echo *": allow
+    "printf *": allow
+    "true": allow
+    "sed *": allow
+    "which *": allow
+    # AGENTS.md "Testing expectations": DB-backed tests run against
+    # dev_test_* databases with the TEST_* creds. Enforcement is the
+    # container's db-safe wrapper (symlinked over these names on PATH)
+    # plus server-side grants -- not these globs.
+    "psql *": allow
+    "mysql *": allow
+    "mariadb *": allow
+    "redis-cli *": allow
+    # Smoke-run an entrypoint / reproduce a failure; CI-equivalent build
+    # (the role covers "test/lint/build").
+    "dart run *": allow
+    "flutter build *": allow
+    # env only as a wrapper around already-allowed tools (never "env *":
+    # it overrides every anchored deny via last-match-wins).
+    "env * dart *": allow
+    "env * flutter *": allow
+    "env * serverpod *": allow
+    "env * jaspr *": allow
     # Last-match-wins env-file guards; see the note in opencode.jsonc.
     "cat *.env*": deny
     "head *.env*": deny
