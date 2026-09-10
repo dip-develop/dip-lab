@@ -126,6 +126,10 @@ permission:
     # operator action per instructions/git-flow.md. Last match wins.
     "gh pr close*": allow
     "gh pr close*--delete-branch*": deny
+    # Comments are reversible (deletable via the web UI / gh api) and are
+    # the sanctioned way to drive bots, e.g. "@dependabot rebase" on
+    # dependency PRs (instructions/git-flow.md: dep maintenance -> develop).
+    "gh pr comment*": allow
     "dart analyze*": allow
     "dart format*": allow
     "dart test*": allow

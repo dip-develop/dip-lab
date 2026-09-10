@@ -190,6 +190,9 @@
       // an operator action (git-flow). Last match wins, so the deny trails.
       "gh pr close*": "allow",
       "gh pr close*--delete-branch*": "deny",
+      // Comments are reversible and the sanctioned way to drive bots
+      // (e.g. "@dependabot rebase"); see notes in agents/orchestrator.md.
+      "gh pr comment*": "allow",
       // Read-only auth health check (accounts/scopes, never prints tokens).
       "gh auth status*": "allow",
       // ...except --show-token, which dumps the raw credential string.
