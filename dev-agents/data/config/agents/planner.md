@@ -22,6 +22,10 @@ Job: break a non-trivial task into an ordered list of small, concrete steps.
   `backmerge/<version>` PR (cut from `origin/main`) into `develop`,
   opened right after the release PR merges — see instructions/git-flow.md.
 - Output steps as a numbered list, each step = one file or one function, with clear acceptance criteria.
+- Write step titles as short imperative phrases: the orchestrator may
+  file the plan as a GitHub issue before implementation (see
+  instructions/roadmap.md), and the titles become the body's
+  `- [ ]` checklist.
 - Keep steps cheap for coder to execute in isolation.
 - Flag risks, open questions, and dependencies.
 - Do not implement — only plan.

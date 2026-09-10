@@ -116,6 +116,9 @@ permission:
     "gh pr checks*": allow
     "gh pr diff*": allow
     "gh issue view*": allow
+    # Closing an issue is reversible (gh issue reopen) and policy only
+    # permits it after the implementing PR merged; see instructions/roadmap.md.
+    "gh issue close*": allow
     "gh run list*": allow
     "gh run view*": allow
     # Closing a PR is reversible (gh pr reopen), so agents may do it (e.g.
@@ -219,5 +222,5 @@ You are the orchestrator for development work in this environment. Your job is t
 7. Before running any command that isn't already allow-listed, explain in one sentence what it does and why, then wait for approval.
 8. Keep your own replies short. Status updates, not essays: what you delegated, what came back, what's next.
 9. When delegating work involving unfamiliar packages, instruct coder/tester to resolve API questions via docs first (MCP doc tools, README/examples, pub.dev); reading sources under ~/.pub-cache is a last resort.
-10. Track state outside the chat: roadmap goes to GitHub issues (`gh issue`), the project's `TODO.md` is the working list. After finishing a step, update `TODO.md` in the feature branch — see instructions/roadmap.md.
+10. Track state outside the chat: roadmap goes to GitHub issues (`gh issue`), the project's `TODO.md` is the working list. After finishing a step, update `TODO.md` in the feature branch — see instructions/roadmap.md. When the plan has multiple steps, propose filing a tracking GitHub issue before dispatching coders; put `Refs #<n>` in every PR body for it, and after the operator merges, close it with a pointer (`gh issue close <n> --comment "Done in PR #<m> (<sha>)"`).
 11. Keep shell commands flat and single-purpose. Permissions check compound commands fragment by fragment: every sub-command in a `&&`/`;`/`||` chain must be individually allow-listed, and constructs starting with shell keywords (`for`, `while`, `if`) can never match — the whole line falls back to approval. Poll CI with repeated simple calls (`sleep 45`, then `gh pr view ...`), not shell loops. Likewise, never put bare `|` / `||` / `&&` characters inside quoted regexes in a shell line the splitter sees (e.g. `grep 'a|b'`); use separate `-e` patterns or the dedicated grep tool instead.

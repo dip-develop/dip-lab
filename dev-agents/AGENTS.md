@@ -109,6 +109,10 @@ values (see `~/.config/dev-agents/env.sh`).
 - Long-lived plans and ideas go to GitHub issues; the current working
   list is `TODO.md` in the project root. Details:
   `instructions/roadmap.md` (injected into every agent).
+- Multi-step plans get a tracking issue before implementation (the
+  operator approves filing); PR bodies link it via `Refs #<n>` and
+  the orchestrator closes it after the merge — GitHub's `Closes`
+  keyword does not fire for develop-based merges.
 
 ## Things to never do
 
