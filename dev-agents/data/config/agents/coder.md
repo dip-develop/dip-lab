@@ -19,6 +19,11 @@ permission:
     "grep *": allow
     "rg *": allow
     "sed *": allow
+    # Code inspection (line-length/field analysis over files) -- parity
+    # with the same trust level already granted in orchestrator/reviewer/
+    # baseline. docker remains unlisted on purpose: it is not installed
+    # in this container and AGENTS.md routes such needs to the operator.
+    "awk *": allow
     "find *": allow
     "stat *": allow
     "mkdir *": allow
