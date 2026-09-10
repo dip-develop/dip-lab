@@ -60,6 +60,12 @@ permission:
     "git fetch": allow
     "git fetch *": allow
     "git -C * fetch *": allow
+    # Inspecting stashed WIP is review context; only the read forms are
+    # granted -- push/pop/apply/drop mutate the working tree and stay at ask.
+    "git stash list*": allow
+    "git stash show*": allow
+    "git -C * stash list*": allow
+    "git -C * stash show*": allow
     "git remote": allow
     "git branch": allow
     "git rev-parse*": allow

@@ -44,6 +44,10 @@ permission:
     "git rev-parse*": allow
     "git branch": allow
     "git branch *": allow
+    # Read-only stash inspection (failing tests vs uncommitted WIP);
+    # push/pop/apply/drop mutate the tree and stay at ask.
+    "git stash list*": allow
+    "git stash show*": allow
     "git ls-files*": allow
     "git config --get*": allow
     "dart analyze*": allow
