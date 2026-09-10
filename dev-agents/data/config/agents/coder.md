@@ -39,6 +39,13 @@ permission:
     "flutter *": allow
     "serverpod *": allow
     "jaspr *": allow
+    # env only as a wrapper around already-allowed tools (e.g. unsetting
+    # vars before "dart run"): a blanket "env *" would let "env gh pr merge"
+    # / "env git push ... main" bypass every anchored deny below.
+    "env * dart *": allow
+    "env * flutter *": allow
+    "env * serverpod *": allow
+    "env * jaspr *": allow
     "cd": allow
     "cd *": allow
     "type *": allow

@@ -33,7 +33,16 @@ permission:
     "which *": allow
     "uname *": allow
     "uname": allow
-    "env *": allow
+    # Not "env *": a blanket allow overrides every anchored deny below via
+    # last-match-wins ("env git push origin HEAD:main", "env gh pr merge",
+    # "env cat x.env" all slipped through). env is granted only as a wrapper
+    # around already-allowed tools; bare env / "env | grep" now fall to ask.
+    "env * dart *": allow
+    "env * flutter *": allow
+    "env * serverpod *": allow
+    "env * jaspr *": allow
+    "env * python *": allow
+    "env * python3 *": allow
     "diff *": allow
     "sort *": allow
     "uniq *": allow
