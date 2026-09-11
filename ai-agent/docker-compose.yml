@@ -58,15 +58,6 @@ services:
     #   - "traefik.http.routers.hermes.tls.certresolver=letsencrypt"
     #   - "traefik.http.services.hermes.loadbalancer.server.port=8642"
 
-  #ai-agent:
-  # Note: kept for backward compatibility as an alias for the hermes
-  # service (so an old `ai-agent` hostname / DNS still resolves inside
-  # the internal network). Uncomment if you need it.
-  #  image: nginx:alpine
-  #  container_name: ai-agent-alias
-  #  restart: always
-  #  networks:
-  #    - internal
 
 networks:
   internal:
