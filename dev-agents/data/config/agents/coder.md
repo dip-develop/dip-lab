@@ -40,6 +40,27 @@ permission:
     pwd: allow
     "git *": allow
     "gh *": allow
+    # Same destructive/history-rewriting carve-outs as orchestrator --
+    # a bare "git *": allow would otherwise silently open these too.
+    "git reset*--hard*": ask
+    "git -C * reset*--hard*": ask
+    "git clean*-f*": ask
+    "git -C * clean*-f*": ask
+    "git filter-branch*": deny
+    "git -C * filter-branch*": deny
+    "git filter-repo*": deny
+    "git -C * filter-repo*": deny
+    "git update-ref*": deny
+    "git -C * update-ref*": deny
+    "git reflog expire*": deny
+    "git -C * reflog expire*": deny
+    "git gc*--aggressive*": ask
+    "git -C * gc*--aggressive*": ask
+    "git config --global*": ask
+    "git -C * config --global*": ask
+    "git remote remove*": ask
+    "git remote rm*": ask
+    "git remote set-url*": ask
     "dart *": allow
     "flutter *": allow
     "serverpod *": allow
@@ -102,6 +123,22 @@ permission:
     "gh pr merge*": deny
     "gh secret*": deny
     "gh repo delete*": deny
+    "gh repo edit*--visibility*": deny
+    "gh workflow disable*": deny
+    "gh workflow delete*": deny
+    "gh release delete*": deny
+    "gh auth token*": deny
+    # Best-effort: glob-matching on flags is bypassable (case,
+    # --method=X, no space) -- server-side branch protection is the
+    # real backstop, same caveat as everywhere else in this file.
+    "gh api*-X POST*": ask
+    "gh api*-X PUT*": deny
+    "gh api*-X DELETE*": deny
+    "gh api*-X PATCH*": deny
+    "gh api*--method POST*": ask
+    "gh api*--method PUT*": deny
+    "gh api*--method DELETE*": deny
+    "gh api*--method PATCH*": deny
     # Close is fine (reversible via gh pr reopen); deleting the head branch
     # and printing the raw token are not (see notes in opencode.jsonc).
     "gh pr close*--delete-branch*": deny

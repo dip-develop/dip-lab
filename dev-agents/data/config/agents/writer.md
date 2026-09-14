@@ -15,8 +15,6 @@ permission:
     "gh pr view*": allow
     "gh issue create*": allow
     "gh issue list*": allow
-    "gh repo *": allow
-    "gh api *": allow
     ls: allow
     "ls *": allow
     "cat *": allow

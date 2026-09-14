@@ -73,72 +73,90 @@ permission:
     "hostname": allow
     "nproc": allow
     "true": allow
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-    "git show *": allow
-    "git branch *": allow
-    "git checkout *": allow
-    "git stash *": allow
-    "git add *": allow
-    "git rm *": allow
-    "git commit *": allow
-    "git merge *": allow
-    "git rebase *": allow
+    # git *: allow, then destructive/history-rewriting/identity-changing
+    # ops are pulled back down to ask or deny below (last match wins).
+    # The old enumerated allow-list implicitly blocked these by omission
+    # (default "*": ask caught them); a bare "git *": allow would have
+    # silently opened all of them, so each is restated explicitly here.
+    "git *": allow
     "git tag *": ask
-    "git fetch *": allow
-    "git pull*": allow
-    "git remote *": allow
-    "git ls-remote *": allow
-    "git grep *": allow
-    "git check-ignore *": allow
-    "git -C *": allow
-    "git remote": allow
-    "git branch": allow
-    "git fetch": allow
-    "git ls-remote": allow
-    "git rev-parse*": allow
-    "git ls-files*": allow
-    "git describe*": allow
-    "git merge-base*": allow
-    "git blame*": allow
-    "git shortlog*": allow
-    "git cat-file*": allow
-    "git rev-list*": allow
-    "git for-each-ref*": allow
-    "git worktree list*": allow
-    "git config --get*": allow
-    "git config --get-regexp*": allow
-    "git config --list*": allow
-    "gh pr create*": allow
-    "gh pr list*": allow
-    "gh pr view*": allow
+    "git -C * tag *": ask
+    # Discards uncommitted work; recoverable via reflog but the agent
+    # may not realize that, and reflog itself can be expired (see below).
+    "git reset*--hard*": ask
+    "git -C * reset*--hard*": ask
+    # Deletes untracked files with no undo.
+    "git clean*-f*": ask
+    "git -C * clean*-f*": ask
+    # History rewrite -- never routine, always an operator action.
+    "git filter-branch*": deny
+    "git -C * filter-branch*": deny
+    "git filter-repo*": deny
+    "git -C * filter-repo*": deny
+    # Rewrites refs directly, bypassing normal commit/checkout paths.
+    "git update-ref*": deny
+    "git -C * update-ref*": deny
+    # Can erase the reflog safety net that "reset --hard" recovery relies on.
+    "git reflog expire*": deny
+    "git -C * reflog expire*": deny
+    "git gc*--aggressive*": ask
+    "git -C * gc*--aggressive*": ask
+    # Commit identity / remote endpoints are operator-level config, not
+    # something a task should change mid-run.
+    "git config --global*": ask
+    "git -C * config --global*": ask
+    "git remote remove*": ask
+    "git remote rm*": ask
+    "git remote set-url*": ask
+    "git -C * remote remove*": ask
+    "git -C * remote rm*": ask
+    "git -C * remote set-url*": ask
+    # Force-deleting a local branch can drop unmerged work silently.
+    "git branch -D*": ask
+    "git branch --delete --force*": ask
+    "git -C * branch -D*": ask
+    "git -C * branch --delete --force*": ask
+    # gh *: allow, then repo administration / secrets / token exposure /
+    # anything that could bypass the pr-merge or branch-protection gates
+    # via the raw API is pulled back down (last match wins).
+    "gh *": allow
     "gh pr merge*": ask
-    "gh issue create*": allow
-    "gh issue list*": allow
-    "gh repo *": allow
-    "gh api *": allow
+    # Repo secrets and repo deletion/visibility are operator actions --
+    # never something a task needs mid-run.
+    "gh secret*": deny
+    "gh repo delete*": deny
+    "gh repo edit*--visibility*": deny
+    "gh repo archive*": deny
+    "gh repo rename*": deny
+    "gh workflow disable*": deny
+    "gh workflow delete*": deny
+    "gh release delete*": deny
     # Read-only auth health check (accounts/scopes, never prints tokens).
     "gh auth status*": allow
-    # ...except --show-token, which dumps the raw credential string.
+    # ...except --show-token, and "gh auth token", which dump the raw
+    # credential string.
     "gh auth status*--show-token*": deny
-    "gh pr checks*": allow
-    "gh pr diff*": allow
-    "gh issue view*": allow
+    "gh auth token*": deny
     # Closing an issue is reversible (gh issue reopen) and policy only
     # permits it after the implementing PR merged; see instructions/roadmap.md.
     "gh issue close*": allow
-    "gh run list*": allow
-    "gh run view*": allow
     # Closing a PR is reversible (gh pr reopen), so agents may do it (e.g.
     # superseded PRs); --delete-branch on top is not -- branch deletion is an
     # operator action per instructions/git-flow.md. Last match wins.
-    "gh pr close*": allow
     "gh pr close*--delete-branch*": deny
-    # Comments are reversible (deletable via the web UI / gh api) and are
-    # the sanctioned way to drive bots, e.g. "@dependabot rebase" on
-    # dependency PRs (instructions/git-flow.md: dep maintenance -> develop).
-    "gh pr comment*": allow
+    # `gh api` is a raw REST escape hatch: glob-matching on flags is
+    # best-effort (case, --method=X, missing space all slip through --
+    # server-side branch protection / required reviews are the real
+    # backstop), but at least catch the common mutating forms. GET-style
+    # reads (the default verb) stay allowed via the "gh *" line above.
+    "gh api*-X POST*": ask
+    "gh api*-X PUT*": deny
+    "gh api*-X DELETE*": deny
+    "gh api*-X PATCH*": deny
+    "gh api*--method POST*": ask
+    "gh api*--method PUT*": deny
+    "gh api*--method DELETE*": deny
+    "gh api*--method PATCH*": deny
     "dart analyze*": allow
     "dart format*": allow
     "dart test*": allow
