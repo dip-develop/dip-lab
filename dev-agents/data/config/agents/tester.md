@@ -1,7 +1,7 @@
 ---
 description: Runs test/lint/build commands and reports results. Use after edits.
 mode: subagent
-model: b_ai/qwen3.8-flash
+model: opencode-go/mimo-v2.5
 hidden: true
 permission:
   edit: deny

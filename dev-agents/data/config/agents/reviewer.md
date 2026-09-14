@@ -1,7 +1,7 @@
 ---
 description: Reviews diffs for correctness, style and open-core boundaries.
 mode: subagent
-model: b_ai/mimo-v2.5
+model: opencode-go/glm-5.3
 hidden: true
 permission:
   edit: deny

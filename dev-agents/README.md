@@ -101,7 +101,7 @@ recreation. An interactive `gh auth login` works too, but its
 | `.env.example` | Template - copy to `.env` and fill in |
 | `setup.sh` | Creates `data/config/agents/` and `data/config/instructions/` if missing |
 | `AGENTS.md` | Read by opencode when you open a project - agent rules |
-| `data/config/opencode.jsonc` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
+| `data/config/opencode.jsonc` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, architect, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host) |
 | `data/config/instructions/` | Global instruction files injected into every agent's system prompt (e.g. the docs-before-sources package policy) |
 | `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
@@ -220,17 +220,37 @@ exception:
   (test user) / `TEST_REDIS_DB` index (Redis), and client-side gated
   by the `db-safe` wrapper on PATH.
 
-## Customizing model IDs
+## Model provider: OpenCode Go
 
-`data/config/opencode.jsonc` ships with `<set-...-model-id>` placeholders.
-After starting the container and opening the web UI:
+Agents run on [OpenCode Go](https://opencode.ai/go), a flat-rate
+subscription covering a curated set of open-weight coding models behind
+one API key. There is no `provider` block in `opencode.jsonc` for it —
+it's a built-in provider, referenced as `opencode-go/<model-id>`.
 
-1. Run `/connect` and pick your model provider.
-2. Run `/models` to list the real model IDs your provider offers.
-3. Replace the placeholders in `data/config/opencode.jsonc` (it is
-   bind-mounted read-write from the host - edit on the host, then
-   reopen the project in opencode or restart the container to pick
-   the changes up).
+1. Subscribe at opencode.ai/go and copy the API key.
+2. Start the container, open the web UI, run `/connect`, and pick
+   "OpenCode Go". The credential is written to `auth.json` in the
+   `opencode-data` volume (see the state table above) — never to a
+   git-tracked file or `.env`.
+3. Run `/models` any time to see the current model IDs; the roster
+   changes as OpenCode adds/retires models.
+
+**Why models differ per agent:** the Go plan's limits are
+account-wide and dollar-based ($12/5h, $30/week, $60/month), shared
+across every agent. High-frequency roles (`coder`, `tester`,
+`small_model`) are pinned to the cheapest, highest-request-budget
+models so routine work doesn't eat the shared allowance; low-frequency
+roles that most benefit from a stronger model (`orchestrator`,
+`reviewer`, `architect`) get pricier models precisely because they're
+called far less often. `architect` in particular is deliberately kept
+as a separate, rarely-invoked subagent from `planner` so its
+1M-context model (a handful of requests per week) is spent only on
+genuine cross-module design decisions, not routine task breakdown —
+see `data/config/agents/architect.md` and `orchestrator.md` rule 2.
+
+If a model gets renamed or retired upstream, `/models` in the web UI
+is the source of truth — update the `model:` fields in
+`data/config/opencode.jsonc` and `data/config/agents/*.md` to match.
 
 ## Differences from a stock opencode install
 

@@ -1,7 +1,7 @@
 ---
 description: Executes one narrow coding step (one file/function). Use for implementation.
 mode: subagent
-model: b_ai/qwen3.8-flash
+model: opencode-go/qwen3.8-flash
 hidden: true
 permission:
   edit: allow

@@ -1,7 +1,7 @@
 ---
 description: Drafts articles, docs and marketing copy. Edits only markdown/text under docs/business.
 mode: primary
-model: b_ai/glm-5.3-flash
+model: opencode-go/gpt-5.6-luna
 permission:
   task: deny
   edit:
