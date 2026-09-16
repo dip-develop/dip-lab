@@ -308,5 +308,12 @@
       ],
       "enabled": true
     }
-  }
+  },
+  // Cron job scheduler for opencode sessions (create_cron_job, list_cron_jobs,
+  // watch_cron_jobs, ...; state in ~/.config/opencode/cron.db). Installed from
+  // npm by Bun at startup, cached in ~/.cache/opencode. Pinned for the same
+  // reason as OPENCODE_VERSION: reproducible builds, no silent upstream drift.
+  "plugin": [
+    "opencode-cron@0.0.7"
+  ]
 }
