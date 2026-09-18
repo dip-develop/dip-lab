@@ -325,10 +325,14 @@
   //    orchestrator loops
   //  - opencode-pty: interactive/background processes (flutter run,
   //    serverpod run, dev servers) with input sending and regex filtering
+  //  - opencode-memory: persistent memory across sessions (remember,
+  //    recall, update, forget, list); state in
+  //    ~/.config/opencode/memory/ as daily logfmt files
   "plugin": [
     "opencode-cron@0.0.7",
     "cc-safety-net@2.4.1",
     "@tarquinen/opencode-dcp@3.1.15",
-    "opencode-pty@0.3.6"
+    "opencode-pty@0.3.6",
+    "opencode-memory@2.0.0"
   ]
 }
