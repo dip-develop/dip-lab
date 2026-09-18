@@ -114,6 +114,16 @@ values (see `~/.config/dev-agents/env.sh`).
   the orchestrator closes it after the merge — GitHub's `Closes`
   keyword does not fire for develop-based merges.
 
+## Scheduled jobs (opencode-cron)
+
+- The `opencode-cron` plugin is available, but creating a recurring job
+  is an operator action, same as installing the auto-back-merge GitHub
+  Action in `instructions/git-flow.md`: agents may propose a cron job
+  (what it would run, how often) but must not create one themselves.
+- Reason: a recurring job runs unattended against the shared OpenCode Go
+  budget ($12/5h, $30/week, $60/month across all models) with no
+  approval step in the loop, unlike a normal ask-gated bash command.
+
 ## Things to never do
 
 - Never edit `.env`, secrets, SSH keys, WireGuard config, or anything

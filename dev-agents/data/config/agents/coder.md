@@ -29,7 +29,19 @@ permission:
     "mkdir *": allow
     "less *": allow
     "sort *": allow
-    "rm *": allow
+    # No blanket "rm *": unlike every other tool here, delete has no
+    # undo, and combined with "cd *": allow a bare "rm *" would let
+    # coder delete outside the current project tree (~/.pub-cache,
+    # ~/.ssh, sibling projects under /home/develop/projects/**). Scope
+    # it to relative paths inside the current project instead; anything
+    # absolute or reaching for a parent dir falls through to "*": ask.
+    "rm ./*": allow
+    "rm -r ./*": allow
+    "rm -rf ./*": allow
+    "rm *..*": ask
+    "rm /*": ask
+    "rm -r /*": ask
+    "rm -rf /*": ask
     "uniq *": allow
     "wc *": allow
     "printf *": allow

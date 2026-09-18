@@ -38,10 +38,14 @@
   "instructions": [
     "instructions/*.md"
   ],
-  // subagent_depth intentionally omitted -> defaults to 1, which is exactly
-  // "primary can call subagents, subagents can't call further subagents".
-  // Every subagent below also explicitly sets task: deny, so this is now
-  // belt-and-suspenders rather than the only thing closing that gap.
+  // Pinned explicitly rather than left to the implicit default: this repo
+  // pins OPENCODE_VERSION/plugin versions everywhere else precisely to
+  // avoid silent drift across an upgrade, so the depth limit that "primary
+  // can call subagents, subagents can't call further subagents" relies on
+  // shouldn't be the one thing left unstated. Every subagent below also
+  // explicitly sets task: deny, so this is belt-and-suspenders, not the
+  // only thing closing the gap.
+  "subagent_depth": 1,
   "permission": {
     "external_directory": {
       "*": "ask",
