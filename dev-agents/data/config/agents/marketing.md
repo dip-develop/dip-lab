@@ -1,7 +1,7 @@
 ---
 description: Business/marketing strategist for positioning, pricing, outreach. No code edits.
 mode: primary
-model: b_ai/qwen3.8-flash
+model: opencode-go/qwen3.8-max
 permission:
   edit:
     "notes/marketing/**": allow

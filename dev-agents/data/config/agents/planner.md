@@ -1,7 +1,10 @@
 ---
 description: Breaks tasks into ordered concrete steps for coder. Read-only planning, no edits.
 mode: subagent
-model: b_ai/glm-5.3-flash
+# Cheap/high-budget model: this runs on every non-trivial task, unlike
+# architect (kimi-k3), which the orchestrator reserves for cross-module /
+# new-subsystem decisions to protect that model's much smaller request budget.
+model: opencode-go/deepseek-v4-pro
 hidden: true
 permission:
   edit: deny
@@ -29,3 +32,8 @@ Job: break a non-trivial task into an ordered list of small, concrete steps.
 - Keep steps cheap for coder to execute in isolation.
 - Flag risks, open questions, and dependencies.
 - Do not implement — only plan.
+- If the task genuinely needs a cross-module design decision (new
+  subsystem, competing architectural approaches, a change touching
+  several packages' contracts) rather than routine step breakdown, say
+  so explicitly instead of guessing — the orchestrator can route that
+  to the `architect` subagent before you break it into steps.

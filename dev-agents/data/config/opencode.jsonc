@@ -1,7 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "b_ai/glm-5.3-flash",
-  "small_model": "b_ai/hy3",
+  // OpenCode Go shared account budget ($12/5h, $30/week, $60/month across
+  // ALL models combined) -- see agents/*.md for per-role model choices.
+  // orchestrator's own model matters here since it runs on every loop turn,
+  // not just once per task: deepseek-v4-pro gives it a large budget while
+  // staying strong enough for delegation/coordination decisions.
+  "model": "opencode-go/deepseek-v4-pro",
+  // Used for cheap internal ops (session titles, context compaction) --
+  // picked for the biggest request budget in the Go lineup, not quality.
+  "small_model": "opencode-go/mimo-v2.5",
   "default_agent": "orchestrator",
   "share": "manual",
   // Keep runtime in sync with the pinned OPENCODE_VERSION in the image:
@@ -22,32 +29,9 @@
       "**/*.freezed.dart"
     ]
   },
-  "provider": {
-    "b_ai": {
-      "type": "openai",
-      "name": "B.AI Provider",
-      "options": {
-        "baseURL": "https://api.b.ai/v1",
-        // Read from the container environment (dev-agents/.env -> compose
-        // environment). Never commit the key here: this file is in git.
-        "apiKey": "{env:B_AI_API_KEY}"
-      },
-      "models": {
-        "glm-5.3-flash": {
-          "name": "GLM 5.3 Flash"
-        },
-        "qwen3.8-flash": {
-          "name": "Qwen 3.8 Flash"
-        },
-        "hy3": {
-          "name": "HY3"
-        },
-        "mimo-v2.5": {
-          "name": "MiMo V2.5"
-        }
-      }
-    }
-  },
+  // No custom "provider" block: opencode-go is a built-in provider.
+  // Auth lives in auth.json (the opencode-data volume), written by
+  // `/connect` -> "OpenCode Go" inside the container -- not by config here.
   // Global instruction files injected into every agent's system prompt
   // (primary and subagents). Paths resolve relative to this config
   // directory (bind-mounted at ~/.config/opencode in the container).
@@ -279,7 +263,7 @@
       "sed *.env*": "deny",
       "rg *.env*": "deny",
       "grep *.env*": "deny",
-      // Secrets also live in exported env vars (B_AI_API_KEY, TEST_*_PASSWORD).
+      // Secrets also live in exported env vars (TEST_*_PASSWORD, GH_TOKEN).
       // Last match wins, so this trails the broad allows above. Best-effort:
       // piped forms like "env | grep KEY" still bypass glob guards -- the
       // real backstop is no secret-bearing .env mounted into the container.
@@ -324,5 +308,31 @@
       ],
       "enabled": true
     }
-  }
+  },
+  // External plugins, installed from npm by Bun at startup and cached in
+  // ~/.cache/opencode. All pinned (same rationale as OPENCODE_VERSION):
+  // reproducible startup, no silent upstream drift inside the always-on
+  // serve process. Local plugins (plugins/*.js) are auto-discovered and
+  // need no entry here -- see plugins/notify-n8n.js.
+  //  - opencode-cron: session cron scheduler (create_cron_job,
+  //    watch_cron_jobs, ...; state in ~/.config/opencode/cron.db)
+  //  - cc-safety-net: pre-execution interception of destructive git/fs
+  //    commands and secret-file access -- the runtime second layer behind
+  //    the best-effort permission globs in this config (xargs/find -exec
+  //    bypasses those, this hook does not get bypassed)
+  //  - @tarquinen/opencode-dcp: prunes stale tool outputs from context;
+  //    direct token savings on the OpenCode Go budget in long
+  //    orchestrator loops
+  //  - opencode-pty: interactive/background processes (flutter run,
+  //    serverpod run, dev servers) with input sending and regex filtering
+  //  - opencode-memory: persistent memory across sessions (remember,
+  //    recall, update, forget, list); state in
+  //    ~/.config/opencode/memory/ as daily logfmt files
+  "plugin": [
+    "opencode-cron@0.0.7",
+    "cc-safety-net@2.4.1",
+    "@tarquinen/opencode-dcp@3.1.15",
+    "opencode-pty@0.3.6",
+    "opencode-memory@2.0.0"
+  ]
 }
