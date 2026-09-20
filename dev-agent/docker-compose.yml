@@ -1,0 +1,159 @@
+# dev-agent: developer workstation container for DIP-Lab.
+#
+# Bundles opencode CLI, Flutter SDK, Dart, and the standard
+# PostgreSQL / MySQL / Redis CLI tools. Ships with the `default`
+# profile; it can be disabled with:
+#   ./manager.sh profile disable dev-agent
+# (or switched to a smaller profile like `core` / `no-ai`).
+#
+# Container name: dev-agent (matches /home/develop/ inside).
+# Port: 4096 (opencode serve web UI/API), bound to 127.0.0.1 by default.
+#
+# Connects to the rest of the lab via the shared `internal` network so
+# the agents can reach:
+#   - http://automation:5678   (n8n automation)
+#   - http://hermes:8642        (Hermes API; container_name in ai-agent/)
+#   - http://hermes:9119        (Hermes dashboard)
+#   - http://postgres:5432     (databases)
+#
+# Hardened like every other service: no docker.sock, no --privileged,
+# resource caps, non-root user. Unlike other services, no-new-privileges
+# is intentionally omitted so sudo works for package installation.
+# See AGENTS.md inside the container for
+# what opencode is/is not allowed to touch.
+
+services:
+  dev-agent:
+    build:
+      context: .
+      args:
+        # Optional: set to match your host user's UID/GID so bind-mounted
+        # files keep matching ownership. Defaults to 1000:1000 if not set.
+        DEVELOP_UID: "${DEVELOP_UID:-1000}"
+        DEVELOP_GID: "${DEVELOP_GID:-1000}"
+        # Optional: pin the opencode CLI version for reproducible builds.
+        # Defaults to "latest" (the current release). Use "v2" for OpenCode v2.
+        OPENCODE_VERSION: "${OPENCODE_VERSION:-v2}"
+        # Optional: pin the serverpod CLI release for reproducible builds.
+        SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0-rc.1}"
+    image: diplab/dev-agent:local
+    container_name: dev-agent
+    restart: unless-stopped
+
+    # Resource caps. A runaway agent process gets throttled/OOM-killed
+    # here instead of starving the rest of the lab.
+
+    # Default 127.0.0.1 - this is a developer tool, not a public service.
+    # Override BIND_IP in .env if you need LAN access (and trust the LAN).
+    ports:
+      - "${BIND_IP:-127.0.0.1}:4096:4096"
+
+    # Bind-mount the entire opencode config directory so edits to
+    # opencode.json / prompts / skills / agents take effect without a
+    # rebuild. /home/develop/projects is the developer's working tree
+    # (mount your own repo there, or use a per-project docker compose
+    # override).
+    volumes:
+      - ./data/config:/home/develop/.config/opencode
+      - ./data/projects:/home/develop/projects
+      # State that must survive container recreation (./manager.sh update):
+      # opencode auth (auth.json from /connect) + session history.
+      - opencode-data:/home/develop/.local/share/opencode
+      # SSH keys / known_hosts, generated once inside the container.
+      - ssh:/home/develop/.ssh
+      # pub-cache: named volume ON PURPOSE - on first use Docker copies
+      # the image content into it (global Dart CLIs baked at build time);
+      # a bind mount would shadow those binaries. See README for the
+      # stale-volume caveat after image updates.
+      - pub-cache:/home/develop/.pub-cache
+      # Dart analysis-server and dart-tool caches: avoid a costly
+      # re-index after every image update.
+      - dart-server:/home/develop/.dartServer
+      - dart-tool:/home/develop/.dart-tool
+
+    environment:
+      # Git identity for commits made from inside the container.
+      - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME:-dev-agent}
+      - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL:-dev-agent@diplab.local}
+      - GIT_COMMITTER_NAME=${GIT_COMMITTER_NAME:-dev-agent}
+      - GIT_COMMITTER_EMAIL=${GIT_COMMITTER_EMAIL:-dev-agent@diplab.local}
+      # Built-in websearch (Exa) for marketing/writer agents.
+      - OPENCODE_ENABLE_EXA=1
+      # Webhook consumed by data/config/plugins/notify-n8n.js (session.idle,
+      # permission.asked, session.error -> n8n). Empty = plugin stays inert.
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-}
+      # Required because opencode serve is always-on and port-mapped.
+      # Without this the API/UI is reachable with no auth on whatever
+      # BIND_IP you set.
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD in dev-agent/.env, see .env.example}
+      # OpenCode Go needs no provider API key here: run `/connect` inside
+      # the container once and pick "OpenCode Go" -- the credential is
+      # written to auth.json in the opencode-data volume (see README's
+      # state/persistence table), not passed via the environment.
+      # GitHub token for the `gh` CLI. Passed via env so authentication
+      # survives container recreation without persisting a token inside
+      # the container (hosts.yml from `gh auth login` is ephemeral by
+      # design). Leave empty and use `gh auth login` interactively if
+      # you prefer - that login then lasts only for the container's
+      # lifetime.
+      - GH_TOKEN=${GH_TOKEN:-}
+      # Isolated test-DB creds. The container can ONLY create/drop
+      # databases whose name starts with `dev_test_` (enforced at the
+      # server side by databases/init.sql + mysql-init.sql). See
+      # dev-agent/README.md and AGENTS.md for the safety rules.
+      - TEST_POSTGRES_USER=${TEST_POSTGRES_USER:-}
+      - TEST_POSTGRES_PASSWORD=${TEST_POSTGRES_PASSWORD:-}
+      - TEST_POSTGRES_DB=${TEST_POSTGRES_DB:-}
+      - TEST_MYSQL_USER=${TEST_MYSQL_USER:-}
+      - TEST_MYSQL_PASSWORD=${TEST_MYSQL_PASSWORD:-}
+      - TEST_MYSQL_DB=${TEST_MYSQL_DB:-}
+      - TEST_REDIS_DB=${TEST_REDIS_DB:-15}
+      - TEST_REDIS_PASSWORD=${TEST_REDIS_PASSWORD:-}
+      # Toggles the db-safe wrapper in entrypoint.sh. Default true.
+      - DB_SAFETY_GUARD=${DB_SAFETY_GUARD:-true}
+
+    # Two networks:
+    #   internal - reach automation, hermes (ai-agent), and other peers
+    #   database - reach postgres, mysql, redis (with the test creds
+    #              above, not the prod creds)
+    networks:
+      - internal
+      - database
+
+    # No docker.sock. No --privileged. No cap_add.
+    # NOTE: no-new-privileges is deliberately NOT set here — it blocks
+    # setuid elevation and would make the in-image passwordless sudo
+    # unusable. Agents rely on sudo to install packages (see Dockerfile).
+
+    healthcheck:
+      # Check the opencode serve port actually answers. Any HTTP
+      # response counts (even 401 Unauthorized from password auth) -
+      # what matters is that the listener is up.
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:4096 || exit 1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 6G
+          pids: 512
+
+networks:
+  internal:
+    external: true
+  database:
+    external: true
+
+# Named state volumes (survive container recreation / image updates;
+# NOT included in `./manager.sh backup`, which only tars <svc>/data/ -
+# everything here is re-creatable: re-auth, new ssh-keygen, fresh caches).
+volumes:
+  opencode-data:
+  ssh:
+  pub-cache:
+  dart-server:
+  dart-tool:
