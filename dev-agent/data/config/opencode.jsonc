@@ -1,0 +1,347 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // OpenCode Go shared account budget ($12/5h, $30/week, $60/month across
+  // ALL models combined) -- see agents/*.md for per-role model choices.
+  // orchestrator's own model matters here since it runs on every loop turn,
+  // not just once per task: deepseek-v4-pro gives it a large budget while
+  // staying strong enough for delegation/coordination decisions.
+  "model": "opencode-go/deepseek-v4-pro",
+  // Used for cheap internal ops (session titles, context compaction) --
+  // picked for the biggest request budget in the Go lineup, not quality.
+  "agents": {
+    "title": {
+      "model": "opencode-go/mimo-v2.5"
+    }
+  },
+  "default_agent": "orchestrator",
+  "share": "manual",
+  // Keep runtime in sync with the pinned OPENCODE_VERSION in the image:
+  // in-container self-update would drift from the built image.
+  "update": "disable",
+  // Keep the file watcher away from build artifacts and generated code:
+  // build_runner / serverpod generate / flutter build rewrite these
+  // constantly and burn the container's CPU/pid budget for no benefit.
+  // Depth-agnostic globs so they match inside any project in ~/projects.
+  "watcher": {
+    "ignore": [
+      "**/.git/**",
+      "**/.dart_tool/**",
+      "**/build/**",
+      "**/node_modules/**",
+      "**/generated/**",
+      "**/*.g.dart",
+      "**/*.freezed.dart"
+    ]
+  },
+  // No custom "provider" block: opencode-go is a built-in provider.
+  // Auth lives in auth.json (the opencode-data volume), written by
+  // `/connect` -> "OpenCode Go" inside the container -- not by config here.
+  // Global instruction files injected into every agent's system prompt
+  // (primary and subagents). Paths resolve relative to this config
+  // directory (bind-mounted at ~/.config/opencode in the container).
+  "instructions": [
+    "instructions/*.md"
+  ],
+  // Pinned explicitly rather than left to the implicit default: this repo
+  // pins OPENCODE_VERSION/plugin versions everywhere else precisely to
+  // avoid silent drift across an upgrade, so the depth limit that "primary
+  // can call subagents, subagents can't call further subagents" relies on
+  // shouldn't be the one thing left unstated. Every subagent below also
+  // explicitly sets subagent: deny, so this is belt-and-suspenders, not the
+  // only thing closing the gap.
+  "experimental": {
+    "subagent_depth": 1
+  },
+  // Ordered permission rules (V2 native): rules are evaluated in order
+  // with the LAST match winning -- the specific denies trail the general
+  // allows they carve out of. Do not reorder.
+  "permissions": [
+    // Filesystem scope for ad-hoc sessions.
+    { "action": "external_directory", "resource": "*", "effect": "ask" },
+    { "action": "external_directory", "resource": "/home/develop/projects/**", "effect": "allow" },
+    // Package research policy allows surgical ~/.pub-cache reads as a
+    // last resort; without this every one of them asks for approval.
+    { "action": "external_directory", "resource": "/home/develop/.pub-cache/**", "effect": "allow" },
+    // Docs-first research policy requires web access in every role
+    // (planner/coder/tester ground package steps via web docs).
+    // V2 form of the V1 flat "webfetch"/"websearch" allow: resource "*".
+    { "action": "webfetch", "resource": "*", "effect": "allow" },
+    { "action": "websearch", "resource": "*", "effect": "allow" },
+    // Secrets stay unreadable by default, even for agents with otherwise
+    // broad read access.
+    { "action": "read", "resource": "*", "effect": "allow" },
+    { "action": "read", "resource": "*.env", "effect": "deny" },
+    { "action": "read", "resource": "*.env.*", "effect": "deny" },
+    { "action": "read", "resource": "*.env.example", "effect": "allow" },
+    // Shared baseline for ad-hoc/manual sessions using this config directly
+    // (e.g. default_agent with no agent .md override). Each agent .md file
+    // repeats the subset it needs rather than relying on partial merge with
+    // this block -- confirm merge granularity on your opencode version
+    // before trying to de-duplicate further.
+    { "action": "shell", "resource": "*", "effect": "ask" },
+    { "action": "shell", "resource": "sleep", "effect": "allow" },
+    { "action": "shell", "resource": "sleep *", "effect": "allow" },
+    { "action": "shell", "resource": "ls", "effect": "allow" },
+    { "action": "shell", "resource": "ls *", "effect": "allow" },
+    { "action": "shell", "resource": "cat *", "effect": "allow" },
+    { "action": "shell", "resource": "head *", "effect": "allow" },
+    { "action": "shell", "resource": "tail *", "effect": "allow" },
+    { "action": "shell", "resource": "grep *", "effect": "allow" },
+    { "action": "shell", "resource": "rg *", "effect": "allow" },
+    { "action": "shell", "resource": "sed *", "effect": "allow" },
+    { "action": "shell", "resource": "find *", "effect": "allow" },
+    { "action": "shell", "resource": "tree *", "effect": "allow" },
+    { "action": "shell", "resource": "xargs *", "effect": "allow" },
+    { "action": "shell", "resource": "wc *", "effect": "allow" },
+    { "action": "shell", "resource": "less *", "effect": "allow" },
+    { "action": "shell", "resource": "stat *", "effect": "allow" },
+    { "action": "shell", "resource": "file *", "effect": "allow" },
+    { "action": "shell", "resource": "pwd", "effect": "allow" },
+    { "action": "shell", "resource": "pwd *", "effect": "allow" },
+    { "action": "shell", "resource": "du *", "effect": "allow" },
+    { "action": "shell", "resource": "echo *", "effect": "allow" },
+    { "action": "shell", "resource": "date", "effect": "allow" },
+    { "action": "shell", "resource": "date *", "effect": "allow" },
+    { "action": "shell", "resource": "which *", "effect": "allow" },
+    { "action": "shell", "resource": "uname", "effect": "allow" },
+    { "action": "shell", "resource": "uname *", "effect": "allow" },
+    // "env *" as a blanket allow silently overrode every anchored deny
+    // below (last-match-wins sees only "env ..." at the fragment start):
+    // "env git push origin HEAD:main", "env gh pr merge", "env cat x.env"
+    // all slipped through. env is only granted as a wrapper around tools
+    // that are themselves allow-listed, so the wrapped program's first
+    // token can never be a protected command. Bare "env" (dumps secrets)
+    // and "env | grep KEY" now fall back to ask.
+    { "action": "shell", "resource": "env * dart *", "effect": "allow" },
+    { "action": "shell", "resource": "env * flutter *", "effect": "allow" },
+    { "action": "shell", "resource": "env * serverpod *", "effect": "allow" },
+    { "action": "shell", "resource": "env * jaspr *", "effect": "allow" },
+    { "action": "shell", "resource": "diff *", "effect": "allow" },
+    { "action": "shell", "resource": "sort *", "effect": "allow" },
+    { "action": "shell", "resource": "uniq *", "effect": "allow" },
+    { "action": "shell", "resource": "mkdir *", "effect": "allow" },
+    { "action": "shell", "resource": "cp *", "effect": "allow" },
+    { "action": "shell", "resource": "mv *", "effect": "allow" },
+    { "action": "shell", "resource": "chmod *", "effect": "allow" },
+    { "action": "shell", "resource": "ln *", "effect": "allow" },
+    { "action": "shell", "resource": "cd", "effect": "allow" },
+    { "action": "shell", "resource": "cd *", "effect": "allow" },
+    { "action": "shell", "resource": "cut *", "effect": "allow" },
+    { "action": "shell", "resource": "awk *", "effect": "allow" },
+    { "action": "shell", "resource": "tr *", "effect": "allow" },
+    { "action": "shell", "resource": "jq *", "effect": "allow" },
+    { "action": "shell", "resource": "type *", "effect": "allow" },
+    { "action": "shell", "resource": "basename *", "effect": "allow" },
+    { "action": "shell", "resource": "dirname *", "effect": "allow" },
+    { "action": "shell", "resource": "realpath *", "effect": "allow" },
+    { "action": "shell", "resource": "readlink *", "effect": "allow" },
+    { "action": "shell", "resource": "md5sum *", "effect": "allow" },
+    { "action": "shell", "resource": "sha256sum *", "effect": "allow" },
+    { "action": "shell", "resource": "ps *", "effect": "allow" },
+    { "action": "shell", "resource": "df *", "effect": "allow" },
+    { "action": "shell", "resource": "free *", "effect": "allow" },
+    { "action": "shell", "resource": "test *", "effect": "allow" },
+    { "action": "shell", "resource": "id", "effect": "allow" },
+    { "action": "shell", "resource": "whoami", "effect": "allow" },
+    { "action": "shell", "resource": "hostname", "effect": "allow" },
+    { "action": "shell", "resource": "nproc", "effect": "allow" },
+    { "action": "shell", "resource": "true", "effect": "allow" },
+    { "action": "shell", "resource": "git -C *", "effect": "allow" },
+    { "action": "shell", "resource": "git status*", "effect": "allow" },
+    { "action": "shell", "resource": "git diff*", "effect": "allow" },
+    { "action": "shell", "resource": "git log*", "effect": "allow" },
+    { "action": "shell", "resource": "git show *", "effect": "allow" },
+    { "action": "shell", "resource": "git branch *", "effect": "allow" },
+    { "action": "shell", "resource": "git checkout *", "effect": "allow" },
+    { "action": "shell", "resource": "git stash *", "effect": "allow" },
+    { "action": "shell", "resource": "git add *", "effect": "allow" },
+    { "action": "shell", "resource": "git rm *", "effect": "allow" },
+    { "action": "shell", "resource": "git commit *", "effect": "allow" },
+    { "action": "shell", "resource": "git merge *", "effect": "allow" },
+    { "action": "shell", "resource": "git rebase *", "effect": "allow" },
+    { "action": "shell", "resource": "git tag *", "effect": "ask" },
+    { "action": "shell", "resource": "git fetch *", "effect": "allow" },
+    { "action": "shell", "resource": "git pull*", "effect": "allow" },
+    { "action": "shell", "resource": "git remote *", "effect": "allow" },
+    { "action": "shell", "resource": "git ls-remote*", "effect": "allow" },
+    { "action": "shell", "resource": "git grep *", "effect": "allow" },
+    { "action": "shell", "resource": "git remote", "effect": "allow" },
+    { "action": "shell", "resource": "git branch", "effect": "allow" },
+    { "action": "shell", "resource": "git fetch", "effect": "allow" },
+    { "action": "shell", "resource": "git rev-parse*", "effect": "allow" },
+    { "action": "shell", "resource": "git ls-files*", "effect": "allow" },
+    { "action": "shell", "resource": "git describe*", "effect": "allow" },
+    { "action": "shell", "resource": "git merge-base*", "effect": "allow" },
+    { "action": "shell", "resource": "git blame*", "effect": "allow" },
+    { "action": "shell", "resource": "git shortlog*", "effect": "allow" },
+    { "action": "shell", "resource": "git cat-file*", "effect": "allow" },
+    { "action": "shell", "resource": "git rev-list*", "effect": "allow" },
+    { "action": "shell", "resource": "git for-each-ref*", "effect": "allow" },
+    { "action": "shell", "resource": "git worktree list*", "effect": "allow" },
+    { "action": "shell", "resource": "git config --get*", "effect": "allow" },
+    { "action": "shell", "resource": "git config --get-regexp*", "effect": "allow" },
+    { "action": "shell", "resource": "git config --list*", "effect": "allow" },
+    // gh read-only: status/CI polling without mutation (pr edit/close,
+    // run cancel/rerun, api POST/DELETE are NOT covered by these).
+    { "action": "shell", "resource": "gh pr checks*", "effect": "allow" },
+    { "action": "shell", "resource": "gh pr diff*", "effect": "allow" },
+    { "action": "shell", "resource": "gh issue view*", "effect": "allow" },
+    { "action": "shell", "resource": "gh run list*", "effect": "allow" },
+    { "action": "shell", "resource": "gh run view*", "effect": "allow" },
+    // Closing a PR is reversible (gh pr reopen); --delete-branch on top is
+    // an operator action (git-flow). Last match wins, so the deny trails.
+    { "action": "shell", "resource": "gh pr close*", "effect": "allow" },
+    { "action": "shell", "resource": "gh pr close*--delete-branch*", "effect": "deny" },
+    // Comments are reversible and the sanctioned way to drive bots
+    // (e.g. "@dependabot rebase"); see notes in agents/orchestrator.md.
+    { "action": "shell", "resource": "gh pr comment*", "effect": "allow" },
+    // Read-only auth health check (accounts/scopes, never prints tokens).
+    { "action": "shell", "resource": "gh auth status*", "effect": "allow" },
+    // ...except --show-token, which dumps the raw credential string.
+    { "action": "shell", "resource": "gh auth status*--show-token*", "effect": "deny" },
+    { "action": "shell", "resource": "dart analyze*", "effect": "allow" },
+    { "action": "shell", "resource": "dart format*", "effect": "allow" },
+    { "action": "shell", "resource": "dart test*", "effect": "allow" },
+    { "action": "shell", "resource": "dart pub *", "effect": "allow" },
+    { "action": "shell", "resource": "flutter test*", "effect": "allow" },
+    { "action": "shell", "resource": "flutter analyze*", "effect": "allow" },
+    { "action": "shell", "resource": "flutter --version*", "effect": "allow" },
+    { "action": "shell", "resource": "serverpod generate*", "effect": "allow" },
+    { "action": "shell", "resource": "flutter doctor*", "effect": "allow" },
+    { "action": "shell", "resource": "flutter devices*", "effect": "allow" },
+    { "action": "shell", "resource": "serverpod analyze*", "effect": "allow" },
+    { "action": "shell", "resource": "jaspr build*", "effect": "allow" },
+    // git push: allowed in general, hard-denied to protected branches and
+    // force-pushes at the permission layer (not just via prompt wording).
+    // This covers direct pushes and refspec forms (e.g. HEAD:main,
+    // :develop branch deletions).
+    // Rules are evaluated in order with the LAST match winning, so the
+    // specific denies must come after the general allow. These are simple
+    // glob patterns, not full argument parsing -- test them against your
+    // real usage before relying on them.
+    { "action": "shell", "resource": "git push *", "effect": "allow" },
+    { "action": "shell", "resource": "git push * main*", "effect": "deny" },
+    { "action": "shell", "resource": "git push * master*", "effect": "deny" },
+    { "action": "shell", "resource": "git push * develop*", "effect": "deny" },
+    { "action": "shell", "resource": "git push*--force*", "effect": "deny" },
+    // The -f guard is anchored to token boundaries ("-f" at end of line
+    // or "-f" followed by a space). The previous "git push*-f*" form also
+    // hard-denied legitimate pushes where "-f" merely appeared inside an
+    // argument (e.g. branch names like feature/git-flow-*).
+    // Residual gap: bundled short flags (-uf/-fu) slip through, as before;
+    // server-side branch protection is the real backstop.
+    { "action": "shell", "resource": "git push*-f", "effect": "deny" },
+    { "action": "shell", "resource": "git push*-f *", "effect": "deny" },
+    { "action": "shell", "resource": "git push*:main*", "effect": "deny" },
+    { "action": "shell", "resource": "git push*:master*", "effect": "deny" },
+    { "action": "shell", "resource": "git push*:develop*", "effect": "deny" },
+    // Branch-deletion forms (flag / delete-refspec, token-anchored):
+    // git-flow makes branch deletion an operator action; before these,
+    // "--delete" fell through the general "git push *" allow.
+    { "action": "shell", "resource": "git push --delete*", "effect": "deny" },
+    { "action": "shell", "resource": "git push * --delete*", "effect": "deny" },
+    { "action": "shell", "resource": "git push :*", "effect": "deny" },
+    { "action": "shell", "resource": "git push * :*", "effect": "deny" },
+    // Mirror the protected-push guards onto the "git -C <path> push ..."
+    // form: the guards above anchor on "git push", so without these the
+    // -C variant would bypass them.
+    { "action": "shell", "resource": "git -C * push * main*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push * master*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push * develop*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push*--force*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push*-f", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push*-f *", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push*:main*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push*:master*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push*:develop*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push --delete*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push * --delete*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push :*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * push * :*", "effect": "deny" },
+    { "action": "shell", "resource": "git -C * tag *", "effect": "ask" },
+    // Env files: bash-side mirror of the read policy above. Last match
+    // wins, so these trail the broad read allows. Best-effort only
+    // (xargs / find -exec bypass globs); the real backstop is that no
+    // .env is mounted into the container. Templates (*.env.example)
+    // stay readable via the Read tool.
+    { "action": "shell", "resource": "cat *.env*", "effect": "deny" },
+    { "action": "shell", "resource": "head *.env*", "effect": "deny" },
+    { "action": "shell", "resource": "tail *.env*", "effect": "deny" },
+    { "action": "shell", "resource": "less *.env*", "effect": "deny" },
+    { "action": "shell", "resource": "sed *.env*", "effect": "deny" },
+    { "action": "shell", "resource": "rg *.env*", "effect": "deny" },
+    { "action": "shell", "resource": "grep *.env*", "effect": "deny" },
+    // Secrets also live in exported env vars (TEST_*_PASSWORD, GH_TOKEN).
+    // Last match wins, so this trails the broad allows above. Best-effort:
+    // piped forms like "env | grep KEY" still bypass glob guards -- the
+    // real backstop is no secret-bearing .env mounted into the container.
+    // (The former "env | grep KEY" bypass is gone: "env *" was replaced
+    // by tool-wrapped allows above, so a bare env dump now asks.)
+    { "action": "shell", "resource": "printenv*", "effect": "deny" }
+  ],
+  "lsp": {
+    "dart": {
+      "command": [
+        "dart",
+        "language-server",
+        "--client-id=opencode"
+      ]
+    },
+    "serverpod": {
+      "command": [
+        "serverpod",
+        "language-server"
+      ]
+    }
+  },
+  "mcp": {
+    "servers": {
+      "jaspr": {
+        "type": "remote",
+        "url": "https://docs.jaspr.site/mcp",
+        "disabled": false
+      },
+      "dart": {
+        "type": "local",
+        "command": [
+          "dart",
+          "mcp-server"
+        ],
+        "disabled": false
+      },
+      "serverpod": {
+        "type": "local",
+        "command": [
+          "serverpod_mcp"
+        ],
+        "disabled": false
+      }
+    }
+  },
+  // External plugins, installed from npm by Bun at startup and cached in
+  // ~/.cache/opencode. All pinned (same rationale as OPENCODE_VERSION):
+  // reproducible startup, no silent upstream drift inside the always-on
+  // serve process. Local plugins (plugins/*.js) are auto-discovered and
+  // need no entry here -- see plugins/notify-n8n.js.
+  //  - opencode-cron: session cron scheduler (create_cron_job,
+  //    watch_cron_jobs, ...; state in ~/.config/opencode/cron.db)
+  //  - cc-safety-net: pre-execution interception of destructive git/fs
+  //    commands and secret-file access -- the runtime second layer behind
+  //    the best-effort permission globs in this config (xargs/find -exec
+  //    bypasses those, this hook does not get bypassed)
+  //  - @tarquinen/opencode-dcp: prunes stale tool outputs from context;
+  //    direct token savings on the OpenCode Go budget in long
+  //    orchestrator loops
+  //  - opencode-pty: interactive/background processes (flutter run,
+  //    serverpod run, dev servers) with input sending and regex filtering
+  //  - opencode-memory: persistent memory across sessions (remember,
+  //    recall, update, forget, list); state in
+  //    ~/.config/opencode/memory/ as daily logfmt files
+  "plugins": [
+    "opencode-cron@0.0.7",
+    "cc-safety-net@2.4.1",
+    "@tarquinen/opencode-dcp@3.1.15",
+    "opencode-pty@0.3.6",
+    "opencode-memory@2.0.0"
+  ]
+}
