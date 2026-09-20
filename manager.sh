@@ -21,7 +21,7 @@ SERVICES_ALL=(
     "automation"
     "gallery"
     "ai-agent"
-    "dev-agents"
+    "dev-agent"
 )
 
 DRY_RUN=false
@@ -181,18 +181,18 @@ fix_permissions() {
     chown -R 999:999 "$SCRIPT_DIR/databases/data/mysql" 2>/dev/null || true
     chown -R 6379:6379 "$SCRIPT_DIR/databases/data/redis" 2>/dev/null || true
 
-    # dev-agents: ownership must match the container user. UID/GID are
-    # configurable via dev-agents/.env (DEVELOP_UID/DEVELOP_GID,
+    # dev-agent: ownership must match the container user. UID/GID are
+    # configurable via dev-agent/.env (DEVELOP_UID/DEVELOP_GID,
     # defaults 1000:1000) and are baked into the image at build time.
     local da_uid=1000 da_gid=1000
-    if [ -f "$SCRIPT_DIR/dev-agents/.env" ]; then
-        da_uid=$(grep -E '^DEVELOP_UID=' "$SCRIPT_DIR/dev-agents/.env" | cut -d= -f2 | tr -d '[:space:]')
-        da_gid=$(grep -E '^DEVELOP_GID=' "$SCRIPT_DIR/dev-agents/.env" | cut -d= -f2 | tr -d '[:space:]')
+    if [ -f "$SCRIPT_DIR/dev-agent/.env" ]; then
+        da_uid=$(grep -E '^DEVELOP_UID=' "$SCRIPT_DIR/dev-agent/.env" | cut -d= -f2 | tr -d '[:space:]')
+        da_gid=$(grep -E '^DEVELOP_GID=' "$SCRIPT_DIR/dev-agent/.env" | cut -d= -f2 | tr -d '[:space:]')
     fi
     da_uid=${da_uid:-1000}
     da_gid=${da_gid:-1000}
-    mkdir -p "$SCRIPT_DIR/dev-agents/data/projects" "$SCRIPT_DIR/dev-agents/data/config"
-    chown -R "$da_uid:$da_gid" "$SCRIPT_DIR/dev-agents/data/projects" "$SCRIPT_DIR/dev-agents/data/config" 2>/dev/null || true
+    mkdir -p "$SCRIPT_DIR/dev-agent/data/projects" "$SCRIPT_DIR/dev-agent/data/config"
+    chown -R "$da_uid:$da_gid" "$SCRIPT_DIR/dev-agent/data/projects" "$SCRIPT_DIR/dev-agent/data/config" 2>/dev/null || true
 
     log ok "Permissions fixed"
 }
@@ -690,12 +690,12 @@ EOF
     echo "  $0 setup                          # init everything"
     echo "  $0 start                          # start enabled services"
     echo "  $0 -n start                       # dry-run"
-    echo "  $0 start dev-agents               # start the developer workstation"
+    echo "  $0 start dev-agent               # start the developer workstation"
     echo "  $0 update-all --filter '^auto|cloud$'  # update only automation + cloud"
     echo "  $0 update-all --no-backup         # update everything, skip pre-flight backup"
     echo "  $0 profile core                   # switch to core profile"
     echo "  $0 profile dev                    # switch to dev profile (default + automation)"
-    echo "  $0 profile disable dev-agents     # disable dev-agents on the fly"
+    echo "  $0 profile disable dev-agent     # disable dev-agent on the fly"
     echo "  $0 logs gallery --tail 50"
 }
 

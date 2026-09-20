@@ -26,9 +26,9 @@ Shared PostgreSQL, MySQL, and Redis used by every other DIP-Lab service.
 - Test credentials (`TEST_POSTGRES_*`, `TEST_MYSQL_*`, `TEST_REDIS_*`)
   are optional. If set, the databases init scripts create a `dev_test`
   user with grants limited to `dev_test_*` databases. The
-  `../dev-agents/` container uses these creds; mirroring them into
-  `dev-agents/.env` enables isolated test runs. See
-  `../dev-agents/README.md` → "Database isolation" for details.
+  `../dev-agent/` container uses these creds; mirroring them into
+  `dev-agent/.env` enables isolated test runs. See
+  `../dev-agent/README.md` → "Database isolation" for details.
 
 ## Initialization
 

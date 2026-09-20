@@ -19,7 +19,7 @@ proxy.
 | `automation/` | n8n (automation) |
 | `gallery/` | Immich server + ML (photo gallery) |
 | `ai-agent/` | Hermes AI agent + dashboard |
-| `dev-agents/` | Developer workstation container: Flutter SDK + opencode CLI (in `default` profile) |
+| `dev-agent/` | Developer workstation container: Flutter SDK + opencode CLI (in `default` profile) |
 
 ## Quick start
 
@@ -60,8 +60,8 @@ exposed externally (80, 443).
 | Grafana / Prometheus | 3000 / 9090 | Monitoring |
 | Traefik | 80, 443 | Reverse proxy (external) |
 
-The `dev-agents` container exposes `opencode serve` on
-`127.0.0.1:4096` by default — see `dev-agents/README.md`.
+The `dev-agent` container exposes `opencode serve` on
+`127.0.0.1:4096` by default — see `dev-agent/README.md`.
 
 ## Database
 
@@ -83,7 +83,7 @@ Docker network (`postgres:5432`, `mysql:3306`, `redis:6379`).
 
 - `web` — Traefik reverse proxy (80, 443 on host)
 - `internal` — all app services, port-mapped to `0.0.0.0:{port}`.
-  `dev-agents` is also on `internal` so its opencode agents can reach
+  `dev-agent` is also on `internal` so its opencode agents can reach
   `automation`, `hermes` (the ai-agent service), and `postgres` by
   hostname.
 - `database` — PostgreSQL, MySQL, Redis (isolated)
@@ -122,7 +122,7 @@ Others attach only to `internal`.
 ```bash
 ./manager.sh setup           # create networks and folders
 ./manager.sh start           # start enabled services
-./manager.sh start dev-agents  # start the developer workstation
+./manager.sh start dev-agent  # start the developer workstation
 ./manager.sh logs gallery --tail 50
 ./manager.sh status
 ./manager.sh update
@@ -142,12 +142,12 @@ Two mechanisms to exclude a service from bulk commands:
 
 1. **`.disabled_services`** — list one service per line (gitignored;
    see `.disabled_services.example`).
-2. **`profile` command** — `./manager.sh profile disable dev-agents`,
-   `./manager.sh profile enable dev-agents`, or
+2. **`profile` command** — `./manager.sh profile disable dev-agent`,
+   `./manager.sh profile enable dev-agent`, or
    `./manager.sh profile <name>` to switch profile.
 
 Disabled services can still be targeted explicitly:
-`./manager.sh start dev-agents`.
+`./manager.sh start dev-agent`.
 
 Built-in profiles (in `.profiles/`, listed in order of how much they
 enable):
@@ -156,21 +156,21 @@ enable):
   app services. Use for the very first start, or a host that only
   runs infrastructure.
 - `default` — everyday stack: `core` + `passwords` + `ai-agent` +
-  `cloud` + `docs` + `gallery` + `dev-agents` (9 services).
+  `cloud` + `docs` + `gallery` + `dev-agent` (9 services).
   Monitoring and automation are situational and are not included.
 - `media` — `default` + `monitoring` + `automation` (Prometheus,
   Grafana, Loki, Promtail, cAdvisor, n8n). 9 services.
 - `dev` — `default` + `automation`. Active development without the
   heavyweight media services (7 services).
-- `no-ai` — everything except `ai-agent` and `dev-agents` (9 services).
+- `no-ai` — everything except `ai-agent` and `dev-agent` (9 services).
   Use on a host where you don't want any LLM gateway or agent
   runtime.
 - `full` — everything enabled (11 services).
 
-`dev-agents` is included in `default`, `media`, `dev`, and `full`. It
+`dev-agent` is included in `default`, `media`, `dev`, and `full`. It
 is excluded from `core` (no app services) and `no-ai` (per the
 profile's intent). On a host with <8 GB RAM, disable it with
-`./manager.sh profile disable dev-agents`.
+`./manager.sh profile disable dev-agent`.
 
 ### Object storage
 
@@ -211,7 +211,7 @@ the bind paths instead, which is harmless but visible.
   `acme.json`)
 - Every service uses `security_opt: no-new-privileges:true` +
   `deploy.resources.limits` for CPU/memory
-- `dev-agents` runs with no `docker.sock`, no `--privileged`, and
+- `dev-agent` runs with no `docker.sock`, no `--privileged`, and
   `opencode` agents are denied at the permission level from reading
   `.env` files, SSH keys, WireGuard configs, or pushing to `main`
 
