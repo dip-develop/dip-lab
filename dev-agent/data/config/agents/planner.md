@@ -6,12 +6,20 @@ mode: subagent
 # new-subsystem decisions to protect that model's much smaller request budget.
 model: opencode-go/deepseek-v4-pro
 hidden: true
-permission:
-  edit: deny
-  bash: deny
-  task: deny
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: subagent
+    resource: "*"
+    effect: deny
   # webfetch accepts only a flat action, not patterns.
-  webfetch: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
 ---
 
 You are the planner subagent for the orchestrator.

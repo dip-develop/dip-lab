@@ -1,7 +1,7 @@
 ---
 description: Run project tests in an isolated dev_test_ database
 agent: tester
-subtask: true
+subagent: true
 ---
 Run the test suite for this project (dart test / flutter test, whichever applies).
 

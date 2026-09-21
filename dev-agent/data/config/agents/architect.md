@@ -3,18 +3,26 @@ description: Makes cross-module / new-subsystem architecture decisions before pl
 mode: subagent
 # kimi-k3: 1M context, best model in the OpenCode Go lineup for grounding
 # a decision in the whole codebase at once -- but only ~110 req/5h and
-# ~250/week (shared account-wide budget with every other agent). Routine
-# task breakdown belongs to planner (deepseek-v4-pro); this agent exists
-# specifically so kimi-k3 is spent only where the 1M context actually
-# earns its cost.
+# ~250/week (kimi-k3's own per-model budget, separate from every other
+# agent's model). Routine task breakdown belongs to planner
+# (deepseek-v4-pro); this agent exists specifically so kimi-k3 is spent
+# only where the 1M context actually earns its cost.
 model: opencode-go/kimi-k3
 hidden: true
-permission:
-  edit: deny
-  bash: deny
-  task: deny
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: subagent
+    resource: "*"
+    effect: deny
   # webfetch accepts only a flat action, not patterns.
-  webfetch: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
 ---
 
 You are the architect subagent for the orchestrator. You are called

@@ -1,7 +1,7 @@
 ---
 description: Review the current branch diff
 agent: reviewer
-subtask: true
+subagent: true
 ---
 Review the uncommitted changes and, if the working tree is clean, the diff
 of the current branch against its merge-base with the flow base branch

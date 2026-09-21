@@ -2,9 +2,9 @@
 *.env
 */*.env
 
-# Data directories (local) - exclude service data, keep dev-agents/config
+# Data directories (local) - exclude service data, keep dev-agent/config
 */data/*
-!dev-agents/data/config/
+!dev-agent/data/config/
 
 # Proxy (sensitive)
 proxy/acme.json
@@ -19,7 +19,7 @@ proxy/certs/
 # Disabled services (user-specific)
 .disabled_services
 
-# OpenCode / dev-agents
+# OpenCode / dev-agent
 .opencode/
 .env.opencode
 
@@ -38,4 +38,4 @@ Thumbs.db
 *.backup
 *.old
 backups/
-dev-agents/data/config/skills/
+dev-agent/data/config/skills/

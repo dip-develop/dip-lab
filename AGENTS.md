@@ -44,21 +44,21 @@ Examples: `./manager.sh update-all --filter '^auto|cloud$'` (regex is unanchored
 
 ## Services & Profiles
 
-Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `proxy`, `monitoring`, `passwords`, `containers`, `cloud`, `docs`, `automation`, `gallery`, `ai-agent`, `dev-agents`. Not every directory is a service — `llm/` is data-only and `networks.yml` is unused (networks live in `manager.sh`).
+Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `proxy`, `monitoring`, `passwords`, `containers`, `cloud`, `docs`, `automation`, `gallery`, `ai-agent`, `dev-agent`. Not every directory is a service — `llm/` is data-only and `networks.yml` is unused (networks live in `manager.sh`).
 
 - **`.disabled_services`** (project root, gitignored) — one service per line; comments/blank lines ignored. Disabled services can still be targeted explicitly: `./manager.sh start <svc>`.
 - `./manager.sh profile <name>` **overwrites** `.disabled_services` with a copy of `.profiles/<name>` (not a merge).
 - Available profiles:
   - `core` — infrastructure only: `databases` + `proxy` + `containers`
-  - `default` — everyday stack; disables `monitoring` and `automation`, includes `dev-agents`
+  - `default` — everyday stack; disables `monitoring` and `automation`, includes `dev-agent`
   - `dev` — disables `monitoring`, `cloud`, `docs`, `gallery`
   - `media` — disables `passwords` and `ai-agent`
-  - `no-ai` — disables `ai-agent` and `dev-agents`
+  - `no-ai` — disables `ai-agent` and `dev-agent`
   - `full` — all services enabled (empty file)
 
 ## Conventions
 
-- Every service: `security_opt: no-new-privileges:true`, `deploy.resources.limits`, health checks, non-root user with explicit UID/GID where possible (known gaps: `proxy` has no resource limits, `cloud` has no healthchecks, `dev-agents` intentionally omits `no-new-privileges` (passwordless `sudo` for package installs)).
+- Every service: `security_opt: no-new-privileges:true`, `deploy.resources.limits`, health checks, non-root user with explicit UID/GID where possible (known gaps: `proxy` has no resource limits, `cloud` has no healthchecks, `dev-agent` intentionally omits `no-new-privileges` (passwordless `sudo` for package installs)).
 - Data persisted in `<svc>/data/` (gitignored).
 - Networks: `web` (reverse proxy, ports 80/443 externally) · `internal` (all app services) · `database` (DBs only). Services needing DB access attach to both `internal` and `database`. The `monitoring` network is defined inline in `monitoring/docker-compose.yml`, not by `setup_nets`.
 - Optional per-service files: `setup.sh` (run by `setup`), `entrypoint.sh`, `Dockerfile`.
@@ -76,11 +76,11 @@ Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `p
 - `databases/init.sql` + `databases/mysql-init.sql` create application databases/extensions on first container start.
 - Test users/databases are created conditionally via `TEST_*` env vars from `databases/.env` (defaults: user `dev_test`, DB `dev_test_main`, `TEST_REDIS_DB=15`).
 - Postgres/MySQL test grants are scoped to `dev_test_%` databases — they cannot drop or alter production databases. Redis test clients use a dedicated DB index.
-- Inside the `dev-agents` workstation, DB access goes through the `db-safe` wrapper (test creds only) — see `dev-agents/AGENTS.md` for container rules (no docker.sock, test-only databases, no pushes to `main`).
+- Inside the `dev-agent` workstation, DB access goes through the `db-safe` wrapper (test creds only) — see `dev-agent/AGENTS.md` for container rules (no docker.sock, test-only databases, no pushes to `main`).
 
 ## Locally Built Images
 
-`dev-agents` and `docs` have `build:` sections (local tags like `diplab/dev-agents:local`):
+`dev-agent` and `docs` have `build:` sections (local tags like `diplab/dev-agent:local`):
 - `./manager.sh build <svc>` to build/rebuild.
 - `./manager.sh update <svc>` detects `build:` and rebuilds instead of pulling.
 

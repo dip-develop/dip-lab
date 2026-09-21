@@ -1,4 +1,4 @@
-# dev-agents
+# dev-agent
 
 Developer workstation container for DIP-Lab. Bundles the opencode
 CLI (with multi-agent config), Flutter SDK, Dart, and the standard
@@ -11,11 +11,11 @@ the other lab services. If you switched to a smaller profile (e.g.
 `core` or `no-ai`), start it explicitly:
 
 ```bash
-cp dev-agents/.env.example dev-agents/.env
-# edit dev-agents/.env: set DEVELOP_UID, DEVELOP_GID,
+cp dev-agent/.env.example dev-agent/.env
+# edit dev-agent/.env: set DEVELOP_UID, DEVELOP_GID,
 # OPENCODE_SERVER_PASSWORD, TEST_*_PASSWORD (from databases/.env)
-./manager.sh start dev-agents
-./manager.sh logs dev-agents --tail 50
+./manager.sh start dev-agent
+./manager.sh logs dev-agent --tail 50
 ```
 
 The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
@@ -42,7 +42,7 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 
 Nothing important lives in the container's writable layer: every path
 the agents care about is mounted out, so `./manager.sh update
-dev-agents` (a recreate) keeps your work and your state. There are two
+dev-agent` (a recreate) keeps your work and your state. There are two
 kinds of mounts:
 
 | Container path | Backed by | In `./manager.sh backup`? | Holds |
@@ -75,7 +75,7 @@ To force a reseed, drop the volume (confirm the exact name with
 `docker volume ls`):
 
 ```bash
-docker volume rm dev-agents_pub-cache && ./manager.sh update dev-agents
+docker volume rm dev-agent_pub-cache && ./manager.sh update dev-agent
 ```
 
 The same trick resets any other state volume when you want a clean slate.
@@ -87,7 +87,7 @@ package to the Dockerfile if you need it permanently. Git identity
 `GIT_AUTHOR_*` / `GIT_COMMITTER_*` env vars (defaulted in the compose
 file).
 
-**GitHub auth:** prefer `GH_TOKEN` in `dev-agents/.env` (see
+**GitHub auth:** prefer `GH_TOKEN` in `dev-agent/.env` (see
 `.env.example`) — it is passed through the environment, so it survives
 recreation. An interactive `gh auth login` works too, but its
 `hosts.yml` is not persisted and is lost on the next recreate.
@@ -175,7 +175,7 @@ openssl rand -hex 24   # copy into TEST_POSTGRES_PASSWORD
 openssl rand -hex 24   # copy into TEST_MYSQL_PASSWORD
 # TEST_REDIS_PASSWORD can be a copy of REDIS_PASSWORD
 
-# 2. In dev-agents/.env: mirror the values (manager.sh does not
+# 2. In dev-agent/.env: mirror the values (manager.sh does not
 # copy them automatically - you do it by hand so secrets stay out
 # of any logs / completion suggestions).
 TEST_POSTGRES_USER=dev_test
@@ -235,15 +235,18 @@ it's a built-in provider, referenced as `opencode-go/<model-id>`.
 3. Run `/models` any time to see the current model IDs; the roster
    changes as OpenCode adds/retires models.
 
-**Why models differ per agent:** the Go plan's limits are
-account-wide and dollar-based ($12/5h, $30/week, $60/month), shared
-across every agent. High-frequency roles (`coder`, `tester`,
-`small_model`) are pinned to the cheapest, highest-request-budget
-models so routine work doesn't eat the shared allowance; low-frequency
-roles that most benefit from a stronger model (`orchestrator`,
-`reviewer`, `architect`) get pricier models precisely because they're
-called far less often. `architect` in particular is deliberately kept
-as a separate, rarely-invoked subagent from `planner` so its
+**Why models differ per agent:** each Go model carries its **own**
+dollar-based usage limit (5-hour / weekly / monthly tranches of a
+per-model monthly cap that itself varies by model, e.g. $15/$30/$60) —
+not one shared pool split across every model. High-frequency roles
+(`coder`, `tester`, `small_model`) are pinned to cheap models with a
+large per-model request budget so routine work doesn't run into that
+model's own limit; low-frequency roles that most benefit from a
+stronger model (`orchestrator`, `reviewer`, `architect`) get pricier
+models precisely because they're called far less often, and — because
+the limits aren't shared — that heavier usage doesn't eat into any
+other role's budget either. `architect` in particular is deliberately
+kept as a separate, rarely-invoked subagent from `planner` so its
 1M-context model (a handful of requests per week) is spent only on
 genuine cross-module design decisions, not routine task breakdown —
 see `data/config/agents/architect.md` and `orchestrator.md` rule 2.
@@ -255,7 +258,7 @@ is the source of truth — update the `model:` fields in
 ## Differences from a stock opencode install
 
 - Always-on `opencode serve` (port 4096), not the TUI. Drop into a normal
-  shell with `docker exec -it dev-agents tmux attach -t dev` for ad-hoc
+  shell with `docker exec -it dev-agent tmux attach -t dev` for ad-hoc
   work.
 - Multi-agent config committed to the repo so the team shares one
   orchestrator/coder/review split. Override per-project with a project

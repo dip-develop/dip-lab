@@ -1,9 +1,9 @@
 #!/bin/bash
 # db-safe - safety wrapper around psql, mysql, mariadb, redis-cli.
 #
-# Installed by the dev-agents Dockerfile in /home/develop/.local/bin,
+# Installed by the dev-agent Dockerfile in /home/develop/.local/bin,
 # which comes first on PATH. Symlinked to psql/mysql/mariadb/redis-cli.
-# Intercepts every call from inside the dev-agents container.
+# Intercepts every call from inside the dev-agent container.
 #
 # Rules (any violation -> exit 1 with a clear error):
 #   * Flag values are recognised in every form they can be written:
@@ -26,7 +26,7 @@
 #     wrapper gives a friendlier error.)
 #
 # Disable for one command by prefixing with `DBSAFE=0 <cmd>`.
-# Disable globally by setting DB_SAFETY_GUARD=false in dev-agents/.env.
+# Disable globally by setting DB_SAFETY_GUARD=false in dev-agent/.env.
 #
 # This is a *defence in depth*, not the primary isolation - the real
 # guarantee is that TEST_POSTGRES_USER / TEST_MYSQL_USER have server-
@@ -58,7 +58,7 @@ fi
 
 die() {
     echo "db-safe: $*" >&2
-    echo "db-safe: this is a guard, not the real isolation. Set DB_SAFETY_GUARD=false in dev-agents/.env to disable." >&2
+    echo "db-safe: this is a guard, not the real isolation. Set DB_SAFETY_GUARD=false in dev-agent/.env to disable." >&2
     exit 1
 }
 
@@ -116,7 +116,7 @@ positional_only() {
     printf '%s\n' "${out[@]}"
 }
 
-# Map of "prod DBs that must never be touched". The dev-agents user
+# Map of "prod DBs that must never be touched". The dev-agent user
 # is server-side-granted only on dev_test_* - this list is a
 # belt-and-braces check that fires before the request even leaves the
 # container.
@@ -130,7 +130,7 @@ check_pg_db() {
     esac
     case " $prod_pg_dbs " in *" $db "*) return 1 ;; esac
     case "$db" in dev_test_*) return 0 ;; esac
-    # Anything else: also reject. The dev-agents user is only allowed
+    # Anything else: also reject. The dev-agent user is only allowed
     # to create dev_test_* DBs; if a new name was never declared, it
     # doesn't exist anyway, but reject loudly so the agent knows.
     return 1

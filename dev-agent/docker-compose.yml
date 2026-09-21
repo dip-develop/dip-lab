@@ -1,12 +1,12 @@
-# dev-agents: developer workstation container for DIP-Lab.
+# dev-agent: developer workstation container for DIP-Lab.
 #
 # Bundles opencode CLI, Flutter SDK, Dart, and the standard
 # PostgreSQL / MySQL / Redis CLI tools. Ships with the `default`
 # profile; it can be disabled with:
-#   ./manager.sh profile disable dev-agents
+#   ./manager.sh profile disable dev-agent
 # (or switched to a smaller profile like `core` / `no-ai`).
 #
-# Container name: dev-agents (matches /home/develop/ inside).
+# Container name: dev-agent (matches /home/develop/ inside).
 # Port: 4096 (opencode serve web UI/API), bound to 127.0.0.1 by default.
 #
 # Connects to the rest of the lab via the shared `internal` network so
@@ -23,7 +23,7 @@
 # what opencode is/is not allowed to touch.
 
 services:
-  dev-agents:
+  dev-agent:
     build:
       context: .
       args:
@@ -31,13 +31,15 @@ services:
         # files keep matching ownership. Defaults to 1000:1000 if not set.
         DEVELOP_UID: "${DEVELOP_UID:-1000}"
         DEVELOP_GID: "${DEVELOP_GID:-1000}"
-        # Optional: pin the opencode CLI version for reproducible builds.
-        # Defaults to "latest" (the current release).
+        # Optional: pin the opencode CLI version for reproducible builds
+        # (e.g. 2.0.3 -- a real V2 release string, not "v2"). This image
+        # always uses the V2 installer (opencode.ai/v2/install); the arg
+        # only pins WHICH release it installs. Defaults to "latest".
         OPENCODE_VERSION: "${OPENCODE_VERSION:-latest}"
         # Optional: pin the serverpod CLI release for reproducible builds.
         SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0-rc.1}"
-    image: diplab/dev-agents:local
-    container_name: dev-agents
+    image: diplab/dev-agent:local
+    container_name: dev-agent
     restart: unless-stopped
 
     # Resource caps. A runaway agent process gets throttled/OOM-killed
@@ -85,7 +87,7 @@ services:
       # Required because opencode serve is always-on and port-mapped.
       # Without this the API/UI is reachable with no auth on whatever
       # BIND_IP you set.
-      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD in dev-agents/.env, see .env.example}
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD in dev-agent/.env, see .env.example}
       # OpenCode Go needs no provider API key here: run `/connect` inside
       # the container once and pick "OpenCode Go" -- the credential is
       # written to auth.json in the opencode-data volume (see README's
@@ -100,7 +102,7 @@ services:
       # Isolated test-DB creds. The container can ONLY create/drop
       # databases whose name starts with `dev_test_` (enforced at the
       # server side by databases/init.sql + mysql-init.sql). See
-      # dev-agents/README.md and AGENTS.md for the safety rules.
+      # dev-agent/README.md and AGENTS.md for the safety rules.
       - TEST_POSTGRES_USER=${TEST_POSTGRES_USER:-}
       - TEST_POSTGRES_PASSWORD=${TEST_POSTGRES_PASSWORD:-}
       - TEST_POSTGRES_DB=${TEST_POSTGRES_DB:-}

@@ -9,7 +9,7 @@ replaces Zapier / Make for self-hosted use.
 
 ## Networks
 
-- `internal` (for all other DIP-Lab peers, including dev-agents and
+- `internal` (for all other DIP-Lab peers, including dev-agent and
   the databases on which the consume queue sits)
 - `database` (PostgreSQL backend)
 
@@ -60,13 +60,13 @@ data/
 - `N8N_SECURE_COOKIE=false` is set because Traefik terminates TLS
   upstream — change to `true` if exposing n8n directly over HTTPS.
 
-## Cross-service: opencode (dev-agents)
+## Cross-service: opencode (dev-agent)
 
-The `dev-agents` container ships with the `default` profile and
+The `dev-agent` container ships with the `default` profile and
 starts alongside the rest of the lab. n8n workflows can call the
 opencode serve API. Fill in `OPENCODE_URL` and
 `OPENCODE_SERVER_PASSWORD` in `automation/.env` (same password as
-`dev-agents/.env`).
+`dev-agent/.env`).
 
 Use the **HTTP Request** node in a workflow:
 
@@ -78,11 +78,11 @@ Use the **HTTP Request** node in a workflow:
 - Body: JSON, depends on the opencode API you target
   (see `https://opencode.ai/docs/` for the current endpoint list)
 
-The `dev-agents` service must be running for the `dev-agents`
+The `dev-agent` service must be running for the `dev-agent`
 hostname to resolve:
 
 ```bash
-./manager.sh start dev-agents
+./manager.sh start dev-agent
 ```
 
 ## Cross-service: Seafile (cloud)

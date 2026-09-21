@@ -27,33 +27,33 @@ LLM-driven agents and tools.
 - LLM provider keys are optional — the agent will only use the
   providers whose keys are present.
 
-### Cross-service: opencode (dev-agents)
+### Cross-service: opencode (dev-agent)
 
-To let Hermes call the `dev-agents` opencode serve API:
+To let Hermes call the `dev-agent` opencode serve API:
 
 ```bash
 # Generate a strong password (one-time)
 openssl rand -hex 32
-# Use the same value you put in dev-agents/.env
+# Use the same value you put in dev-agent/.env
 ```
 
 In `ai-agent/.env`:
 
 ```bash
-OPENCODE_URL=http://dev-agents:4096
-OPENCODE_SERVER_PASSWORD=<the same password as in dev-agents/.env>
+OPENCODE_URL=http://dev-agent:4096
+OPENCODE_SERVER_PASSWORD=<the same password as in dev-agent/.env>
 HERMES_OPENCODE_AUTOCALL=false   # set to true if you want Hermes to
                                  # invoke opencode without explicit
                                  # operator approval
 ```
 
 Notes:
-- `dev-agents` must be started for the hostname to resolve:
-  `./manager.sh start dev-agents`
-- If `dev-agents` is down, Hermes's calls to opencode will fail and
+- `dev-agent` must be started for the hostname to resolve:
+  `./manager.sh start dev-agent`
+- If `dev-agent` is down, Hermes's calls to opencode will fail and
   be retried by the agent runtime — Hermes itself stays healthy.
 - The same `OPENCODE_SERVER_PASSWORD` is required in
-  `dev-agents/.env` for the `opencode serve` web UI/API to accept
+  `dev-agent/.env` for the `opencode serve` web UI/API to accept
   the request.
 
 ## First-start
@@ -83,7 +83,7 @@ depends on whether credentials are configured for that service.
 | Service | URL (from inside ai-agent) | Auth | Configured via |
 |---|---|---|---|
 | n8n (automation) | `http://automation:5678` | n8n user session | (no API key by default) |
-| opencode (dev-agents) | `http://dev-agents:4096` | `Authorization: Bearer $OPENCODE_SERVER_PASSWORD` | `OPENCODE_*` in `.env` |
+| opencode (dev-agent) | `http://dev-agent:4096` | `Authorization: Bearer $OPENCODE_SERVER_PASSWORD` | `OPENCODE_*` in `.env` |
 | Seafile (cloud) | `http://cloud` | admin email+password **or** `Token $SEAFILE_API_TOKEN` | `SEAFILE_*` in `.env` |
 | Immich (gallery) | `http://gallery:2283` | `x-api-key: $IMMICH_API_KEY` | `IMMICH_*` in `.env` |
 | Paperless (docs) | `http://docs:8000` | `Authorization: Token $DOCS_API_TOKEN` | `DOCS_*` in `.env` |
@@ -94,11 +94,11 @@ Hermes is **not** on the `database` network, so it cannot reach
 PostgreSQL, MySQL, or Redis directly. Always go through the service's
 HTTP API.
 
-The `dev-agents` container is also on `internal` and can reach
+The `dev-agent` container is also on `internal` and can reach
 Hermes at `http://hermes:8642` (API) or `http://hermes:9119`
 (dashboard) for cross-agent calls. (The Docker hostname is `hermes`,
 matching the `container_name` in `ai-agent/docker-compose.yml`; the
-project directory is `ai-agent/`.) See `../dev-agents/AGENTS.md` for
+project directory is `ai-agent/`.) See `../dev-agent/AGENTS.md` for
 the inverse table.
 
 ### Seafile (cloud)
