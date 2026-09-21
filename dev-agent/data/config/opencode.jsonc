@@ -331,38 +331,5 @@
         "disabled": false
       }
     }
-  },
-  // External plugins, installed from npm by Bun at startup and cached in
-  // ~/.cache/opencode. All pinned (same rationale as OPENCODE_VERSION):
-  // reproducible startup, no silent upstream drift inside the always-on
-  // serve process. Local plugins (plugins/*.js) are auto-discovered and
-  // need no entry here -- see plugins/notify-n8n.js, ported to the V2
-  // Plugin.define({ id, setup(ctx) }) shape but not yet runtime-verified
-  // against a real build (check `opencode serve` logs / active plugin
-  // list on first start).
-  //  - opencode-cron: session cron scheduler (create_cron_job,
-  //    watch_cron_jobs, ...; state in ~/.config/opencode/cron.db)
-  //  - cc-safety-net: pre-execution interception of destructive git/fs
-  //    commands and secret-file access -- the runtime second layer behind
-  //    the best-effort permission globs in this config (xargs/find -exec
-  //    bypasses those, this hook does not get bypassed). V2 plugin-API
-  //    compatibility is NOT independently confirmed here -- the package
-  //    is actively maintained and lists OpenCode as a supported target,
-  //    but check `opencode serve` startup logs / active plugin list for
-  //    a load error before trusting this backstop under OpenCode 2.
-  //  - @tarquinen/opencode-dcp: prunes stale tool outputs from context;
-  //    direct token savings on the OpenCode Go budget in long
-  //    orchestrator loops
-  //  - opencode-pty: interactive/background processes (flutter run,
-  //    serverpod run, dev servers) with input sending and regex filtering
-  //  - opencode-memory: persistent memory across sessions (remember,
-  //    recall, update, forget, list); state in
-  //    ~/.config/opencode/memory/ as daily logfmt files
-  "plugins": [
-    "opencode-cron@0.0.7",
-    "cc-safety-net@2.4.1",
-    "@tarquinen/opencode-dcp@3.1.15",
-    "opencode-pty@0.3.6",
-    "opencode-memory@2.0.0"
-  ]
+  }
 }

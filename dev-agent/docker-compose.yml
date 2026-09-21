@@ -86,9 +86,6 @@ services:
       - GIT_COMMITTER_EMAIL=${GIT_COMMITTER_EMAIL:-dev-agent@diplab.local}
       # Built-in websearch (Exa) for marketing/writer agents.
       - OPENCODE_ENABLE_EXA=1
-      # Webhook consumed by data/config/plugins/notify-n8n.js (session.idle,
-      # permission.asked, session.error -> n8n). Empty = plugin stays inert.
-      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-}
       # Required because opencode serve is always-on and port-mapped.
       # Without this the API/UI is reachable with no auth on whatever
       # BIND_IP you set.

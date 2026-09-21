@@ -146,12 +146,13 @@ values (see `~/.config/dev-agent/env.sh`).
   the orchestrator closes it after the merge — GitHub's `Closes`
   keyword does not fire for develop-based merges.
 
-## Scheduled jobs (opencode-cron)
+## Scheduled jobs
 
-- The `opencode-cron` plugin is available, but creating a recurring job
-  is an operator action, same as installing the auto-back-merge GitHub
-  Action in `instructions/git-flow.md`: agents may propose a cron job
-  (what it would run, how often) but must not create one themselves.
+- Creating a recurring job is an operator action, same as installing the
+  auto-back-merge GitHub Action in `instructions/git-flow.md`: agents may
+  propose a cron job (what it would run, how often) but must not create
+  one themselves. (The `opencode-cron` plugin was removed as non-functional
+  under V2.)
 - Reason: a recurring job runs unattended against whichever model it's
   configured to use, against that model's own OpenCode Go usage cap
   (5h/week/month tranches -- see opencode.ai/docs/go), with no approval
