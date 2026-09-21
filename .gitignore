@@ -1,62 +1,41 @@
-```
-# Dependencies
-node_modules/
-venv/
-.venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-dist/
-build/
-target/
-.gradle/
+# .env files
+*.env
+*/*.env
 
-# Logs and temp files
-*.log
-*.tmp
+# Data directories (local) - exclude service data, keep dev-agent/config
+*/data/*
+!dev-agent/data/config/
+
+# Proxy (sensitive)
+proxy/acme.json
+proxy/dynamic/.htpasswd
+proxy/logs/
+proxy/certs/
+
+# Docker
+*.sock
+*.pid
+
+# Disabled services (user-specific)
+.disabled_services
+
+# OpenCode / dev-agent
+.opencode/
+.env.opencode
+
+# IDE
+.idea/
+.vscode/
 *.swp
 *.swo
 
-# Environment
-.env
-.env.local
-*.env.*
-
-# Editors
-.vscode/
-.idea/
-
-# System
+# OS
 .DS_Store
 Thumbs.db
 
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
-```.next/
-.next/
+# Backups
+*.bak
+*.backup
+*.old
+backups/
+dev-agent/data/config/skills/

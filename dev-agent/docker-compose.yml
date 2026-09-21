@@ -31,9 +31,11 @@ services:
         # files keep matching ownership. Defaults to 1000:1000 if not set.
         DEVELOP_UID: "${DEVELOP_UID:-1000}"
         DEVELOP_GID: "${DEVELOP_GID:-1000}"
-        # Optional: pin the opencode CLI version for reproducible builds.
-        # Defaults to "latest" (the current release). Use "v2" for OpenCode v2.
-        OPENCODE_VERSION: "${OPENCODE_VERSION:-v2}"
+        # Optional: pin the opencode CLI version for reproducible builds
+        # (e.g. 2.0.3 -- a real V2 release string, not "v2"). This image
+        # always uses the V2 installer (opencode.ai/v2/install); the arg
+        # only pins WHICH release it installs. Defaults to "latest".
+        OPENCODE_VERSION: "${OPENCODE_VERSION:-latest}"
         # Optional: pin the serverpod CLI release for reproducible builds.
         SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0-rc.1}"
     image: diplab/dev-agent:local

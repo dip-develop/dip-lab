@@ -5,6 +5,6 @@
 # Use this when you want to actually see what your stack is doing and
 # run workflows.
 #
-# dev-agents is included here too (it ships with `default`).
+# dev-agent is included here too (it ships with `default`).
 passwords
 ai-agent

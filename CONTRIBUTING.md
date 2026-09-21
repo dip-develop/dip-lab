@@ -41,6 +41,21 @@ cp dev-agent/.env.example dev-agent/.env
 ./manager.sh start dev-agent
 ```
 
+**Upgrading an existing deployment:** `dev-agent` is OpenCode 2 and
+replaces the old `dev-agents` (OpenCode 1) container outright -- both
+bind the same host port (4096), and `manager.sh` no longer knows about
+`dev-agents` at all, so it can't stop a container it no longer manages.
+If a `dev-agents` container is still running from before this change,
+stop and remove it manually first:
+
+```bash
+docker compose -f dev-agents/docker-compose.yml down
+```
+
+Rollback, if needed: check out the commit before this migration and
+run `./manager.sh start dev-agents` from there -- the old container's
+config isn't kept in the tree going forward.
+
 ## Guidelines
 
 - Follow existing code style and conventions (Compose, shell, Markdown)

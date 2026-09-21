@@ -235,15 +235,18 @@ it's a built-in provider, referenced as `opencode-go/<model-id>`.
 3. Run `/models` any time to see the current model IDs; the roster
    changes as OpenCode adds/retires models.
 
-**Why models differ per agent:** the Go plan's limits are
-account-wide and dollar-based ($12/5h, $30/week, $60/month), shared
-across every agent. High-frequency roles (`coder`, `tester`,
-`small_model`) are pinned to the cheapest, highest-request-budget
-models so routine work doesn't eat the shared allowance; low-frequency
-roles that most benefit from a stronger model (`orchestrator`,
-`reviewer`, `architect`) get pricier models precisely because they're
-called far less often. `architect` in particular is deliberately kept
-as a separate, rarely-invoked subagent from `planner` so its
+**Why models differ per agent:** each Go model carries its **own**
+dollar-based usage limit (5-hour / weekly / monthly tranches of a
+per-model monthly cap that itself varies by model, e.g. $15/$30/$60) —
+not one shared pool split across every model. High-frequency roles
+(`coder`, `tester`, `small_model`) are pinned to cheap models with a
+large per-model request budget so routine work doesn't run into that
+model's own limit; low-frequency roles that most benefit from a
+stronger model (`orchestrator`, `reviewer`, `architect`) get pricier
+models precisely because they're called far less often, and — because
+the limits aren't shared — that heavier usage doesn't eat into any
+other role's budget either. `architect` in particular is deliberately
+kept as a separate, rarely-invoked subagent from `planner` so its
 1M-context model (a handful of requests per week) is spent only on
 genuine cross-module design decisions, not routine task breakdown —
 see `data/config/agents/architect.md` and `orchestrator.md` rule 2.

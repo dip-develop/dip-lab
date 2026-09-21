@@ -6,10 +6,12 @@
 #
 # BUILD-TIME ARGS (optional): DEVELOP_UID, DEVELOP_GID - the host user's
 # UID/GID so bind-mounted files keep matching ownership. Defaults to
-# 1000:1000 if not set (see docker-compose.yml). OPENCODE_VERSION pins
-# the opencode CLI release ("v2" by default for OpenCode v2). SERVERPOD_CLI_VERSION
-# pins the serverpod CLI release (default 4.0.0-rc.1). Flutter (stable)
-# is installed in-image, so containers start offline-ready.
+# 1000:1000 if not set (see docker-compose.yml). This image always
+# installs OpenCode 2 (via opencode.ai/v2/install); OPENCODE_VERSION
+# optionally pins WHICH V2 release to install (e.g. 2.0.3), "latest" by
+# default. SERVERPOD_CLI_VERSION pins the serverpod CLI release (default
+# 4.0.0-rc.1). Flutter (stable) is installed in-image, so containers
+# start offline-ready.
 #
 # Runtime configuration (opencode.jsonc, agents/) is bind-mounted
 # from data/config/ on the host - no rebuild required to tweak agent config.
@@ -104,8 +106,13 @@ ENV PATH="/home/develop/.local/bin:${PATH}"
 
 # opencode - the first agent CLI in this box, not the only one.
 # Add more CLI installs here later without touching anything above.
-# Pin with OPENCODE_VERSION (e.g. 1.0.180) for reproducible builds.
-# "v2" (default) installs OpenCode v2 using the new installer.
+# Always uses the V2 installer (opencode.ai/v2/install). Pin with
+# OPENCODE_VERSION (e.g. 2.0.3 -- a real V2 release string) for
+# reproducible builds; "latest" (default) installs the current V2
+# release. NOT VERIFIED: the V1 installer's --version flag is assumed to
+# carry over to V2 unchanged (same project, same install-script shape) --
+# confirm with `bash -s -- --help` against the V2 installer before
+# relying on a pin for a real build.
 ARG OPENCODE_VERSION=latest
 RUN if [ "$OPENCODE_VERSION" = "latest" ]; then \
         curl -fsSL https://opencode.ai/v2/install | bash; \

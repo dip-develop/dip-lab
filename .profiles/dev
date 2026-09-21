@@ -5,7 +5,7 @@
 # Disabled: monitoring, cloud, docs, gallery - heavyweight services
 # you don't need while iterating on code.
 #
-# dev-agents is included here too (it ships with `default`).
+# dev-agent is included here too (it ships with `default`).
 monitoring
 cloud
 docs

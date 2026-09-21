@@ -152,9 +152,10 @@ values (see `~/.config/dev-agent/env.sh`).
   is an operator action, same as installing the auto-back-merge GitHub
   Action in `instructions/git-flow.md`: agents may propose a cron job
   (what it would run, how often) but must not create one themselves.
-- Reason: a recurring job runs unattended against the shared OpenCode Go
-  budget ($12/5h, $30/week, $60/month across all models) with no
-  approval step in the loop, unlike a normal ask-gated bash command.
+- Reason: a recurring job runs unattended against whichever model it's
+  configured to use, against that model's own OpenCode Go usage cap
+  (5h/week/month tranches -- see opencode.ai/docs/go), with no approval
+  step in the loop, unlike a normal ask-gated bash command.
 
 ## Things to never do
 
