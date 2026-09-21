@@ -200,6 +200,15 @@
     // Comments are reversible and the sanctioned way to drive bots
     // (e.g. "@dependabot rebase"); see notes in agents/orchestrator.md.
     { "action": "shell", "resource": "gh pr comment*", "effect": "allow" },
+    // PR workflow: create/edit/view/list/status are part of the standard
+    // Git Flow loop (git-flow.md / commands/pr.md instruct `gh pr create`).
+    // create/edit are reversible mutations; `gh pr merge` stays "ask"
+    // (operator action) and is intentionally NOT allow-listed here.
+    { "action": "shell", "resource": "gh pr create*", "effect": "allow" },
+    { "action": "shell", "resource": "gh pr edit*", "effect": "allow" },
+    { "action": "shell", "resource": "gh pr view*", "effect": "allow" },
+    { "action": "shell", "resource": "gh pr list*", "effect": "allow" },
+    { "action": "shell", "resource": "gh pr status*", "effect": "allow" },
     // Read-only auth health check (accounts/scopes, never prints tokens).
     { "action": "shell", "resource": "gh auth status*", "effect": "allow" },
     // ...except --show-token, which dumps the raw credential string.
