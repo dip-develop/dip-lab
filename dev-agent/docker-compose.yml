@@ -38,6 +38,11 @@ services:
         OPENCODE_VERSION: "${OPENCODE_VERSION:-latest}"
         # Optional: pin the serverpod CLI release for reproducible builds.
         SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0-rc.1}"
+        # Git identity baked into the image as `git config --global
+        # user.name` / `user.email`, sourced from .env. Changing these
+        # requires a rebuild: ./manager.sh build dev-agent
+        GIT_AUTHOR_NAME: "${GIT_AUTHOR_NAME:-dev-agent}"
+        GIT_AUTHOR_EMAIL: "${GIT_AUTHOR_EMAIL:-dev-agent@diplab.local}"
     image: diplab/dev-agent:local
     container_name: dev-agent
     restart: unless-stopped

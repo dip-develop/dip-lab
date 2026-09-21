@@ -82,10 +82,13 @@ The same trick resets any other state volume when you want a clean slate.
 
 **Not persisted, by design:** packages installed with `sudo apt` at
 runtime live only in the writable layer and vanish on recreate — add a
-package to the Dockerfile if you need it permanently. Git identity
-(user.name / user.email) is not persisted either; it comes from the
-`GIT_AUTHOR_*` / `GIT_COMMITTER_*` env vars (defaulted in the compose
-file).
+package to the Dockerfile if you need it permanently. Git identity is
+baked into the image at build time from `GIT_AUTHOR_NAME` /
+`GIT_AUTHOR_EMAIL` in `dev-agent/.env` (set as `user.name` /
+`user.email` via `git config --global`), so `git config user.name` /
+`user.email` return real values after a clean start; the
+`GIT_AUTHOR_*` / `GIT_COMMITTER_*` runtime env vars still override the
+author/committer on individual commits.
 
 **GitHub auth:** prefer `GH_TOKEN` in `dev-agent/.env` (see
 `.env.example`) — it is passed through the environment, so it survives
