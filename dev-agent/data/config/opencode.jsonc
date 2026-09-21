@@ -64,6 +64,9 @@
     // Package research policy allows surgical ~/.pub-cache reads as a
     // last resort; without this every one of them asks for approval.
     { "action": "external_directory", "resource": "/home/develop/.pub-cache/**", "effect": "allow" },
+    // Scratch space for agent temp files (PR bodies, artifacts, etc.).
+    // Pre-approved so Read/Write/Edit never ask for a path here.
+    { "action": "external_directory", "resource": "/tmp/opencode/**", "effect": "allow" },
     // Docs-first research policy requires web access in every role
     // (planner/coder/tester ground package steps via web docs).
     // V2 form of the V1 flat "webfetch"/"websearch" allow: resource "*".
