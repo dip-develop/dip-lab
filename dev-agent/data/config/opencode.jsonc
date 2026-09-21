@@ -305,6 +305,9 @@
       "command": [
         "serverpod",
         "language-server"
+      ],
+      "extensions": [
+        "dart"
       ]
     }
   },
