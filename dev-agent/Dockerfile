@@ -10,8 +10,10 @@
 # installs OpenCode 2 (via opencode.ai/v2/install); OPENCODE_VERSION
 # optionally pins WHICH V2 release to install (e.g. 2.0.3), "latest" by
 # default. SERVERPOD_CLI_VERSION pins the serverpod CLI release (default
-# 4.0.0-rc.1). Flutter (stable) is installed in-image, so containers
-# start offline-ready.
+# 4.0.0-rc.1). GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL seed the global git
+# identity (user.name / user.email) baked into the image -- sourced from
+# dev-agent/.env via docker-compose.yml. Flutter (stable) is installed
+# in-image, so containers start offline-ready.
 #
 # Runtime configuration (opencode.jsonc, agents/) is bind-mounted
 # from data/config/ on the host - no rebuild required to tweak agent config.
@@ -20,6 +22,8 @@ FROM debian:bookworm-slim
 
 ARG DEVELOP_UID=1000
 ARG DEVELOP_GID=1000
+ARG GIT_AUTHOR_NAME=dev-agent
+ARG GIT_AUTHOR_EMAIL=dev-agent@diplab.local
 
 # Base tooling. Nothing here is opencode-specific - the same image could
 # host Claude Code, Cursor CLI, etc. Add their deps here later.
@@ -82,14 +86,19 @@ USER develop
 WORKDIR /home/develop
 
 # Sane global git defaults baked into the image. Identity (user.name /
-# user.email) is intentionally NOT set here - it comes from the
-# GIT_AUTHOR_* / GIT_COMMITTER_* env vars at runtime (see
-# .env.example). Defaults survive container recreation for free since
-# they live in the image, not in container state.
+# user.email) comes from the GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL build
+# args (sourced from dev-agent/.env) so `git config user.name` and
+# `git config user.email` return real values even after a clean
+# container start. The GIT_AUTHOR_* / GIT_COMMITTER_* runtime env vars
+# still override the author/committer on individual commits. These
+# defaults survive container recreation for free since they live in the
+# image, not in container state.
 RUN git config --global init.defaultBranch main \
     && git config --global push.autoSetupRemote true \
     && git config --global fetch.prune true \
-    && git config --global pull.rebase true
+    && git config --global pull.rebase true \
+    && git config --global user.name "$GIT_AUTHOR_NAME" \
+    && git config --global user.email "$GIT_AUTHOR_EMAIL"
 
 # `db-safe` wrapper - shadows psql, mysql, mariadb, redis-cli.
 # Refuses to talk to a non-test database unless the operator has
