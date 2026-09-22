@@ -21,7 +21,7 @@ LLM-driven agents and tools.
   `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USERS`, `DEEPSEEK_API_KEY`,
   `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`. Cross-service: `OPENCODE_URL`,
   `OPENCODE_SERVER_PASSWORD`, `HERMES_OPENCODE_AUTOCALL`, `SEAFILE_*`,
-  `IMMICH_*`, `DOCS_*`, `PASSWORDS_*` (see below).
+  `IMMICH_*`, `DOCS_*`, `PASSWORDS_*`, `N8N_*` (see below).
 - At minimum, set a strong `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD` and
   `API_SERVER_KEY` before exposing the service.
 - LLM provider keys are optional — the agent will only use the
@@ -82,7 +82,7 @@ depends on whether credentials are configured for that service.
 
 | Service | URL (from inside ai-agent) | Auth | Configured via |
 |---|---|---|---|
-| n8n (automation) | `http://automation:5678` | n8n user session | (no API key by default) |
+| n8n (automation) | `http://automation:5678` | `X-N8N-API-KEY: $N8N_API_KEY` | `N8N_*` in `.env` |
 | opencode (dev-agent) | `http://dev-agent:4096` | `Authorization: Bearer $OPENCODE_SERVER_PASSWORD` | `OPENCODE_*` in `.env` |
 | Seafile (cloud) | `http://cloud` | admin email+password **or** `Token $SEAFILE_API_TOKEN` | `SEAFILE_*` in `.env` |
 | Immich (gallery) | `http://gallery:2283` | `x-api-key: $IMMICH_API_KEY` | `IMMICH_*` in `.env` |
@@ -136,6 +136,22 @@ long-lived client_credentials token from the web UI under
 Account → Security.
 
 Without it, calls to Vaultwarden will return 401.
+
+### n8n (automation)
+
+In `ai-agent/.env`, set `N8N_API_KEY`. Generate it in the n8n web UI:
+Settings → n8n API → Create an API key.
+
+This key authenticates n8n's *management* REST API (`/api/v1/...`) —
+listing/creating/activating workflows, reading executions. It does
+not run a specific workflow on demand. To let Hermes trigger a
+particular automation, add a Webhook trigger node to that workflow
+in n8n and call its webhook URL directly (shown in the node once the
+workflow is active); each workflow gets its own webhook URL, so
+there's nothing to template as a single env var for that part.
+
+Without `N8N_API_KEY`, management-API calls to n8n will return 401;
+per-workflow webhook URLs work independently of this key regardless.
 
 ## Resource caps
 

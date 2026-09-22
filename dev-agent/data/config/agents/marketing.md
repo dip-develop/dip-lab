@@ -3,12 +3,17 @@ description: Business/marketing strategist for positioning, pricing, outreach. N
 mode: primary
 model: opencode-go/qwen3.8-max
 permissions:
-  - action: edit
-    resource: "notes/marketing/**"
-    effect: allow
+  # Rules are evaluated with the LAST match winning (see opencode.jsonc).
+  # The general deny must come FIRST so the specific allow below it can
+  # actually take effect -- the reverse order (allow then deny) makes
+  # both rules match "notes/marketing/**" and the trailing deny wins,
+  # silently blocking the one path this agent is supposed to write to.
   - action: edit
     resource: "*"
     effect: deny
+  - action: edit
+    resource: "notes/marketing/**"
+    effect: allow
   - action: shell
     resource: "*"
     effect: deny
