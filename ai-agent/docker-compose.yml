@@ -48,6 +48,9 @@ services:
       # Cross-service: Vaultwarden (passwords). Leave key empty to disable.
       - PASSWORDS_URL=${PASSWORDS_URL:-http://passwords}
       - PASSWORDS_API_KEY=${PASSWORDS_API_KEY:-}
+      # Cross-service: n8n (automation). Leave key empty to disable.
+      - N8N_URL=${N8N_URL:-http://automation:5678}
+      - N8N_API_KEY=${N8N_API_KEY:-}
     networks:
       - internal
     tty: true
