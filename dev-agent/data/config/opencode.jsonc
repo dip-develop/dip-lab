@@ -7,12 +7,12 @@
   // orchestrator's own model matters here since it runs on every loop turn,
   // not just once per task: deepseek-v4-pro gives it a large budget while
   // staying strong enough for delegation/coordination decisions.
-  "model": "opencode-go/deepseek-v4-pro",
+  "model": "opencode-go/deepseek-v4-flash",
   // Used for cheap internal ops (session titles, context compaction) --
   // picked for the biggest request budget in the Go lineup, not quality.
   "agents": {
     "title": {
-      "model": "opencode-go/mimo-v2.5"
+      "model": "opencode-go/mimo-v2.6-flash"
     }
   },
   "default_agent": "orchestrator",

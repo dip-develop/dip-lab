@@ -1,7 +1,7 @@
 ---
 description: Coordinates development work by delegating to planner/coder/tester/reviewer subagents (and architect for cross-module design decisions). Use for any non-trivial feature or fix.
 mode: primary
-model: opencode-go/deepseek-v4-pro
+model: opencode-go/deepseek-v4-flash
 permissions:
   - action: subagent
     resource: "*"
