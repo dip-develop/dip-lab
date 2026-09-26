@@ -2,7 +2,9 @@
 description: Runs test/lint/build commands and reports results. Use after edits.
 mode: subagent
 model: opencode-go/mimo-v2.5
-hidden: true
+# NOT `hidden: true` -- see the note in planner.md. Hidden agents are
+# dropped from the V2 subagent catalog, which is exactly what broke
+# delegation.
 permissions:
   - action: edit
     resource: "*"
