@@ -1,14 +1,27 @@
 services:
   hermes:
-    image: nousresearch/hermes-agent:latest
+    # Pin via HERMES_AGENT_VERSION once you've picked a known-good release
+    # (check `docker run --rm nousresearch/hermes-agent:latest version` or
+    # https://github.com/NousResearch/hermes-agent/releases -- tags are
+    # date-based, e.g. v2026.8.3). Left on "latest", `./manager.sh update
+    # ai-agent` can pull a new release with no diff in this repo to review,
+    # same reproducibility concern as dev-agent's OPENCODE_VERSION.
+    image: nousresearch/hermes-agent:${HERMES_AGENT_VERSION:-latest}
     container_name: hermes
     command: gateway run
     restart: unless-stopped
     env_file:
       - .env
+    # Default 127.0.0.1, matching every other developer-facing service in
+    # this lab (see dev-agent's BIND_IP) -- this exposes an API server and
+    # a dashboard, and an unauthenticated/exposed Hermes dashboard has been
+    # a real attack vector for this exact product (see the "why --insecure
+    # was removed" note in Hermes's own Docker docs). Basic-auth on the
+    # dashboard (below) is a second layer, not a substitute for this.
+    # Override to 0.0.0.0 in .env only if you need LAN access and trust it.
     ports:
-      - "${BIND_IP:-0.0.0.0}:18789:8642"
-      - "${BIND_IP:-0.0.0.0}:18790:9119"
+      - "${BIND_IP:-127.0.0.1}:18789:8642"
+      - "${BIND_IP:-127.0.0.1}:18790:9119"
     volumes:
       - ./data/aiagent:/opt/data
     environment:
@@ -35,6 +48,9 @@ services:
       # Cross-service: Vaultwarden (passwords). Leave key empty to disable.
       - PASSWORDS_URL=${PASSWORDS_URL:-http://passwords}
       - PASSWORDS_API_KEY=${PASSWORDS_API_KEY:-}
+      # Cross-service: n8n (automation). Leave key empty to disable.
+      - N8N_URL=${N8N_URL:-http://automation:5678}
+      - N8N_API_KEY=${N8N_API_KEY:-}
     networks:
       - internal
     tty: true

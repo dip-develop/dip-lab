@@ -1,7 +1,10 @@
 ---
 description: Coordinates development work by delegating to planner/coder/tester/reviewer subagents (and architect for cross-module design decisions). Use for any non-trivial feature or fix.
 mode: primary
-model: opencode-go/deepseek-v4-pro
+# Keep in sync with "model" in opencode.jsonc. Deliberately the flash tier
+# (operator decision in 9bab4fa) for request budget; see the note there about
+# multi-step discipline.
+model: opencode-go/deepseek-v4-flash
 permissions:
   - action: subagent
     resource: "*"

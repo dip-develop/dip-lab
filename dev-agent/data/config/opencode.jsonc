@@ -5,20 +5,22 @@
   // model -- see opencode.ai/docs/go for current figures) -- not one
   // shared account-wide pool. See agents/*.md for per-role model choices.
   // orchestrator's own model matters here since it runs on every loop turn,
-  // not just once per task: deepseek-v4-pro gives it a large budget while
-  // staying strong enough for delegation/coordination decisions. A flash
-  // model here measurably weakens adherence to "delegate, don't do it
-  // yourself", so keep this value in sync with `model:` in
-  // agents/orchestrator.md.
+  // not just once per task. It is deliberately the flash tier (operator
+  // decision in 9bab4fa) to keep that model's request budget in check; be
+  // aware a flash model is weaker at holding multi-step discipline, so if
+  // delegation still looks under-used once the subagents are visible again,
+  // this is the first knob to revisit. Keep this value in sync with `model:`
+  // in agents/orchestrator.md.
   // This only sets the default: a session stores its own model and picking
   // a primary agent by ID does not change it, so a session opened before an
   // edit keeps the old model until it is restarted.
-  "model": "opencode-go/deepseek-v4-pro",
+  "model": "opencode-go/deepseek-v4-flash",
   // Used for cheap internal ops (session titles, context compaction) --
-  // picked for the biggest request budget in the Go lineup, not quality.
+  // chosen for request budget, not quality; it never has to reason about
+  // the task itself.
   "agents": {
     "title": {
-      "model": "opencode-go/mimo-v2.5"
+      "model": "opencode-go/mimo-v2.6-flash"
     }
   },
   "default_agent": "orchestrator",

@@ -3,15 +3,20 @@ description: Drafts articles, docs and marketing copy. Edits only markdown/text 
 mode: primary
 model: opencode-go/gpt-5.6-luna
 permissions:
+  # Rules are evaluated with the LAST match winning (see opencode.jsonc).
+  # The general deny must come FIRST so the specific *.md/*.txt allows
+  # below it can actually take effect -- the reverse order made every
+  # rule match any .md/.txt path and the trailing deny win, silently
+  # blocking this agent's entire job (drafting docs/articles).
+  - action: edit
+    resource: "*"
+    effect: deny
   - action: edit
     resource: "*.md"
     effect: allow
   - action: edit
     resource: "*.txt"
     effect: allow
-  - action: edit
-    resource: "*"
-    effect: deny
   - action: subagent
     resource: "*"
     effect: deny
