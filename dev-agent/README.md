@@ -102,11 +102,10 @@ recreation. An interactive `gh auth login` works too, but its
 | `Dockerfile` | Image build (see args above) |
 | `docker-compose.yml` | Service definition, joins the `internal` network |
 | `.env.example` | Template - copy to `.env` and fill in |
-| `setup.sh` | Creates `data/config/agents/` and `data/config/instructions/` if missing |
-| `AGENTS.md` | Read by opencode when you open a project - agent rules |
+| `setup.sh` | Creates `data/config/agents/` if missing |
+| `AGENTS.md` | Read by opencode when you open a project - agent rules **and the full global policy** (git flow, roadmap/TODO, docs-before-sources, flat-shell rules), inlined here because opencode V2 does not load the `instructions` config key |
 | `data/config/opencode.jsonc` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, architect, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
-| `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host) |
-| `data/config/instructions/` | Global instruction files injected into every agent's system prompt (e.g. the docs-before-sources package policy) |
+| `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host). Do **not** set `hidden: true` on a subagent - in V2 that removes it from the `subagent` tool catalog, so the orchestrator can no longer launch it |
 | `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
 
 ## Slash commands
@@ -268,9 +267,11 @@ is the source of truth — update the `model:` fields in
   local `.opencode/opencode.json`.
 - Permission baseline blocks destructive shell and secret access by
   default; loosen in your fork as needed.
-- Global "docs before sources" package policy injected via the config's `instructions` key (`data/config/instructions/`); agents consult MCP doc tools / README / pub.dev before reading `~/.pub-cache` sources. Source reading is not hard-denied — it stays a documented last resort (bash reads like `rg`/`cat` are allow-listed; the read tool may prompt since `~/.pub-cache` falls under `external_directory: ask`).
+- Global "docs before sources" package policy, inlined in `data/config/AGENTS.md`; agents consult MCP doc tools / README / pub.dev before reading `~/.pub-cache` sources. Source reading is not hard-denied — it stays a documented last resort (bash reads like `rg`/`cat` are allow-listed; the read tool may prompt since `~/.pub-cache` falls under `external_directory: ask`).
 - Git Flow policy (`main` + `develop`, `feature/`/`bugfix/`/`hotfix/`/`release/`
-  branches, PR-only integration) injected into every agent via
-  `data/config/instructions/git-flow.md`; pushes to `main` and `develop` are
-  hard-denied at the permission layer, including refspec forms
-  (`HEAD:develop`, `:develop` deletions).
+  branches, PR-only integration) inlined in `data/config/AGENTS.md`; pushes to
+  `main` and `develop` are hard-denied at the permission layer, including
+  refspec forms (`HEAD:develop`, `:develop` deletions).
+- Global policy lives in `AGENTS.md`, not a separate `instructions/` directory:
+  opencode V2 accepts the `instructions` key but does not load its entries, so
+  files placed there are silently ignored by every agent.

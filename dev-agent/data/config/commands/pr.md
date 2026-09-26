@@ -10,8 +10,9 @@ Open a pull request for the current work:
 3. `git push -u origin <branch>`.
 4. Base branch (`--base`): `develop` for `feature/*` and `bugfix/*`;
    `main` for `hotfix/*` and `release/*` - see the Git Flow table in
-   `instructions/git-flow.md`. Note that `gh pr create` alone defaults
+   `AGENTS.md`. Note that `gh pr create` alone defaults
    to the repo's default branch, which is usually wrong for Git Flow.
+   Repos with no `develop` branch use `--base main` for `feature/*` too.
    Hotfix and release branches need two PRs: into `main` AND `develop`.
 5. `gh pr create` with a title matching the main change and a body that
    summarizes what/why and lists a test plan.

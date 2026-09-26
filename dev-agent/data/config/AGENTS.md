@@ -119,37 +119,138 @@ values (see `~/.config/dev-agent/env.sh`).
 
 ## Git workflow (Git Flow)
 
-- The full branch/PR policy is injected into every agent as
-  `instructions/git-flow.md` — it is the single source of truth; this
-  section only summarizes the consequences.
-- Supporting branches (`feature/`, `bugfix/`, `release/`) base on
-  `develop`; `hotfix/` bases on `main`. Never commit directly to
-  `main`/`develop`.
-- Push your branch, open a PR with `gh pr create --base develop`
-  (hotfix/release: two PRs — into `main` AND `develop`), then stop
-  and summarize what's ready for review.
-- Merging into `main`/`develop`, tagging releases, and force-pushes
-  are operator actions. Pushes to `main`/`develop` (including refspec
-  forms like `HEAD:develop`) are denied at the permission level.
-- After a release/hotfix lands on `main`, propose the back-merge PR
-  (`backmerge/*` cut from `origin/main`, base `develop`) right away;
-  dependency/CI maintenance targets `develop`
-  (`target-branch: develop`). Details in `instructions/git-flow.md`.
+Long-lived branches: `main` (production, tagged releases) and `develop`
+(integration). Nothing lands on either except through pull requests — the
+operator merges.
+
+| Branch | Branch from | Open PR into | Example |
+|---|---|---|---|
+| `feature/<topic>` | `develop` | `develop` | `feature/login-page` |
+| `bugfix/<topic>` | `develop` | `develop` | `bugfix/null-avatar` |
+| `chore/<topic>` | `develop` | `develop` | `chore/bump-test-deps` (dependency/CI maintenance) |
+| `hotfix/<topic>` | `main` | `main` AND `develop` (two PRs) | `hotfix/crash-on-start` |
+| `release/<version>` | `develop` | `main` AND `develop` (two PRs) | `release/1.4.0` |
+| `backmerge/<version>` | `main` | `develop` | `backmerge/1.4.0` |
+
+Workflow:
+
+1. Create the branch from the correct base, e.g.
+   `git checkout develop && git checkout -b feature/<topic>`.
+2. Commit in small, single-purpose chunks with clear messages.
+3. Push the branch (`git push -u origin feature/<topic>`) and open
+   the PR with `gh pr create --base develop` — the base MUST match
+   the table; `gh pr create` alone defaults to the repo's default
+   branch, which is usually wrong.
+4. Stop and summarize what is ready for review. The operator
+   merges PRs, creates release tags, and pushes `main`/`develop`.
+
+Repos with no `develop` branch (single-branch projects such as
+`dip-lab`) use `feature/*` off `main` and `gh pr create --base main`; run
+`git branch -a` first rather than assuming the table applies.
+
+### Back-merge: `main` into `develop` after every release
+
+`main` must stay a subset of `develop`'s history. Anything that
+lands on `main` (release/hotfix merges, GitHub-side fixes) makes
+`develop` lag; resolve the drift immediately with a back-merge PR —
+never let it accumulate:
+
+1. Cut `backmerge/<version>` from `origin/main`, push it, and open
+   `gh pr create --base develop` titled e.g.
+   `chore: back-merge main into develop (1.4.0)`. The operator
+   merges it. Do not use `--head main` — a `backmerge/*` branch
+   keeps the protected-branch rules intact.
+2. Before starting new work in a repo, check for missed back-merges:
+   `git fetch` then `git rev-list --count develop..origin/main`;
+   non-zero with no open back-merge PR → propose one first.
+3. Merging release/hotfix PRs into `main` must use merge commits,
+   never squash — squashing rewrites `main`'s history and makes
+   every later back-merge conflict (operator action).
+
+### Dependabot & CI maintenance
+
+- Dependency updates and CI fixes belong on `develop`. Every repo
+  must set `target-branch: develop` on each ecosystem entry in
+  `.github/dependabot.yml` — the default is the repo's default
+  branch (usually `main`), which is the main drift source.
+- Never retarget or rebase an incoming dependency/CI PR onto
+  `main`; do that work on `chore/*` branches off `develop`.
+- Auto-back-merge on release (GitHub Action on `release: published`
+  / push to `main`, opening the `backmerge/*` PR) is recommended —
+  but it is operator infrastructure; agents may propose it, never
+  install or schedule it themselves.
+
+### Git flow — never
+
+- Never commit or push directly to `main` or `develop`; pushes to
+  them are hard-denied at the permission layer.
+- Never merge into `main`/`develop`, tag releases, delete branches,
+  or force-push — release/hotfix merges and tagging are operator
+  actions. Back-merges are delivered as PRs, never as local merges
+  pushed onward.
+- Never open PRs with `main`/`develop` itself as the head — the
+  only sanctioned flow toward `develop` is the `backmerge/*` branch
+  described above; never branch off another PR branch, always off
+  the table's base.
+
+Trade-off: for tiny single-author projects Git Flow is heavier than
+GitHub Flow, but this environment standardizes on Git Flow.
 
 ## Roadmap & TODO
 
-- Long-lived plans and ideas go to GitHub issues; the current working
-  list is `TODO.md` in the project root. Details:
-  `instructions/roadmap.md` (injected into every agent).
-- Multi-step plans get a tracking issue before implementation (the
-  operator approves filing); PR bodies link it via `Refs #<n>` and
-  the orchestrator closes it after the merge — GitHub's `Closes`
-  keyword does not fire for develop-based merges.
+Chat history is not durable. Any state worth keeping outlives the
+session.
+
+### Roadmap (long-lived) → GitHub issues
+
+- Larger planned work, known bugs, and improvement ideas go to GitHub
+  issues via `gh issue create --repo <owner/repo>`.
+- One issue per topic, descriptive title, body with context and
+  acceptance criteria. Label with a milestone if the repo uses them.
+- Do not reopen a near-duplicate: check `gh issue list` first.
+- Orchestrator may file issues; the operator still decides order and
+  assignment.
+
+### Working TODO (current) → `TODO.md` in the project root
+
+- `TODO.md` is the short-lived working list for active work.
+- Format: one item per line, `- [ ]` unchecked / `- [x]` done, newest
+  items at the top. Keep at most ~20 items — archive or move finished
+  topics to issues.
+- The planner reads `TODO.md` before planning; the orchestrator
+  updates it (check off, add follow-ups) as steps complete.
+- `TODO.md` changes ride in the feature branch — they land via the
+  normal PR, never directly on `develop`.
+
+### Planned work → issue at planning time
+
+- When the planner returns a multi-step plan, the orchestrator
+  proposes creating a GitHub issue for it before dispatching coders
+  (default: one issue for the plan, steps as `- [ ]` checkboxes in
+  the body; per-step issues when they are independently actionable).
+  The operator decides whether to file; one-shot drive-by fixes need
+  no issue.
+- Every PR body for that work references the issue: `Refs #<n>` —
+  or `Closes #<n>` ONLY when the PR's base is the repo's default
+  branch: GitHub's auto-close keyword is inert for merges into
+  non-default branches, so Git Flow (develop-based) repos must close
+  explicitly.
+- After the operator merges, the orchestrator closes the linked
+  issue with a pointer:
+  `gh issue close <n> --comment "Done in PR #<m> (<sha>)"`.
+
+### Roadmap — never
+
+- Never keep progress lists only in chat ("I'll remember it").
+- Never duplicate the same task in both an issue and `TODO.md`
+  without a pointer to the other.
+- Never close an issue whose implementing PR has not merged yet
+  (`Closes #N` in a develop-based PR does NOT auto-close).
 
 ## Scheduled jobs
 
 - Creating a recurring job is an operator action, same as installing the
-  auto-back-merge GitHub Action in `instructions/git-flow.md`: agents may
+  auto-back-merge GitHub Action described under *Git workflow* above: agents may
   propose a cron job (what it would run, how often) but must not create
   one themselves. (The `opencode-cron` plugin was removed as non-functional
   under V2.)
@@ -180,10 +281,62 @@ values (see `~/.config/dev-agent/env.sh`).
 
 ## Package research policy
 
-- Docs before sources: the full policy is injected into every agent as
-  `instructions/package-docs-first.md` — MCP doc servers first, then
-  README / `example/` / pub.dev docs; `~/.pub-cache` sources only as a
-  surgical last resort (search for a symbol, never whole-file browsing).
+When you need information about a third-party package (anything under
+`~/.pub-cache` or another dependency cache), consult documentation
+FIRST. Treat reading package sources as a last resort.
+
+Order of preference:
+
+1. MCP doc servers, when available for the ecosystem:
+   - `dart` MCP: `pub_dev_search`, `read_package_uris` (README /
+     `example/` via `package:` and `package-root:` URIs),
+     `rip_grep_packages`.
+   - `serverpod` MCP: `ask-docs`, `get-guide`, `list-guides`.
+   - `jaspr` MCP: `list_doc_files`, `read_doc_page`.
+   (tool names may be prefixed with the server name, e.g. `dart_pub_dev_search`.)
+2. The package's README, CHANGELOG, and `example/` directory.
+3. Official docs / API reference on pub.dev or the project website.
+
+Only if docs do not answer the question: read sources under
+`~/.pub-cache`, surgically — search for the specific symbol or
+signature (e.g. with `rg`), do not browse whole files or dump large
+source chunks into your output. Cite package + symbol + version.
+
+Rationale: docs match the resolved version and stay current; cached
+sources may not, and doc tools are cheaper and more targeted.
+
+## Shell execution policy: keep commands flat
+
+The permission checker matches shell commands fragment by fragment
+against the allow/ask/deny rules in `opencode.jsonc` and each agent's
+own `permissions:` block. This has one consequence every agent needs
+to know, not just the one that happens to spell it out in its own
+prompt:
+
+- **Compound commands always fall back to `ask`, in full**, even when
+  every individual piece is already allow-listed. Every sub-command in
+  a `&&` / `;` / `||` chain must be individually allow-listed AND the
+  checker must recognize the line as decomposable — in practice, a
+  line starting with a shell keyword (`for`, `while`, `if`) can never
+  match anything and always asks.
+- Practical effect: `cd myproject && git status` asks for approval
+  even though `cd *` and `git status*` are both allowed on their own.
+  Prefer separate calls (`cd myproject`, then `git status`) over
+  chaining when you want to stay inside the allow-listed path.
+- Poll for a slow result (CI, a long build) with repeated simple calls
+  — `sleep 45`, then `gh pr view ...` — never a shell loop. A loop
+  both falls back to `ask` and won't do what you expect even once
+  approved, since each iteration is a fresh, unrelated permission
+  check.
+- Never put bare `|`, `||`, or `&&` characters inside a quoted regex
+  in a shell line the splitter sees (e.g. `grep 'a|b'`). Use separate
+  `-e` patterns, or the dedicated grep tool, instead — the splitter
+  can't tell a literal pipe inside quotes from a real one.
+
+Keeping commands flat and single-purpose isn't just a style
+preference: it's the difference between routine work running
+autonomously within the allow-list and every other step stalling on
+an avoidable approval round-trip.
 
 ## Testing expectations
 

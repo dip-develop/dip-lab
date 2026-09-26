@@ -2,7 +2,9 @@
 description: Reviews diffs for correctness, style and open-core boundaries.
 mode: subagent
 model: opencode-go/glm-5.3
-hidden: true
+# NOT `hidden: true` -- see the note in planner.md. Hidden agents are
+# dropped from the V2 subagent catalog, which is exactly what broke
+# delegation.
 permissions:
   - action: edit
     resource: "*"

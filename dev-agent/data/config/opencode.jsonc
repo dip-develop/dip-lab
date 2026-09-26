@@ -5,17 +5,28 @@
   // model -- see opencode.ai/docs/go for current figures) -- not one
   // shared account-wide pool. See agents/*.md for per-role model choices.
   // orchestrator's own model matters here since it runs on every loop turn,
-  // not just once per task: deepseek-v4-pro gives it a large budget while
-  // staying strong enough for delegation/coordination decisions.
+  // not just once per task. It is deliberately the flash tier (operator
+  // decision in 9bab4fa) to keep that model's request budget in check; be
+  // aware a flash model is weaker at holding multi-step discipline, so if
+  // delegation still looks under-used once the subagents are visible again,
+  // this is the first knob to revisit. Keep this value in sync with `model:`
+  // in agents/orchestrator.md.
+  // This only sets the default: a session stores its own model and picking
+  // a primary agent by ID does not change it, so a session opened before an
+  // edit keeps the old model until it is restarted.
   "model": "opencode-go/deepseek-v4-flash",
   // Used for cheap internal ops (session titles, context compaction) --
-  // picked for the biggest request budget in the Go lineup, not quality.
+  // chosen for request budget, not quality; it never has to reason about
+  // the task itself.
   "agents": {
     "title": {
       "model": "opencode-go/mimo-v2.6-flash"
     }
   },
   "default_agent": "orchestrator",
+  // Currently inert: V2 accepts "share" but does not implement session
+  // sharing yet (opencode.ai/v2/docs/config, "Sharing"). Stated once here
+  // so the intent is on record and it starts working when the feature lands.
   "share": "manual",
   // Keep runtime in sync with the pinned OPENCODE_VERSION in the image:
   // in-container self-update would drift from the built image.
@@ -38,22 +49,19 @@
   // No custom "provider" block: opencode-go is a built-in provider.
   // Auth lives in auth.json (the opencode-data volume), written by
   // `/connect` -> "OpenCode Go" inside the container -- not by config here.
-  // Global instruction files injected into every agent's system prompt
-  // (primary and subagents). Paths resolve relative to this config
-  // directory (bind-mounted at ~/.config/opencode in the container).
-  "instructions": [
-    "instructions/*.md"
-  ],
-  // Pinned explicitly rather than left to the implicit default: this repo
-  // pins OPENCODE_VERSION/plugin versions everywhere else precisely to
-  // avoid silent drift across an upgrade, so the depth limit that "primary
-  // can call subagents, subagents can't call further subagents" relies on
-  // shouldn't be the one thing left unstated. Every subagent below also
-  // explicitly sets subagent: deny, so this is belt-and-suspenders, not the
-  // only thing closing the gap.
-  "experimental": {
-    "subagent_depth": 1
-  },
+  // No "instructions" key on purpose. OpenCode V2 accepts the field but
+  // does not load its entries (opencode.ai/v2/docs/config, "Instructions":
+  // "OpenCode accepts this field but does not load its entries; use AGENTS.md
+  // for instructions"). The policy files that used to sit in instructions/
+  // therefore never reached any agent's system prompt -- every rule that
+  // pointed at them was a dead reference. Their content is now inlined into
+  // AGENTS.md, which V2 does load for primary and subagents alike.
+  // No "experimental.subagent_depth" on purpose: V2 documents only
+  // "experimental.policies" (opencode.ai/v2/docs/config), so the key was
+  // inert while its comment claimed it was the thing bounding nesting
+  // depth. The real control is explicit and lives in each subagent's own
+  // frontmatter -- `- action: subagent / resource: "*" / effect: deny` --
+  // so keep those in sync with the agent list instead of re-adding this.
   // Ordered permission rules (V2 native): rules are evaluated in order
   // with the LAST match winning -- the specific denies trail the general
   // allows they carve out of. Do not reorder.
@@ -79,10 +87,13 @@
     { "action": "read", "resource": "*.env.*", "effect": "deny" },
     { "action": "read", "resource": "*.env.example", "effect": "allow" },
     // Shared baseline for ad-hoc/manual sessions using this config directly
-    // (e.g. default_agent with no agent .md override). Each agent .md file
-    // repeats the subset it needs rather than relying on partial merge with
-    // this block -- confirm merge granularity on your opencode version
-    // before trying to de-duplicate further.
+    // (e.g. default_agent with no agent .md override). Merge semantics are
+    // documented in V2 (opencode.ai/v2/docs/agents, "Merging"): global
+    // permissions are applied first and agent-specific rules are appended
+    // after, so the combined list is still last-match-wins. Each agent .md
+    // file deliberately repeats the subset it needs rather than relying on
+    // partial merge -- de-duplicating is safe, but re-listing keeps each
+    // agent's effective policy readable in one place.
     { "action": "shell", "resource": "*", "effect": "ask" },
     { "action": "shell", "resource": "sleep", "effect": "allow" },
     { "action": "shell", "resource": "sleep *", "effect": "allow" },

@@ -8,7 +8,9 @@ mode: subagent
 # (deepseek-v4-pro); this agent exists specifically so kimi-k3 is spent
 # only where the 1M context actually earns its cost.
 model: opencode-go/kimi-k3
-hidden: true
+# NOT `hidden: true` -- see the note in planner.md. Hidden agents are
+# dropped from the V2 subagent catalog, which is exactly what broke
+# delegation.
 permissions:
   - action: edit
     resource: "*"

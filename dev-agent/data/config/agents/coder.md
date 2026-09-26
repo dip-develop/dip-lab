@@ -2,7 +2,9 @@
 description: Executes one narrow coding step (one file/function). Use for implementation.
 mode: subagent
 model: opencode-go/qwen3.8-flash
-hidden: true
+# NOT `hidden: true` -- see the note in planner.md. Hidden agents are
+# dropped from the V2 subagent catalog, which is exactly what broke
+# delegation.
 permissions:
   - action: edit
     resource: "*"
