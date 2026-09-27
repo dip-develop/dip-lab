@@ -6,8 +6,26 @@ mode: primary
 # multi-step discipline.
 model: opencode-go/deepseek-v4-flash
 permissions:
+  # Orchestrator may launch only the classic dev subagents — never
+  # supper (self-governed autonomous agent; see agents/supper.md).
+  # Last match wins, so the deny comes first and allows trail it.
   - action: subagent
     resource: "*"
+    effect: deny
+  - action: subagent
+    resource: "planner"
+    effect: allow
+  - action: subagent
+    resource: "coder"
+    effect: allow
+  - action: subagent
+    resource: "tester"
+    effect: allow
+  - action: subagent
+    resource: "reviewer"
+    effect: allow
+  - action: subagent
+    resource: "architect"
     effect: allow
   # Force delegation discipline (see Rules #1/#3 below): orchestrator's
   # job is to coordinate, not edit. Without this it silently inherits

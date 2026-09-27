@@ -104,7 +104,7 @@ recreation. An interactive `gh auth login` works too, but its
 | `.env.example` | Template - copy to `.env` and fill in |
 | `setup.sh` | Creates `data/config/agents/` if missing |
 | `AGENTS.md` | Read by opencode when you open a project - agent rules **and the full global policy** (git flow, roadmap/TODO, docs-before-sources, flat-shell rules), inlined here because opencode V2 does not load the `instructions` config key |
-| `data/config/opencode.jsonc` | Multi-agent config: orchestrator, coder, reviewer, tester, planner, architect, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
+| `data/config/opencode.jsonc` | Multi-agent config: orchestrator, supper, coder, reviewer, tester, planner, architect, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host). Do **not** set `hidden: true` on a subagent - in V2 that removes it from the `subagent` tool catalog, so the orchestrator can no longer launch it |
 | `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
 
