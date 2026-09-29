@@ -89,6 +89,7 @@
     // same paths as the old absolute forms).
     { "action": "external_directory", "resource": "*", "effect": "ask" },
     { "action": "external_directory", "resource": "~/projects/**", "effect": "allow" },
+    { "action": "external_directory", "resource": "~/develop/**", "effect": "allow" },
     // Package research policy allows surgical ~/.pub-cache reads as a
     // last resort; without this every one of them asks for approval.
     { "action": "external_directory", "resource": "~/.pub-cache/**", "effect": "allow" },
