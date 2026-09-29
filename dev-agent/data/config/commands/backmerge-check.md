@@ -13,6 +13,14 @@ If it does not, or the project has no parent that looks like a repo folder, stop
 and ask the operator for the correct directory rather than guessing or defaulting
 to any fixed path.
 
+The first access to the resolved root will raise one `external_directory`
+approval prompt: the sibling repos sit outside this project's working
+directory, which is what that permission guards. Surface it to the operator
+instead of treating it as an error — approving it "always" covers the rest of
+the session, so the sweep does not re-prompt. One directory listing of the
+root is enough to find the `.git` entries, so it should be a single prompt,
+not one per repo.
+
 1. Enumerate the repos: list the resolved root and treat each subdirectory with
    a `.git` entry as a repo. Skip anything without `.git` (including
    `*.worktrees` stores). Do not hardcode a repo list.
