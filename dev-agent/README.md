@@ -104,13 +104,13 @@ recreation. An interactive `gh auth login` works too, but its
 | `.env.example` | Template - copy to `.env` and fill in |
 | `setup.sh` | Creates `data/config/agents/` if missing |
 | `AGENTS.md` | Read by opencode when you open a project - agent rules **and the full global policy** (git flow, roadmap/TODO, docs-before-sources, flat-shell rules), inlined here because opencode V2 does not load the `instructions` config key |
-| `data/config/opencode.jsonc` | Multi-agent config: orchestrator, supper, coder, reviewer, tester, planner, architect, marketing, writer. Bind-mounted to `~/.config/opencode` (read-write) |
+| `data/config/opencode.jsonc` | Multi-agent config: title, compaction, summary, explore, docs. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host). Do **not** set `hidden: true` on a subagent - in V2 that removes it from the `subagent` tool catalog, so the orchestrator can no longer launch it |
-| `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
+| `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`, `/sync-repos`, `/triage-issues`, `/backmerge-check`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
 
 ## Slash commands
 
-Three custom slash commands ship in `data/config/commands/` and are
+Six custom slash commands ship in `data/config/commands/` and are
 available in both the TUI and the web UI:
 
 - `/test` - run the project's test suite in an isolated `dev_test_`
@@ -119,9 +119,17 @@ available in both the TUI and the web UI:
   secrets (delegates to the `reviewer` subagent, read-only).
 - `/pr` - commit, push the current branch, and open a pull request
   following the repo's Git Flow rules.
+- `/sync-repos` - switch every git repo under the sources folder to its
+  `develop` branch and fast-forward it with `--ff-only`; skips repos
+  without a `develop` branch and leaves dirty working trees untouched.
+- `/triage-issues` - list the repo's open issues, verify which are
+  actually fixed (the implementing PR must have merged), then close them
+  one at a time with the operator's explicit confirmation.
+- `/backmerge-check` - report `develop..origin/main` drift per repo and
+  propose back-merge PRs; read-only, it never creates a branch or PR.
 
 Each command is a markdown file whose frontmatter defines at least
-`description`, with optional `agent`, `subtask`, and `model` fields
+`description`, with optional `agent`, `subagent`, and `model` fields
 (format: see the opencode commands docs); the body
 is the prompt template and `$ARGUMENTS` expands to whatever you type after
 the command. Because the whole `data/config/` tree is bind-mounted to
