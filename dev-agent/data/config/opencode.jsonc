@@ -20,7 +20,23 @@
   // the task itself.
   "agents": {
     "title": {
-      "model": "opencode-go/mimo-v2.6-flash"
+      "model": "opencode/mimo-v2.6-flash-free"
+    },
+    "compaction": {
+      "model": "opencode/mimo-v2.6-flash-free"
+    },
+    "summary": {
+      "model": "opencode/mimo-v2.6-flash-free"
+    },
+    "explore": {
+      "description": "Fast codebase exploration",
+      "mode": "subagent",
+      "model": "opencode/mimo-v2.6-flash-free"
+    },
+    "docs": {
+      "description": "Documentation and simple research",
+      "mode": "subagent",
+      "model": "opencode/mimo-v2.6-flash-free"
     }
   },
   "default_agent": "orchestrator",
@@ -202,6 +218,7 @@
     { "action": "shell", "resource": "gh pr checks*", "effect": "allow" },
     { "action": "shell", "resource": "gh pr diff*", "effect": "allow" },
     { "action": "shell", "resource": "gh issue view*", "effect": "allow" },
+    { "action": "shell", "resource": "gh issue list*", "effect": "allow" },
     { "action": "shell", "resource": "gh run list*", "effect": "allow" },
     { "action": "shell", "resource": "gh run view*", "effect": "allow" },
     // Closing a PR is reversible (gh pr reopen); --delete-branch on top is
