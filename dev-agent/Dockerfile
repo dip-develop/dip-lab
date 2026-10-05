@@ -33,11 +33,24 @@ ARG GIT_AUTHOR_EMAIL=dev-agent@diplab.local
 # redis-cli from inside the container. The db-safe wrapper in
 # /home/develop/.local/bin intercepts them and refuses to target any
 # non-test database (see dev-agent/db-safe.sh).
+#
+# python3/python3-yaml: agents routinely parse YAML (compose files, CI
+# workflows, frontmatter) from a throwaway `python3 -c` one-liner rather
+# than installing a parser. python3 was previously present only as an
+# *auto* dependency of another package, and anything an agent pip/apt
+# installs lands in the container's writable layer -- which
+# `./manager.sh update dev-agent` destroys, because a recreate rebuilds
+# the container from this image. Installing it here is what makes it
+# survive. python3 is listed explicitly because it was never requested
+# directly; python3-yaml would pull it in as a dependency anyway, but the
+# base block names its tools outright rather than leaning on transitive
+# pulls.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates git openssh-client tmux unzip xz-utils \
         chromium libglu1-mesa libgtk-3-dev mesa-utils clang cmake \
         ninja-build pkg-config \
         postgresql-client default-mysql-client redis-tools \
+        python3 python3-yaml \
         sudo \
     && rm -rf /var/lib/apt/lists/*
 

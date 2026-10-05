@@ -34,6 +34,11 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 - `tmux`, `git`, `gh`, `openssh-client`, `clang`/`cmake`/`ninja-build`/`pkg-config`
   build toolchain for ad-hoc work
 - DB clients: `psql`, `mysql`, `mariadb`, `redis-cli`
+- `python3` + `python3-yaml`, so agents can parse YAML (compose files, CI
+  workflows, agent frontmatter) from a throwaway `python3 -c` one-liner.
+  Installing it in the image rather than at runtime matters: anything an
+  agent `pip`/`apt` installs lives in the container's writable layer, which
+  `./manager.sh update dev-agent` discards on recreate
 - GTK 3.0 dev libraries and mesa-utils (eglinfo) for Linux desktop builds / flutter doctor
 - Chromium wired up for flutter web via CHROME_EXECUTABLE=/usr/bin/chromium
 - Global Dart CLIs: skills, serverpod (pinned via SERVERPOD_CLI_VERSION build arg, default 4.0.0-rc.1), serverpod_mcp, jaspr — skills get <pkg> is run per-project at runtime; the pinned RC CLI generates code for Serverpod 4.0.0-rc.* packages
