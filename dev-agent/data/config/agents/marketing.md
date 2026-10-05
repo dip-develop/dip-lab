@@ -1,7 +1,11 @@
 ---
 description: Business/marketing strategist for positioning, pricing, outreach. No code edits.
 mode: primary
-model: opencode-go/qwen3.8-max
+# No `model:` on purpose — the operator sets the model per session (a
+# primary agent without a configured model inherits the session model;
+# picking this agent by ID does not change the session model). Update
+# it via /models in the web UI.
+# Previous pin: qwen3.8-max.
 permissions:
   # Rules are evaluated with the LAST match winning (see opencode.jsonc).
   # The general deny must come FIRST so the specific allow below it can

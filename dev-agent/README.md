@@ -255,25 +255,29 @@ it's a built-in provider, referenced as `opencode-go/<model-id>`.
 3. Run `/models` any time to see the current model IDs; the roster
    changes as OpenCode adds/retires models.
 
-**Why models differ per agent:** each Go model carries its **own**
-dollar-based usage limit (5-hour / weekly / monthly tranches of a
-per-model monthly cap that itself varies by model, e.g. $15/$30/$60) —
-not one shared pool split across every model. High-frequency roles
-(`coder`, `tester`, `small_model`) are pinned to cheap models with a
-large per-model request budget so routine work doesn't run into that
-model's own limit; low-frequency roles that most benefit from a
-stronger model (`orchestrator`, `reviewer`, `architect`) get pricier
-models precisely because they're called far less often, and — because
-the limits aren't shared — that heavier usage doesn't eat into any
-other role's budget either. `architect` in particular is deliberately
-kept as a separate, rarely-invoked subagent from `planner` so its
-1M-context model (a handful of requests per week) is spent only on
-genuine cross-module design decisions, not routine task breakdown —
-see `data/config/agents/architect.md` and `orchestrator.md` rule 2.
+**Model selection:** no agent pins a model. Every file in
+`data/config/agents/` deliberately omits `model:`, so each agent
+inherits the session model and the operator picks per session with
+`/models`. The single default lives in `data/config/opencode.jsonc`
+(`"model"`) and applies when a session hasn't chosen one. Each agent
+keeps a comment recording what it used to pin and why, so the previous
+split can be restored deliberately if wanted.
+
+The reason that split existed is worth keeping in mind: each Go model
+carries its **own** dollar-based usage limit (5-hour / weekly / monthly
+tranches of a per-model monthly cap that itself varies by model, e.g.
+$15/$30/$60) — not one shared pool split across every model. High-frequency
+roles were therefore pinned to cheap, high-request-budget models and
+low-frequency roles to stronger ones, with `architect` kept separate from
+`planner` so a 1M-context model was spent only on genuine cross-module
+design decisions. Removing the pins does not merge those budgets; it means
+one session model applies to every role, so a single expensive model now
+covers the whole delegation tree. Re-pin per role if that matters for how
+you work.
 
 If a model gets renamed or retired upstream, `/models` in the web UI
-is the source of truth — update the `model:` fields in
-`data/config/opencode.jsonc` and `data/config/agents/*.md` to match.
+is the source of truth — update the `model` key in
+`data/config/opencode.jsonc` to match.
 
 ## Troubleshooting
 
@@ -306,10 +310,18 @@ it, and weakens the runaway guard.
 - Permission baseline blocks destructive shell and secret access by
   default; loosen in your fork as needed.
 - Global "docs before sources" package policy, inlined in `data/config/AGENTS.md`; agents consult MCP doc tools / README / pub.dev before reading `~/.pub-cache` sources. Source reading is not hard-denied — it stays a documented last resort (bash reads like `rg`/`cat` are allow-listed; the read tool may prompt since `~/.pub-cache` falls under `external_directory: ask`).
-- Git Flow policy (`main` + `develop`, `feature/`/`bugfix/`/`hotfix/`/`release/`
-  branches, PR-only integration) inlined in `data/config/AGENTS.md`; pushes to
-  `main` and `develop` are hard-denied at the permission layer, including
-  refspec forms (`HEAD:develop`, `:develop` deletions).
+- Git policy for **this** repo is single-branch: `main` is the default and
+  the only long-lived branch — there is no `develop`. Branch `feature/*`
+  (or `fix/*`, `chore/*`) off `main` and open the PR with
+  `gh pr create --base main`. Pushes to `main` are hard-denied at the
+  permission layer, including refspec forms (`HEAD:main`, `:main`
+  deletions).
+- The general Git Flow table (`main` + `develop`, back-merges, release
+  trains) in `data/config/AGENTS.md` describes the *other* repos this
+  container works on — e.g. `gewerber`, which does use `develop`. That file
+  is mounted globally at `/home/develop/.config/opencode`, which is why its
+  `develop` push-deny rules still apply to those repos and are simply inert
+  here. Run `git branch -a` before assuming a table applies.
 - Global policy lives in `AGENTS.md`, not a separate `instructions/` directory:
   opencode V2 accepts the `instructions` key but does not load its entries, so
   files placed there are silently ignored by every agent.

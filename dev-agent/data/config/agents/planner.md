@@ -1,10 +1,14 @@
 ---
 description: Breaks tasks into ordered concrete steps for coder. Read-only planning, no edits.
 mode: subagent
-# Cheap/high-budget model: this runs on every non-trivial task, unlike
-# architect (kimi-k3), which the orchestrator reserves for cross-module /
-# new-subsystem decisions to protect that model's much smaller request budget.
-model: opencode-go/deepseek-v4-pro
+# No `model:` on purpose — the operator sets the model per session (a
+# subagent without a configured model inherits the parent session's
+# model, and selecting a primary agent does not change the session
+# model). Update it via /models in the web UI.
+# Previous pin, kept for the rationale: deepseek-v4-pro — a cheap,
+# high-request-budget model, because this runs on every non-trivial
+# task. Unpinning it does not make planner expensive; it makes the
+# session model apply, which is the operator's call.
 # NOT `hidden: true`. In V2 that flag removes the agent from the
 # subagent catalog (opencode.ai/v2/docs/agents, "Hidden"), so a hidden
 # subagent cannot be launched by the primary at all: the orchestrator
