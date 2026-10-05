@@ -47,6 +47,26 @@ services:
     container_name: dev-agent
     restart: unless-stopped
 
+    # Put Docker's tini at PID 1. The image ENTRYPOINT ends in
+    # `exec opencode serve`, so opencode IS PID 1 - and it does not reap
+    # orphaned children. Agents spawn dart/flutter through a shell, and
+    # when that intermediate shell exits its children reparent to PID 1
+    # and linger as zombies; only PID 1 can reap them, so they are
+    # unrecoverable from inside the container.
+    #
+    # Observed 2026-10-04: 482 zombies against the 512-PID cap below
+    # (pids.events reported the cap hit 2628 times). The symptom was not
+    # "slow" but total: every fork() failed with EAGAIN, so gh, dart and
+    # subagent launches died at random with "failed to create new OS
+    # thread" / "fork: Resource temporarily unavailable". A restart
+    # cleared it (509 -> 48 processes) but the leak resumes immediately,
+    # so the restart is a workaround, not a fix.
+    #
+    # tini reaps the orphans and forwards SIGTERM to opencode, which
+    # opencode-as-PID-1 did not do reliably. This is required, not
+    # optional: raising `pids:` alone only postpones the same failure.
+    init: true
+
     # Resource caps. A runaway agent process gets throttled/OOM-killed
     # here instead of starving the rest of the lab.
 

@@ -215,6 +215,16 @@ exception:
   elevation and break the in-image passwordless `sudo` that agents use
   for package installs); the rest of the posture still applies
 - Resource caps: 4 CPU, 6 GB RAM, 512 PIDs
+- `init: true` — Docker's tini runs as PID 1 and reaps orphaned
+  children. Load-bearing, not cosmetic: the image ENTRYPOINT `exec`s
+  `opencode serve`, so opencode itself is PID 1 and does not reap. Agent
+  tool calls spawn `dart`/`flutter` through a shell; when that shell
+  exits, the children reparent to PID 1 and become zombies that nothing
+  can clear from inside the container. At the 512-PID cap that made every
+  `fork()` fail with `EAGAIN` (`fork: Resource temporarily
+  unavailable`, `failed to create new OS thread`), intermittently killing
+  `gh`, `dart analyze`, `dart test` and subagent launches. Restarting the
+  container clears it; only `init: true` stops it recurring.
 - No `docker.sock` mount, no `--privileged`, no `cap_add`
 - Port 4096 bound to `127.0.0.1` by default; password-protected at the
   application layer (`OPENCODE_SERVER_PASSWORD`)
@@ -256,6 +266,26 @@ see `data/config/agents/architect.md` and `orchestrator.md` rule 2.
 If a model gets renamed or retired upstream, `/models` in the web UI
 is the source of truth — update the `model:` fields in
 `data/config/opencode.jsonc` and `data/config/agents/*.md` to match.
+
+## Troubleshooting
+
+### `fork: Resource temporarily unavailable` / `failed to create new OS thread`
+
+The container has exhausted its PID cap. Check whether the processes are
+zombies, which means the reaper is missing:
+
+```bash
+./manager.sh exec dev-agent ps -eo stat,comm | awk '$1 ~ /Z/' | head
+./manager.sh exec dev-agent cat /sys/fs/cgroup/pids.current
+./manager.sh exec dev-agent cat /sys/fs/cgroup/pids.max
+```
+
+A large `Z` count against `pids.current` means orphaned processes are
+piling up because PID 1 is not reaping them - see `init: true` in
+`docker-compose.yml`. Apply the fix with `./manager.sh update dev-agent`
+(recreates the container); `./manager.sh restart dev-agent` does **not**
+reload compose changes. Raising `pids:` postpones this but does not fix
+it, and weakens the runaway guard.
 
 ## Differences from a stock opencode install
 
