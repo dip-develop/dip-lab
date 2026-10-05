@@ -37,7 +37,13 @@ services:
         # only pins WHICH release it installs. Defaults to "latest".
         OPENCODE_VERSION: "${OPENCODE_VERSION:-latest}"
         # Optional: pin the serverpod CLI release for reproducible builds.
-        SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0-rc.1}"
+        SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0}"
+        # Optional: pin the Tailwind CSS CLI release for reproducible builds.
+        # The image has no npm/bun/npx, so the standalone binary from the
+        # tailwindlabs/tailwindcss GitHub release is downloaded at build
+        # time. Value is the release WITHOUT the leading `v` -- the tag is
+        # v<version>. Requires a rebuild to take effect.
+        TAILWIND_VERSION: "${TAILWIND_VERSION:-4.3.3}"
         # Git identity baked into the image as `git config --global
         # user.name` / `user.email`, sourced from .env. Changing these
         # requires a rebuild: ./manager.sh build dev-agent
