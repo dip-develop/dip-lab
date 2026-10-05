@@ -42,15 +42,19 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
 - GTK 3.0 dev libraries and mesa-utils (eglinfo) for Linux desktop builds / flutter doctor
 - Chromium wired up for flutter web via CHROME_EXECUTABLE=/usr/bin/chromium
 - Global Dart CLIs: skills, serverpod (pinned via SERVERPOD_CLI_VERSION build arg, default 4.0.0), serverpod_mcp, jaspr — skills get <pkg> is run per-project at runtime; the stable 4.0.0 CLI generates code for Serverpod 4.0.0 packages
+- Node.js 24.21.0 LTS (codename "Krypton") + npm 11.19.0, from the NodeSource apt repo (pinned via the `NODE_VERSION` build arg, default 24.21.0) — not Debian's, whose bookworm `nodejs` is 18.20.4, EOL since April 2025, and where npm is only a `Suggests` of that package, so a plain `apt-get install nodejs` yields no npm (Debian's separate npm package is 9.2.0~ds1-1)
 - Tailwind CSS CLI, standalone binary at `/opt/tailwindcss/tailwindcss`
   (pinned via the `TAILWIND_VERSION` build arg, default 4.3.3, written
   without the leading `v`):
-  `tailwindcss -i input.css -o output.css --watch`. The image has no
-  npm/npx/corepack, so only the standalone release binary works —
-  baking it into the image (rather than installing it at runtime) is
-  what makes it survive `./manager.sh update dev-agent`. The v4 CLI has
-  no `--version` flag: the pinned version only shows as the
-  `≈ tailwindcss vX.Y.Z` banner printed to stderr when a build runs.
+  `tailwindcss -i input.css -o output.css --watch`. The image does ship
+  Node.js + npm, but the standalone binary stays the deliberate choice: it
+  is one self-contained executable at a fixed path (no dependency on npm's
+  global prefix), an npm operation inside a project cannot break or remove
+  it, and it adds no second copy of Node. Baking it into the image (rather
+  than installing it at runtime) is what makes it survive `./manager.sh
+  update dev-agent`. The v4 CLI has no `--version` flag: the pinned version
+  only shows as the `≈ tailwindcss vX.Y.Z` banner printed to stderr when a
+  build runs.
 
 ## State & persistence
 
