@@ -37,7 +37,24 @@ services:
         # only pins WHICH release it installs. Defaults to "latest".
         OPENCODE_VERSION: "${OPENCODE_VERSION:-latest}"
         # Optional: pin the serverpod CLI release for reproducible builds.
-        SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0-rc.1}"
+        SERVERPOD_CLI_VERSION: "${SERVERPOD_CLI_VERSION:-4.0.0}"
+        # Optional: pin the Tailwind CSS CLI release for reproducible builds.
+        # The image does ship Node.js + npm, but the standalone binary from
+        # the tailwindlabs/tailwindcss GitHub release is downloaded at build
+        # time anyway: a fixed-path self-contained executable that an npm
+        # operation inside a project cannot break. Value is the release
+        # WITHOUT the leading `v` -- the tag is v<version>. Requires a
+        # rebuild to take effect.
+        TAILWIND_VERSION: "${TAILWIND_VERSION:-4.3.3}"
+        # Optional: pin the Node.js release for reproducible builds. Installed
+        # from the NodeSource apt repo rather than Debian's, whose bookworm
+        # nodejs is 18.20.4 (EOL since April 2025) and where npm is only a
+        # `Suggests` of that package, so `apt-get install nodejs` there pulls
+        # no npm at all (Debian's separate npm package is 9.2.0~ds1-1).
+        # Bumping this moves the build to a newer Node release -- the default
+        # 24.21.0 is the 24.x LTS "Krypton" line, which ships npm 11.19.0.
+        # Requires a rebuild to take effect.
+        NODE_VERSION: "${NODE_VERSION:-24.21.0}"
         # Git identity baked into the image as `git config --global
         # user.name` / `user.email`, sourced from .env. Changing these
         # requires a rebuild: ./manager.sh build dev-agent

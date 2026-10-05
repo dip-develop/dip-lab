@@ -10,8 +10,13 @@
 # installs OpenCode 2 (via opencode.ai/v2/install); OPENCODE_VERSION
 # optionally pins WHICH V2 release to install (e.g. 2.0.3), "latest" by
 # default. SERVERPOD_CLI_VERSION pins the serverpod CLI release (default
-# 4.0.0-rc.1). GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL seed the global git
-# identity (user.name / user.email) baked into the image -- sourced from
+# 4.0.0). TAILWIND_VERSION pins the Tailwind CSS CLI release (default
+# 4.3.3) - a standalone binary, so the version is written WITHOUT the
+# leading `v` (the GitHub release tag is `v${TAILWIND_VERSION}`).
+# NODE_VERSION pins the Node.js release (default 24.21.0, LTS Krypton)
+# installed from the NodeSource apt repo.
+# GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL seed the global git identity
+# (user.name / user.email) baked into the image -- sourced from
 # dev-agent/.env via docker-compose.yml. Flutter (stable) is installed
 # in-image, so containers start offline-ready.
 #
@@ -66,6 +71,75 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
         > /etc/apt/sources.list.d/github-cli.list \
     && apt-get update && apt-get install -y gh \
     && rm -rf /var/lib/apt/lists/*
+
+# Node.js (LTS) + npm, from the NodeSource apt repo -- deliberately NOT
+# from Debian's own apt, which on bookworm only carries nodejs 18.20.4,
+# EOL since April 2025, and where npm is only a `Suggests` of that
+# package (`apt-cache depends nodejs` lists it under Suggests, not
+# Depends): a plain `apt-get install nodejs` there installs no npm at all,
+# and Debian's separate npm package is the old 9.2.0~ds1-1. So the apt
+# route would bake an unmaintained Node into the image, with no npm beside
+# it, and fail the moment a project's package.json asks for a modern
+# engine.
+# NodeSource republishes the official upstream binaries per release, and
+# NODE_VERSION (default 24.21.0, the 24.x LTS codenamed "Krypton",
+# shipping npm 11.19.0) picks the exact one. Like the other pins, moving
+# it takes a rebuild.
+#
+# The shape mirrors the GitHub CLI block above: key into
+# /usr/share/keyrings, one-line entry in /etc/apt/sources.list.d, then
+# apt-get update. Two NodeSource-specific details:
+# - The key at https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+#   is ASCII-armored, not a binary OpenPGP keyring, so the file is named
+#   .asc: apt reads armored keyrings for signed-by from 1.4 on (bookworm
+#   ships 2.6.1) and uses that extension to tell the two formats apart.
+#   This is what lets the block keep the `curl | dd` shape instead of
+#   pulling in gnupg to `gpg --dearmor`, the way NodeSource's own
+#   setup_24.x script does.
+# - NodeSource has no per-distribution codename suite. Every Node major
+#   gets its own repo whose suite is the literal `nodistro`, so
+#   `node_24.x` is hardcoded here and does NOT track NODE_VERSION -- that
+#   arg pins the package version INSIDE the 24.x repo instead.
+#
+# The install appends the deb's Debian revision (`-1nodesource1`) to
+# NODE_VERSION because apt matches the full version string: `nodejs=24.21.0`
+# on its own fails with "Version '24.21.0' for 'nodejs' was not found". If
+# NodeSource ever republishes a release under a different revision this
+# build fails loudly here rather than quietly installing something else.
+# The `nodejs` package Provides npm, so this one install brings node, npm
+# and npx along. Do not try to add npm separately: the NodeSource nodejs
+# package Conflicts: npm (and nodejs-doc/-dev/-legacy), so a
+# `sudo apt-get install npm` -- the obvious move in an image whose docs
+# tell agents to install packages with sudo -- resolves to Debian's npm
+# 9.2.0~ds1-1 and REMOVES nodejs. npm is part of this one install.
+#
+# No ENV PATH line for node: the deb installs into /usr/bin, already on
+# PATH from the base image. Nothing global is baked in via npm either.
+# npm's global prefix here is /usr, NOT /usr/local: @npmcli/config derives
+# it as dirname(dirname(process.execPath)), and the deb's binary is
+# /usr/bin/node, so the global dir is /usr/lib/node_modules. That is
+# root-owned, which splits a runtime `npm i -g` in two: as the develop
+# user it fails outright with EACCES and needs `sudo npm i -g`, and run as
+# root it succeeds but lands in the writable layer and dies on recreate,
+# exactly like any other runtime install.
+#
+# The trailing `node --version && npm --version` is a build-time smoke
+# test, same idea as the Tailwind one further down: it proves the pin
+# resolved and the binaries actually run -- here as root, before the
+# develop user exists. npm is checked too because this image advertises
+# npm (README, Tailwind note above), and the Conflicts trap above makes a
+# missing npm the easy way for the nodejs install to go wrong.
+ARG NODE_VERSION=24.21.0
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | dd of=/usr/share/keyrings/nodesource-repo-keyring.asc \
+    && chmod go+r /usr/share/keyrings/nodesource-repo-keyring.asc \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/nodesource-repo-keyring.asc] https://deb.nodesource.com/node_24.x nodistro main" \
+        > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends "nodejs=${NODE_VERSION}-1nodesource1" \
+    && rm -rf /var/lib/apt/lists/* \
+    && node --version \
+    && npm --version
 
 # Create the non-root user. If the host UID/GID are not specified, the
 # default 1000:1000 is used. sudo + NOPASSWD is intentional: opencode
@@ -171,7 +245,7 @@ ENV PATH="/opt/dart-sdk/bin:${PATH}"
 # - serverpod_mcp: separate package providing the `serverpod_mcp` binary
 #   referenced by the mcp block in opencode.jsonc.
 # - jaspr CLI: provides `jaspr` (create/serve/build).
-ARG SERVERPOD_CLI_VERSION=4.0.0-rc.1
+ARG SERVERPOD_CLI_VERSION=4.0.0
 RUN dart pub global activate skills \
     && dart pub global activate serverpod_cli "$SERVERPOD_CLI_VERSION" \
     && dart pub global activate serverpod_mcp \
@@ -192,6 +266,63 @@ RUN git clone --depth 1 -b stable https://github.com/flutter/flutter.git /home/d
 # shadows Flutter's bundled dart shim. Safe: the flutter launcher always
 # uses its own bundled SDK regardless of PATH order.
 ENV PATH="${PATH}:/home/develop/flutter/bin"
+
+# Tailwind CSS CLI (v4 standalone binary) - the CSS engine behind the
+# jaspr/Web tooling. The image does ship Node.js + npm (see the NodeSource
+# block above), so `npm i -D @tailwindcss/cli` and the on-demand
+# `npx @tailwindcss/cli` both work here. The standalone release binary is
+# still the deliberate choice, for reasons that have nothing to do with npm
+# being absent:
+# - it is a single self-contained executable at a fixed path
+#   (/opt/tailwindcss/tailwindcss) with no dependency on where npm's global
+#   prefix lands or how that prefix is later reconfigured;
+# - it cannot be broken or removed by an npm operation inside a project --
+#   no shared node_modules or package-lock is involved;
+# - it does not add a second, independently-versioned copy of Node to the
+#   image.
+# Pin with TAILWIND_VERSION (e.g. 4.3.3), written WITHOUT the leading `v` -
+# the GitHub release tag is `v${TAILWIND_VERSION}`.
+#
+# Installed in-image for the same reason python3 is above: anything
+# downloaded into the container's writable layer dies on
+# `./manager.sh update dev-agent`, which recreates the container from
+# this image. /opt/tailwindcss rather than ~/.local/bin matches the
+# /opt/dart-sdk precedent above and keeps a ~110MB binary out of
+# ~/.local/bin, the dir holding the db-safe wrapper symlinks. The ENV
+# PATH line below prepends /opt/tailwindcss even ahead of
+# ~/.local/bin, but ordering only matters for shadowing and there is
+# nothing to shadow: the dir holds just the one binary. Root-owned
+# 0755: an unprivileged process cannot replace the binary - though
+# develop has NOPASSWD sudo in this image (see above), so nothing baked
+# in here is truly immutable.
+#
+# The build-time smoke test is `tailwindcss --help` because v4 has no
+# --version flag, and it uses the ABSOLUTE path because the ENV PATH
+# line exposing /opt/tailwindcss is declared AFTER this RUN: a bare
+# `tailwindcss` on this line is not on PATH yet, so it would fail as
+# "command not found" rather than print help.
+#
+# The cwd matters as much as the PATH here: bare `tailwindcss` in a
+# non-TTY context falls through to the build path, whose source
+# auto-detection scans the cwd recursively. WORKDIR is /home/develop at
+# this point, and the Flutter checkout cloned above lives inside it as a
+# subdirectory (/home/develop/projects only becomes the cwd at the
+# WORKDIR line below), so reach for the absolute path whenever a build
+# runs from here.
+ARG TAILWIND_VERSION=4.3.3
+RUN set -eux; \
+    case "$TARGETARCH" in \
+        amd64) TAILWIND_ARCH=x64 ;; \
+        arm64) TAILWIND_ARCH=arm64 ;; \
+        *) echo "ERROR: unsupported TARGETARCH '${TARGETARCH}' for the Tailwind CSS CLI (expected amd64 or arm64)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o /tmp/tailwindcss \
+        "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-${TAILWIND_ARCH}" \
+    && sudo install -d -m 0755 /opt/tailwindcss \
+    && sudo install -m 0755 /tmp/tailwindcss /opt/tailwindcss/tailwindcss \
+    && rm /tmp/tailwindcss \
+    && /opt/tailwindcss/tailwindcss --help > /dev/null
+ENV PATH="/opt/tailwindcss:${PATH}"
 
 # Bash profile snippet that exports the test-cred env vars into
 # every interactive shell. The file is sourced from ~/.bashrc (added
@@ -214,11 +345,13 @@ RUN printf '\n# dev-agent test-DB env\n[ -f ~/.config/dev-agent/env.sh ] && . ~/
 # Toolchain PATH for interactive shells. The image ENV above already
 # exports these for every process, but login shells and `su - develop`
 # reset PATH, so re-export here. Order mirrors the ENV lines: the
-# standalone Dart SDK shadows Flutter's bundled dart shim, Flutter's
-# launcher dir is appended, then the pub-global and Dart-managed
-# install dirs (pre-populated at build time by the global CLI installs
-# above / IDE tooling).
-RUN printf '\n# dev-agent toolchain PATH\nexport PATH="/opt/dart-sdk/bin:$PATH"\nexport PATH="$PATH:/home/develop/flutter/bin"\nexport PATH="$PATH":"$HOME/.local/state/Dart/install/bin"\nexport PATH="$PATH":"$HOME/.pub-cache/bin"\n# Flutter web tooling: point flutter doctor / chrome driver at the apt-installed chromium.\nexport CHROME_EXECUTABLE="/usr/bin/chromium"\n' \
+# standalone Dart SDK and the Tailwind CSS CLI dir are prepended, so
+# they shadow anything on the inherited PATH; Flutter's launcher dir is
+# appended (keeping the standalone `dart` ahead of Flutter's bundled
+# shim), then the pub-global and Dart-managed install dirs
+# (pre-populated at build time by the global CLI installs above /
+# IDE tooling).
+RUN printf '\n# dev-agent toolchain PATH\nexport PATH="/opt/dart-sdk/bin:$PATH"\nexport PATH="/opt/tailwindcss:$PATH"\nexport PATH="$PATH:/home/develop/flutter/bin"\nexport PATH="$PATH":"$HOME/.local/state/Dart/install/bin"\nexport PATH="$PATH":"$HOME/.pub-cache/bin"\n# Flutter web tooling: point flutter doctor / chrome driver at the apt-installed chromium.\nexport CHROME_EXECUTABLE="/usr/bin/chromium"\n' \
         >> /home/develop/.bashrc
 
 WORKDIR /home/develop/projects
