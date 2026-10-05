@@ -41,7 +41,16 @@ The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
   `./manager.sh update dev-agent` discards on recreate
 - GTK 3.0 dev libraries and mesa-utils (eglinfo) for Linux desktop builds / flutter doctor
 - Chromium wired up for flutter web via CHROME_EXECUTABLE=/usr/bin/chromium
-- Global Dart CLIs: skills, serverpod (pinned via SERVERPOD_CLI_VERSION build arg, default 4.0.0-rc.1), serverpod_mcp, jaspr — skills get <pkg> is run per-project at runtime; the pinned RC CLI generates code for Serverpod 4.0.0-rc.* packages
+- Global Dart CLIs: skills, serverpod (pinned via SERVERPOD_CLI_VERSION build arg, default 4.0.0), serverpod_mcp, jaspr — skills get <pkg> is run per-project at runtime; the stable 4.0.0 CLI generates code for Serverpod 4.0.0 packages
+- Tailwind CSS CLI, standalone binary at `/opt/tailwindcss/tailwindcss`
+  (pinned via the `TAILWIND_VERSION` build arg, default 4.3.3, written
+  without the leading `v`):
+  `tailwindcss -i input.css -o output.css --watch`. The image has no
+  npm/npx/corepack, so only the standalone release binary works —
+  baking it into the image (rather than installing it at runtime) is
+  what makes it survive `./manager.sh update dev-agent`. The v4 CLI has
+  no `--version` flag: the pinned version only shows as the
+  `≈ tailwindcss vX.Y.Z` banner printed to stderr when a build runs.
 
 ## State & persistence
 
@@ -87,7 +96,10 @@ The same trick resets any other state volume when you want a clean slate.
 
 **Not persisted, by design:** packages installed with `sudo apt` at
 runtime live only in the writable layer and vanish on recreate — add a
-package to the Dockerfile if you need it permanently. Git identity is
+package to the Dockerfile if you need it permanently. The inverse case
+holds too: tools baked into the image (`python3`, the Tailwind CSS CLI)
+DO survive `./manager.sh update dev-agent` — only the installs an agent
+makes at runtime live in the writable layer. Git identity is
 baked into the image at build time from `GIT_AUTHOR_NAME` /
 `GIT_AUTHOR_EMAIL` in `dev-agent/.env` (set as `user.name` /
 `user.email` via `git config --global`), so `git config user.name` /

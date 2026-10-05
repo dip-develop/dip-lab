@@ -5,7 +5,7 @@ developer workstation container. It defines what agents are allowed to do.
 
 ## Stack
 
-- Container: Debian Bookworm + Flutter SDK (stable) + Dart + opencode CLI v2
+- Container: Debian Bookworm + Flutter SDK (stable) + Dart + opencode CLI v2 + Tailwind CSS CLI
 - Build entrypoint: `opencode serve --hostname 0.0.0.0 --port 4096`
 - Companion tmux session: `tmux attach -t dev` (started by ENTRYPOINT)
 - Container name: `dev-agent` (OpenCode v2 version)
