@@ -1,13 +1,19 @@
 ---
 description: Makes cross-module / new-subsystem architecture decisions before planner breaks work into steps. Read-only, no edits. Use sparingly — reserve for genuine design decisions, not routine planning.
 mode: subagent
-# kimi-k3: 1M context, best model in the OpenCode Go lineup for grounding
-# a decision in the whole codebase at once -- but only ~110 req/5h and
-# ~250/week (kimi-k3's own per-model budget, separate from every other
-# agent's model). Routine task breakdown belongs to planner
-# (deepseek-v4-pro); this agent exists specifically so kimi-k3 is spent
-# only where the 1M context actually earns its cost.
-model: opencode-go/kimi-k3
+# No `model:` on purpose — the operator sets the model per session (a
+# subagent without a configured model inherits the parent session's
+# model). Update it via /models in the web UI. Note that unpinning does
+# not rebalance budgets automatically: if you want this agent on a
+# 1M-context model, set that in the session rather than here.
+# Previous pin, kept for the rationale: kimi-k3 — 1M context, best in
+# the OpenCode Go lineup for grounding a decision in the whole codebase
+# at once, but only ~110 req/5h and ~250/week (its own per-model
+# budget, separate from every other agent's model). This agent exists
+# as a separate, rarely-invoked role so a 1M-context model is spent
+# only where the context actually earns its cost; with the pin removed
+# that separation now has to be maintained by how often the orchestrator
+# delegates here.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
 # dropped from the V2 subagent catalog, which is exactly what broke
 # delegation.

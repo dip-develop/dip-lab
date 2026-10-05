@@ -1,7 +1,10 @@
 ---
 description: Runs test/lint/build commands and reports results. Use after edits.
 mode: subagent
-model: opencode-go/mimo-v2.5
+# No `model:` on purpose — the operator sets the model per session (a
+# subagent without a configured model inherits the parent session's
+# model). Update it via /models in the web UI.
+# Previous pin: mimo-v2.5 (cheap, high request budget).
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
 # dropped from the V2 subagent catalog, which is exactly what broke
 # delegation.

@@ -1,7 +1,10 @@
 ---
 description: Executes one narrow coding step (one file/function). Use for implementation.
 mode: subagent
-model: opencode-go/qwen3.8-flash
+# No `model:` on purpose — the operator sets the model per session (a
+# subagent without a configured model inherits the parent session's
+# model). Update it via /models in the web UI.
+# Previous pin: qwen3.8-flash (cheap, high request budget).
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
 # dropped from the V2 subagent catalog, which is exactly what broke
 # delegation.

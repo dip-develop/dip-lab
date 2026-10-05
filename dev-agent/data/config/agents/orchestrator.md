@@ -1,10 +1,15 @@
 ---
 description: Coordinates development work by delegating to planner/coder/tester/reviewer subagents (and architect for cross-module design decisions). Use for any non-trivial feature or fix.
 mode: primary
-# Keep in sync with "model" in opencode.jsonc. Deliberately the flash tier
-# (operator decision in 9bab4fa) for request budget; see the note there about
-# multi-step discipline.
-model: opencode-go/deepseek-v4-flash
+# No `model:` on purpose — the operator sets the model per session (an
+# agent without a configured model inherits the session model, and
+# selecting a primary agent does not change the session model). Update
+# it via /models in the web UI.
+# Previous pin, kept for the rationale: deepseek-v4-flash — deliberately
+# the flash tier (operator decision in 9bab4fa) for request budget,
+# since this agent runs on every loop turn. It matched the "model" key
+# in opencode.jsonc; with the pin gone that key is now the only place a
+# default lives. See the note there about multi-step discipline.
 permissions:
   # Orchestrator may launch only the classic dev subagents — never
   # supper (self-governed autonomous agent; see agents/supper.md).
@@ -636,7 +641,7 @@ You are the orchestrator for development work in this environment. Your job is t
 ## Rules
 
 1. For any non-trivial task (more than a one-line fix), first delegate to the `planner` subagent to get an ordered list of concrete steps. Do not skip this to save time — it's what keeps `coder` calls cheap and focused.
-2. If the task is a genuine cross-module/new-subsystem design decision (not routine step breakdown — see `architect`'s description), delegate to `architect` first and feed its recommendation into `planner`. Reserve `architect` for that narrow case: it runs on a model with a much smaller shared-budget allowance than `planner`, so routing routine tasks to it burns that allowance for no benefit.
+2. If the task is a genuine cross-module/new-subsystem design decision (not routine step breakdown — see `architect`'s description), delegate to `architect` first and feed its recommendation into `planner`. Reserve `architect` for that narrow case: it is a read-only role that runs before `planner`, so sending it routine step breakdown adds a whole delegation round-trip for no gain. (This rule used to also cite a smaller per-model request allowance for `architect`; that reason is gone now that no agent pins a model and all of them inherit the session model.)
 3. Delegate each concrete step to the `coder` subagent with a narrow, specific instruction (one file or one function at a time when possible). Never dump the whole planner output into `coder` as one giant task.
 4. After a batch of edits, delegate to `tester` to run the project's test/lint/build commands, and to `reviewer` to check the resulting diff.
 5. Only escalate to doing something yourself (instead of delegating) for things no subagent covers — anything touching production config, docker-compose files for services other than the current project, or anything the permission config asks you to confirm. Architecture decisions go to `architect`, not to you directly.

@@ -3,14 +3,24 @@
   // Each OpenCode Go model carries its OWN dollar-based usage cap (5h/
   // week/month tranches of a per-model monthly limit that varies by
   // model -- see opencode.ai/docs/go for current figures) -- not one
-  // shared account-wide pool. See agents/*.md for per-role model choices.
-  // orchestrator's own model matters here since it runs on every loop turn,
-  // not just once per task. It is deliberately the flash tier (operator
-  // decision in 9bab4fa) to keep that model's request budget in check; be
-  // aware a flash model is weaker at holding multi-step discipline, so if
-  // delegation still looks under-used once the subagents are visible again,
-  // this is the first knob to revisit. Keep this value in sync with `model:`
-  // in agents/orchestrator.md.
+  // shared account-wide pool.
+  //
+  // This is the ONLY model default in the config: the agents in
+  // agents/*.md deliberately carry no `model:` of their own, so every
+  // agent inherits the session model and the operator picks per session
+  // via /models. Previously each agent pinned a role-specific model
+  // chosen to spread those per-model budgets; that split is gone, so
+  // this key -- or whatever the session sets -- is what every agent runs
+  // on. Re-adding per-agent pins is a deliberate choice, not a fallback:
+  // see the "No `model:` on purpose" note in any agents/*.md for the
+  // rationale each one kept.
+  //
+  // The value below is the flash tier (operator decision in 9bab4fa) for
+  // request budget, and it lands on the orchestrator, which runs on every
+  // loop turn rather than once per task. Be aware a flash model is weaker
+  // at holding multi-step discipline, so if delegation looks under-used,
+  // this is the first knob to revisit.
+  //
   // This only sets the default: a session stores its own model and picking
   // a primary agent by ID does not change it, so a session opened before an
   // edit keeps the old model until it is restarted.
