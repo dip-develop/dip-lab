@@ -10,8 +10,11 @@
 # installs OpenCode 2 (via opencode.ai/v2/install); OPENCODE_VERSION
 # optionally pins WHICH V2 release to install (e.g. 2.0.3), "latest" by
 # default. SERVERPOD_CLI_VERSION pins the serverpod CLI release (default
-# 4.0.0-rc.1). GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL seed the global git
-# identity (user.name / user.email) baked into the image -- sourced from
+# 4.0.0). TAILWIND_VERSION pins the Tailwind CSS CLI release (default
+# 4.3.3) - a standalone binary, so the version is written WITHOUT the
+# leading `v` (the GitHub release tag is `v${TAILWIND_VERSION}`).
+# GIT_AUTHOR_NAME / GIT_AUTHOR_EMAIL seed the global git identity
+# (user.name / user.email) baked into the image -- sourced from
 # dev-agent/.env via docker-compose.yml. Flutter (stable) is installed
 # in-image, so containers start offline-ready.
 #
@@ -171,7 +174,7 @@ ENV PATH="/opt/dart-sdk/bin:${PATH}"
 # - serverpod_mcp: separate package providing the `serverpod_mcp` binary
 #   referenced by the mcp block in opencode.jsonc.
 # - jaspr CLI: provides `jaspr` (create/serve/build).
-ARG SERVERPOD_CLI_VERSION=4.0.0-rc.1
+ARG SERVERPOD_CLI_VERSION=4.0.0
 RUN dart pub global activate skills \
     && dart pub global activate serverpod_cli "$SERVERPOD_CLI_VERSION" \
     && dart pub global activate serverpod_mcp \
@@ -192,6 +195,56 @@ RUN git clone --depth 1 -b stable https://github.com/flutter/flutter.git /home/d
 # shadows Flutter's bundled dart shim. Safe: the flutter launcher always
 # uses its own bundled SDK regardless of PATH order.
 ENV PATH="${PATH}:/home/develop/flutter/bin"
+
+# Tailwind CSS CLI (v4 standalone binary) - the CSS engine behind the
+# jaspr/Web tooling. This image ships no npm, bun, npx or corepack, so
+# neither the npm route (`npm i tailwindcss` / `npm i -D
+# @tailwindcss/cli`) nor the on-demand `npx @tailwindcss/cli` route
+# works here. Tailwind documents the standalone release binary as the
+# supported no-Node path, and that is what this block fetches. Pin with
+# TAILWIND_VERSION (e.g. 4.3.3), written WITHOUT the leading `v` - the
+# GitHub release tag is `v${TAILWIND_VERSION}`.
+#
+# Installed in-image for the same reason python3 is above: anything
+# downloaded into the container's writable layer dies on
+# `./manager.sh update dev-agent`, which recreates the container from
+# this image. /opt/tailwindcss rather than ~/.local/bin matches the
+# /opt/dart-sdk precedent above and keeps a ~110MB binary out of
+# ~/.local/bin, the dir holding the db-safe wrapper symlinks. The ENV
+# PATH line below prepends /opt/tailwindcss even ahead of
+# ~/.local/bin, but ordering only matters for shadowing and there is
+# nothing to shadow: the dir holds just the one binary. Root-owned
+# 0755: an unprivileged process cannot replace the binary - though
+# develop has NOPASSWD sudo in this image (see above), so nothing baked
+# in here is truly immutable.
+#
+# The build-time smoke test is `tailwindcss --help` because v4 has no
+# --version flag, and it uses the ABSOLUTE path because the ENV PATH
+# line exposing /opt/tailwindcss is declared AFTER this RUN: a bare
+# `tailwindcss` on this line is not on PATH yet, so it would fail as
+# "command not found" rather than print help.
+#
+# The cwd matters as much as the PATH here: bare `tailwindcss` in a
+# non-TTY context falls through to the build path, whose source
+# auto-detection scans the cwd recursively. WORKDIR is /home/develop at
+# this point, and the Flutter checkout cloned above lives inside it as a
+# subdirectory (/home/develop/projects only becomes the cwd at the
+# WORKDIR line below), so reach for the absolute path whenever a build
+# runs from here.
+ARG TAILWIND_VERSION=4.3.3
+RUN set -eux; \
+    case "$TARGETARCH" in \
+        amd64) TAILWIND_ARCH=x64 ;; \
+        arm64) TAILWIND_ARCH=arm64 ;; \
+        *) echo "ERROR: unsupported TARGETARCH '${TARGETARCH}' for the Tailwind CSS CLI (expected amd64 or arm64)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o /tmp/tailwindcss \
+        "https://github.com/tailwindlabs/tailwindcss/releases/download/v${TAILWIND_VERSION}/tailwindcss-linux-${TAILWIND_ARCH}" \
+    && sudo install -d -m 0755 /opt/tailwindcss \
+    && sudo install -m 0755 /tmp/tailwindcss /opt/tailwindcss/tailwindcss \
+    && rm /tmp/tailwindcss \
+    && /opt/tailwindcss/tailwindcss --help > /dev/null
+ENV PATH="/opt/tailwindcss:${PATH}"
 
 # Bash profile snippet that exports the test-cred env vars into
 # every interactive shell. The file is sourced from ~/.bashrc (added
@@ -214,11 +267,13 @@ RUN printf '\n# dev-agent test-DB env\n[ -f ~/.config/dev-agent/env.sh ] && . ~/
 # Toolchain PATH for interactive shells. The image ENV above already
 # exports these for every process, but login shells and `su - develop`
 # reset PATH, so re-export here. Order mirrors the ENV lines: the
-# standalone Dart SDK shadows Flutter's bundled dart shim, Flutter's
-# launcher dir is appended, then the pub-global and Dart-managed
-# install dirs (pre-populated at build time by the global CLI installs
-# above / IDE tooling).
-RUN printf '\n# dev-agent toolchain PATH\nexport PATH="/opt/dart-sdk/bin:$PATH"\nexport PATH="$PATH:/home/develop/flutter/bin"\nexport PATH="$PATH":"$HOME/.local/state/Dart/install/bin"\nexport PATH="$PATH":"$HOME/.pub-cache/bin"\n# Flutter web tooling: point flutter doctor / chrome driver at the apt-installed chromium.\nexport CHROME_EXECUTABLE="/usr/bin/chromium"\n' \
+# standalone Dart SDK and the Tailwind CSS CLI dir are prepended, so
+# they shadow anything on the inherited PATH; Flutter's launcher dir is
+# appended (keeping the standalone `dart` ahead of Flutter's bundled
+# shim), then the pub-global and Dart-managed install dirs
+# (pre-populated at build time by the global CLI installs above /
+# IDE tooling).
+RUN printf '\n# dev-agent toolchain PATH\nexport PATH="/opt/dart-sdk/bin:$PATH"\nexport PATH="/opt/tailwindcss:$PATH"\nexport PATH="$PATH:/home/develop/flutter/bin"\nexport PATH="$PATH":"$HOME/.local/state/Dart/install/bin"\nexport PATH="$PATH":"$HOME/.pub-cache/bin"\n# Flutter web tooling: point flutter doctor / chrome driver at the apt-installed chromium.\nexport CHROME_EXECUTABLE="/usr/bin/chromium"\n' \
         >> /home/develop/.bashrc
 
 WORKDIR /home/develop/projects
