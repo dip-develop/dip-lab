@@ -305,38 +305,54 @@ source chunks into your output. Cite package + symbol + version.
 Rationale: docs match the resolved version and stay current; cached
 sources may not, and doc tools are cheaper and more targeted.
 
-## Shell execution policy: keep commands flat
+## Shell execution policy: how permissions match a command
 
-The permission checker matches shell commands fragment by fragment
-against the allow/ask/deny rules in `opencode.jsonc` and each agent's
-own `permissions:` block. This has one consequence every agent needs
-to know, not just the one that happens to spell it out in its own
-prompt:
+The permission checker splits a shell line into fragments and matches
+each one against the allow/ask/deny rules in `opencode.jsonc` and the
+agent's own `permissions:` block. Two different rules apply, and
+confusing them is the common mistake:
 
-- **Compound commands always fall back to `ask`, in full**, even when
-  every individual piece is already allow-listed. Every sub-command in
-  a `&&` / `;` / `||` chain must be individually allow-listed AND the
-  checker must recognize the line as decomposable — in practice, a
-  line starting with a shell keyword (`for`, `while`, `if`) can never
-  match anything and always asks.
-- Practical effect: `cd myproject && git status` asks for approval
-  even though `cd *` and `git status*` are both allowed on their own.
-  Prefer separate calls (`cd myproject`, then `git status`) over
-  chaining when you want to stay inside the allow-listed path.
+- Choosing the rule: for one action + resource pair the **last** matching
+  rule wins (opencode.ai/v2/docs/permissions, "Matching"), so a block
+  is written catch-all first and the specific rules after it —
+  `subagent: "*"` deny then `subagent: "tester"` allow. That is the
+  idiom in `agents/orchestrator.md` and `agents/coder.md`.
+- Combining fragments: across the fragments of one shell line the
+  strictest result wins — any `deny` denies the whole line, otherwise
+  any `ask` asks for it, otherwise it runs.
+
+So one unlisted stage inside a pipe asks for the whole line — but a pipe
+whose every stage is allow-listed runs unattended.
+
+- Keep each stage on the allow-list. `sed -n '1,5p' f.md | head -20`
+  needs both `sed *` and `head *`; add the missing stage to the agent's
+  list (and to `opencode.jsonc`) or the whole pipe prompts.
+- `&&`, `;`, `||` and pipes are fine — they are checked stage by stage,
+  not rejected wholesale. Split into separate calls only when a stage
+  is *not* allow-listed, or when you specifically want the approval.
+- The one construct that does not decompose in practice is a line
+  starting with a shell keyword (`for`, `while`, `if`, `case`): there
+  is no first command to match, so the line asks in full. Rewrite it as
+  repeated single-purpose calls, or accept the prompt when a loop
+  really is the shorter form.
 - Poll for a slow result (CI, a long build) with repeated simple calls
-  — `sleep 45`, then `gh pr view ...` — never a shell loop. A loop
-  both falls back to `ask` and won't do what you expect even once
-  approved, since each iteration is a fresh, unrelated permission
-  check.
+  — `sleep 45`, then `gh pr view ...` — not a shell loop.
+- Hex dumps: `hexdump` and `xxd` are **not installed** in this image
+  (`hexdump` lives in `bsdextrautils`, `xxd` in its own package, and
+  neither is in the apt list in `dev-agent/Dockerfile`). Use `od` from
+  coreutils — `od -c` for escapes, `od -A x -t x1z` for hex + ASCII.
+  `od *` is allow-listed; the other two are not, on purpose: an allow
+  rule for a missing binary turns a visible prompt into a silent
+  exit 127 that reads like "no data there".
 - Never put bare `|`, `||`, or `&&` characters inside a quoted regex
   in a shell line the splitter sees (e.g. `grep 'a|b'`). Use separate
   `-e` patterns, or the dedicated grep tool, instead — the splitter
   can't tell a literal pipe inside quotes from a real one.
 
-Keeping commands flat and single-purpose isn't just a style
-preference: it's the difference between routine work running
-autonomously within the allow-list and every other step stalling on
-an avoidable approval round-trip.
+Keeping every stage allow-listed is the difference between routine
+work running autonomously and every other step stalling on an
+avoidable approval round-trip. Anything that legitimately needs
+approval — say what it does and why, then wait.
 
 ## Testing expectations
 

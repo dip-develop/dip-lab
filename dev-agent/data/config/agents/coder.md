@@ -12,9 +12,26 @@ permissions:
   - action: edit
     resource: "*"
     effect: allow
+  # One level of self-verification: coder may hand the check on its own
+  # step to tester or reviewer. Deny first, allows after -- for one
+  # action + resource pair the LAST matching rule wins (see "Shell
+  # execution policy: how permissions match a command" in AGENTS.md).
+  # This block decides WHICH agent may be launched; DEPTH is enforced
+  # separately by the top-level "subagent_depth" in opencode.jsonc.
+  # Together they bound depth at orchestrator -> coder -> {tester,
+  # reviewer}: both tester and reviewer keep `subagent: "*"` deny AND
+  # sit past the depth limit, so a third level cannot exist. Fan-out is
+  # not bounded by either -- how many verifications one step runs is
+  # capped by the Rules bullet below, not here.
   - action: subagent
     resource: "*"
     effect: deny
+  - action: subagent
+    resource: "tester"
+    effect: allow
+  - action: subagent
+    resource: "reviewer"
+    effect: allow
   # webfetch accepts only a flat action, not patterns.
   - action: webfetch
     resource: "*"
@@ -61,6 +78,22 @@ permissions:
     effect: allow
   - action: shell
     resource: "stat *"
+    effect: allow
+  # Read-only inspection siblings of awk/sort: "diff" compares two
+  # files, "tr" rewrites characters on stdout, "od" dumps bytes. diff
+  # and tr never write a file (diff --output writes a path this agent
+  # could already write -- edit: "*" is allow above). "od" is
+  # deliberate: hexdump (bsdextrautils) and xxd are NOT installed in
+  # this image, so they stay unlisted -- an allow rule for a missing
+  # binary trades a visible prompt for a silent exit 127.
+  - action: shell
+    resource: "diff *"
+    effect: allow
+  - action: shell
+    resource: "tr *"
+    effect: allow
+  - action: shell
+    resource: "od *"
     effect: allow
   - action: shell
     resource: "mkdir *"
@@ -109,6 +142,11 @@ permissions:
     effect: allow
   - action: shell
     resource: "echo *"
+    effect: allow
+  # The "|| true" idiom: fragment-checked compounds need it, same as
+  # echo/printf above (see AGENTS.md "Shell execution policy").
+  - action: shell
+    resource: "true"
     effect: allow
   - action: shell
     resource: "sleep"
@@ -426,4 +464,6 @@ You are the coder subagent. Execute ONE narrow step delegated by orchestrator.
 - Follow project AGENTS.md and dart analyze/format rules.
 - Make the change, verify with dart analyze if relevant.
 - Keep scope tight: one file or one function per call. Do not expand scope.
+- Verification is yours first: run the project's own analyze/format. Launch `tester` or `reviewer` only for the check this delegated step needs — `tester` for that step's test/lint/build run, `reviewer` only when the orchestrator asked for a diff check — and at most once per step. The orchestrator still runs its own batch-level tester/reviewer pass afterwards, so this does not replace it. Never hand them planning or design work, and never relay a further subagent: both deny `subagent: "*"` and the depth limit refuses the call anyway. If a check comes back red, fix it yourself inside the delegated scope and say so in your return line.
+- Keep shell commands flat: permissions match each fragment, so every stage of a pipe or `&&` chain needs its own allow, and a line starting with `for`/`while`/`if` always asks; for hex dumps use `od` — `hexdump`/`xxd` are not installed here.
 - Return what was changed and next step if blocked.

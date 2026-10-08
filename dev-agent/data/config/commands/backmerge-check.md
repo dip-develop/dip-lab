@@ -3,7 +3,8 @@ description: Report develop-vs-main drift across repos and propose back-merges (
 ---
 Check every git repo inside the current chat project for missed
 back-merges (`main` must stay a subset of `develop`'s history — see the
-Back-merge section of `AGENTS.md`). Propose only; never mutate.
+Back-merge section of `AGENTS.md`). Propose only; never mutate. A repo with
+only one long-lived branch has no back-merge obligation: report it as N/A.
 
 Resolve the scope first. The default scope is the current chat project itself:
 the project root the chat was opened in, derived at runtime; never assume a
@@ -35,10 +36,13 @@ appears at all, so a normal run needs no external approval.
    above the scope directory.
 2. Per repo, in scope only if it has BOTH branches — check with
    `git branch -a`: remote-only `origin/develop` / `origin/main` count too (a
-   fresh clone has no local branches). Missing either (e.g. a
-   single-branch repo): report as out of scope and touch nothing.
-3. Measure drift per in-scope repo, two separate calls in order (keep commands
-   flat — no `&&` chains, no `for`/`while`/`if` loops): `git fetch`, then
+   fresh clone has no local branches). A single-branch repo (e.g. `dip-lab`,
+   `main` only) is out of scope: report it as N/A — there is nothing to
+   back-merge into a branch that does not exist — and touch nothing. Do NOT
+   create `develop` to make such a repo in scope.
+3. Measure drift per in-scope repo, two separate calls in order (a line starting
+   with `for`/`while`/`if` asks in full — see "Shell execution policy: how
+   permissions match a command" in `AGENTS.md`): `git fetch`, then
    `git rev-list --count origin/develop..origin/main` — remote refs, so a
    missing local branch cannot hide drift; keep `develop..origin/main` as a
    fallback when both local branches exist.
@@ -67,7 +71,7 @@ appears at all, so a normal run needs no external approval.
 8. Remind the operator: merges into `main` (release/hotfix PRs) must use merge
    commits, never squash — squashing rewrites `main`'s history and turns every
    later back-merge into a conflict to resolve by hand.
-9. Report a table: repo | drift | status (OK / out of scope / back-merge PR
+9. Report a table: repo | drift | status (OK / N/A single-branch / back-merge PR
    already open / back-merge proposed / skipped).
 
 Optional scope directory override (defaults to the current chat project): $ARGUMENTS

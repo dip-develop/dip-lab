@@ -1,5 +1,5 @@
 ---
-description: Switch the current project's repos to develop and fast-forward them
+description: Switch the current project's repos to their flow base and fast-forward them
 ---
 
 **Dirty tree is a hard stop.** Before switching any repo's branch, run `git status
@@ -7,7 +7,11 @@ description: Switch the current project's repos to develop and fast-forward them
 current branch and report it as dirty/skipped. Never stash, never discard, never force
 a checkout - no `git checkout -f`, no `git switch --force`.
 
-Sync every git repo in the resolved scope to its `develop` branch.
+Sync every git repo in the resolved scope to its flow base: `develop` where that
+branch exists, `main` where it does not - never create `develop`. Note that in a
+single-branch repo `main` is the release branch, so the fallback checks out and
+fast-forwards it; never push, and report rather than switch when the operator has
+it checked out.
 
 Resolve the scope first. The default scope is the current chat project itself:
 the project root the chat was opened in, derived at runtime; never assume a
@@ -25,43 +29,38 @@ default to any fixed path. The same applies to an empty `$ARGUMENTS` when the
 project root is not a git repo and has no git subdirectories: ask, never walk
 to a parent directory looking for repos.
 
-When `$ARGUMENTS` points outside the current project's working directory, the
-first access to it raises one `external_directory` approval prompt - that is
-what the permission guards. Surface it to the operator instead of treating it
-as an error - approving it "always" covers the rest of the session, so the
-sweep does not re-prompt. With the default in-project scope no such prompt
-appears at all, so a normal run needs no external approval.
-
 1. Enumerate the scope: check the scope directory itself (the project root, or
    `$ARGUMENTS` when given) and each of its subdirectories for a `.git` entry.
    Discover the repos this way - the set changes over time, so do not work from
    a hardcoded list. Do not list anything above the scope directory.
-2. Run `git branch -a` in each repo. A repo is in scope only if `develop` exists,
-   locally or as `origin/develop`.
-3. No `develop` branch means out of scope: skip the repo and report it as skipped.
-   Do NOT fall back to `main`, do NOT create `develop`, do not switch or pull
-   such a repo at all - leave it entirely alone.
-4. In-scope repo: `git fetch`, confirm the working tree is clean (see the guard
-   above), then `git checkout develop`. If `develop` exists only as `origin/develop`,
-   a plain `git checkout develop` creates the local branch tracking the remote.
-5. Fast-forward with `git merge --ff-only origin/develop`. If `--ff-only` fails the
+2. Run `git branch -a` in each repo and pick the flow base from that output:
+   remote-only `origin/develop` / `origin/main` count, since a fresh clone has no
+   local branches. A repo is in scope when EITHER branch exists.
+3. `develop` present (local or `origin/develop`) -> the sync base is `develop`, as
+   in step 4. No `develop` anywhere -> the repo is single-branch: fall back to
+   `main` and run the same steps against `main` / `origin/main`. Do NOT create
+   `develop` in any repo, and do not touch a repo that has neither branch: skip
+   it and report it as skipped.
+4. From here on `<base>` is whatever step 3 resolved: `develop` or `main`.
+   In-scope repo: `git fetch`, confirm the working tree is clean (see the guard
+   above), then `git checkout <base>`. If `<base>` exists only as `origin/<base>`,
+   a plain `git checkout <base>` creates the local branch tracking the remote.
+5. Fast-forward with `git merge --ff-only origin/<base>`. If `--ff-only` fails the
    history has diverged: report it and do NOT force, rebase, or reset.
-6. Measure drift with `git rev-list --left-right --count develop...origin/develop`.
-   The left number is commits only in local `develop` (ahead / unpushed), the right
-   is commits only in `origin/develop` (behind). After a successful `--ff-only` both
+6. Measure drift with `git rev-list --left-right --count <base>...origin/<base>`.
+   The left number is commits only in local `<base>` (ahead / unpushed), the right
+   is commits only in `origin/<base>` (behind). After a successful `--ff-only` both
    are normally `0 0`; the left number is the signal that there is unpushed work.
 7. No remote: if `git remote get-url origin` errors, or `git fetch` fails, report
    the repo as no remote and skip the sync for it - still honour the dirty-tree
    guard and never fail the whole run.
 
-Keep commands flat and single-purpose: no `&&` / `;` / `||` chains, no `for` /
-`while` / `if` constructs - the permission checker falls back to `ask` on compound
-commands (see "Shell execution policy: keep commands flat" in `AGENTS.md`). Here
-that means enumerate the folder once, then issue separate per-repo commands rather
-than writing a loop.
+Keep every stage allow-listed (see "Shell execution policy: how permissions match
+a command" in `AGENTS.md`): enumerate the folder once, then issue separate
+per-repo commands rather than writing a loop - a line starting with `for` / `while`
+/ `if` asks in full, because there is no first command to match.
 
 End with a per-repo table: repo name, resulting branch, whether it moved, how many
-commits ahead/behind of the remote, and status (OK / dirty-skipped / skipped /
-no remote / diverged).
+commits ahead/behind of the remote, and status (OK / dirty-skipped / skipped (no flow base) / no remote / diverged).
 
 Optional scope directory override (defaults to the current chat project): $ARGUMENTS

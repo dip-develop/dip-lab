@@ -8,19 +8,25 @@ Triage this repo's open issues and close only the verifiably fixed ones:
    overrides it with a specific repo, or narrows to one issue number.
 2. List what is open with `gh issue list --repo <owner/repo>`. If `gh` is
    missing or unauthenticated, report that and stop — do not fail hard.
-   Work issue by issue with flat, single-purpose commands: no `&&` chains,
-   no shell loops (see the shell policy in `AGENTS.md`).
+   Work issue by issue with flat, single-purpose commands: a line starting with
+   `for`/`while`/`if` asks in full (see "Shell execution policy: how permissions
+   match a command" in `AGENTS.md`).
 3. Establish whether each issue is actually fixed:
    - fixing commit: `git log --all --grep <n>`; repeated `--grep` patterns
      are OR'd by git, use separate ones, never a `|` inside a quoted pattern.
    - referencing PR: `gh pr list --repo <owner/repo> --state merged
      --search #<n> in:body` plus `gh issue view <n> --repo <owner/repo>`.
    - confirm that PR really merged into its base branch and that the fix is
-     reachable from `main` or `develop` as applicable to this repo: `git
-     branch -a`, then `git fetch` (refs may be stale), then
-     `git merge-base --is-ancestor <sha> origin/main` — use `origin/develop`
-     when the PR's base is `develop`. A squash-merged PR head sha is not an
-     ancestor (safe false negative); merge commits are the policy anyway.
+     reachable from the branch that PR actually merged into — determine that from
+     the PR, not from assumption: `gh pr view <n> --repo <owner/repo> --json
+     baseRefName`. Then check it against the remote: run `git branch -a`
+     (remote-only `origin/develop` / `origin/main` count; a fresh clone has no
+     local branches), `git fetch` (refs may be stale), then `git merge-base
+     --is-ancestor <sha> origin/<base>` where `<base>` is that PR's base branch —
+     the repo's flow base (`develop` where it exists, `main` where it does not)
+     for feature/bugfix/chore PRs, and `main` for a hotfix or release PR, which
+     is why both bases can matter in one repo. A squash-merged PR head sha is not
+     an ancestor (safe false negative); merge commits are the policy anyway.
 4. The governing rule, and it MUST hold (see "Roadmap & TODO" in
    `AGENTS.md`): never close an issue whose implementing PR has not merged.
    GitHub's `Closes #N` is inert for merges into non-default branches, so a
