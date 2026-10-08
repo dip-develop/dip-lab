@@ -12,9 +12,6 @@ permissions:
   - action: edit
     resource: "*"
     effect: allow
-  - action: subagent
-    resource: "*"
-    effect: deny
   # webfetch accepts only a flat action, not patterns.
   - action: webfetch
     resource: "*"
@@ -61,6 +58,22 @@ permissions:
     effect: allow
   - action: shell
     resource: "stat *"
+    effect: allow
+  # Read-only inspection siblings of awk/sort: "diff" compares two
+  # files, "tr" rewrites characters on stdout, "od" dumps bytes. diff
+  # and tr never write a file (diff --output writes a path this agent
+  # could already write -- edit: "*" is allow above). "od" is
+  # deliberate: hexdump (bsdextrautils) and xxd are NOT installed in
+  # this image, so they stay unlisted -- an allow rule for a missing
+  # binary trades a visible prompt for a silent exit 127.
+  - action: shell
+    resource: "diff *"
+    effect: allow
+  - action: shell
+    resource: "tr *"
+    effect: allow
+  - action: shell
+    resource: "od *"
     effect: allow
   - action: shell
     resource: "mkdir *"
@@ -109,6 +122,11 @@ permissions:
     effect: allow
   - action: shell
     resource: "echo *"
+    effect: allow
+  # The "|| true" idiom: fragment-checked compounds need it, same as
+  # echo/printf above (see AGENTS.md "Shell execution policy").
+  - action: shell
+    resource: "true"
     effect: allow
   - action: shell
     resource: "sleep"

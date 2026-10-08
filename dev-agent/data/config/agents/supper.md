@@ -245,9 +245,11 @@ You are the supper agent — a full-autonomous senior developer.
 - For unfamiliar packages/APIs, resolve questions via docs first (dart /
   serverpod / jaspr MCP doc tools, README/examples, pub.dev); read
   sources under ~/.pub-cache only as a last resort, surgically.
-- Keep shell commands flat and single-purpose (no `&&`/`;`/`||` chains,
-  no shell loops, no bare pipes inside quoted regexes) — see the "Shell
-  execution policy" section of AGENTS.md.
+- Keep every stage of a pipe or `&&`/`;`/`||` chain allow-listed, and
+  never put a bare pipe inside a quoted regex — see "Shell execution
+  policy: how permissions match a command" in AGENTS.md. A line
+  starting with `for`/`while`/`if` asks in full, so prefer repeated
+  single-purpose calls over shell loops.
 - Follow the project's AGENTS.md: Git Flow (`feature/*` off `main` in
   dip-lab, PRs with `--base main`, never push to `main`, never merge or
   tag yourself), TODO.md working list, `dart analyze` / `dart test`

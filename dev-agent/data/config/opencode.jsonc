@@ -33,15 +33,28 @@
   // therefore never reached any agent's system prompt -- every rule that
   // pointed at them was a dead reference. Their content is now inlined into
   // AGENTS.md, which V2 does load for primary and subagents alike.
-  // No "experimental.subagent_depth" on purpose: V2 documents only
-  // "experimental.policies" (opencode.ai/v2/docs/config), so the key was
-  // inert while its comment claimed it was the thing bounding nesting
-  // depth. The real control is explicit and lives in each subagent's own
-  // frontmatter -- `- action: subagent / resource: "*" / effect: deny` --
-  // so keep those in sync with the agent list instead of re-adding this.
+  // Subagent nesting is gated twice, and both gates must agree:
+  //  1. "subagent_depth" (top level, default 1) is what actually enforces
+  //     depth -- the subagent tool counts the caller session's ancestors
+  //     and refuses the call with "Subagent depth limit reached (N)". The
+  //     default of 1 means "primary only", so a subagent could not launch
+  //     anything at all. We set 2 so coder can verify its own step; the
+  //     third level is still refused because a tester/reviewer session
+  //     already has 2 ancestors. Verified against the published schema
+  //     (opencode.ai/config.json), which documents it even though the
+  //     config guide page does not.
+  //  2. each agent's own `- action: subagent` block, which decides WHICH
+  //     agent a caller may launch: orchestrator -> planner/coder/
+  //     tester/reviewer/architect (supper denied); coder -> tester/
+  //     reviewer only; planner/tester/reviewer/architect/marketing/
+  //     writer blanket deny; supper -> itself only.
+  // Raise the depth only together with a matching allow in the calling
+  // agent's frontmatter -- the number alone permits the call, the
+  // permission decides who may make it.
   // Ordered permission rules (V2 native): rules are evaluated in order
   // with the LAST match winning -- the specific denies trail the general
   // allows they carve out of. Do not reorder.
+  "subagent_depth": 2,
   "permissions": [
     // Filesystem scope for ad-hoc sessions. "~" expands to the current
     // user's home, so these rules follow the user across machines,
@@ -135,6 +148,13 @@
     { "action": "shell", "resource": "readlink *", "effect": "allow" },
     { "action": "shell", "resource": "md5sum *", "effect": "allow" },
     { "action": "shell", "resource": "sha256sum *", "effect": "allow" },
+    // Read-only byte inspection. "od" is the hex-dump tool that ships
+    // in this image (coreutils). "hexdump" (bsdextrautils) and "xxd"
+    // are NOT installed and are deliberately absent -- an allow rule
+    // for a missing binary turns a visible prompt into a silent exit
+    // 127 that reads like "no data". Install the package first, then
+    // add the rule.
+    { "action": "shell", "resource": "od *", "effect": "allow" },
     { "action": "shell", "resource": "ps *", "effect": "allow" },
     { "action": "shell", "resource": "df *", "effect": "allow" },
     { "action": "shell", "resource": "free *", "effect": "allow" },
