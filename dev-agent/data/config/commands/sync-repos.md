@@ -1,5 +1,5 @@
 ---
-description: Switch every sibling repo to develop and fast-forward it
+description: Switch the current project's repos to develop and fast-forward them
 ---
 
 **Dirty tree is a hard stop.** Before switching any repo's branch, run `git status
@@ -7,27 +7,35 @@ description: Switch every sibling repo to develop and fast-forward it
 current branch and report it as dirty/skipped. Never stash, never discard, never force
 a checkout - no `git checkout -f`, no `git switch --force`.
 
-Sync every repo in the resolved repo root to its `develop` branch.
+Sync every git repo in the resolved scope to its `develop` branch.
 
-Resolve the root first: `$ARGUMENTS`, when given, is the directory holding the
-sibling repos - use it and skip discovery. Otherwise it is the parent directory of
-the current project root, derived at runtime; never assume a literal path. Then
-verify that the directory contains at least one subdirectory with a `.git` entry.
-If it does not, or the project has no parent that looks like a repo folder, stop
-and ask the operator for the correct directory - do not guess or default to any
-fixed path.
+Resolve the scope first. The default scope is the current chat project itself:
+the project root the chat was opened in, derived at runtime; never assume a
+literal path. Repos inside that scope are the project root (when it has a
+`.git` entry) plus each subdirectory with a `.git` entry (nested subprojects).
+Never climb above the project directory - sibling projects, other repos in the
+home folder or anywhere else on disk are out of scope by default, even when
+they sit next to the current project.
 
-The first access to the resolved root will raise one `external_directory`
-approval prompt: the sibling repos sit outside this project's working
-directory, which is what that permission guards. Surface it to the operator
-instead of treating it as an error - approving it "always" covers the rest of
-the session, so the sweep does not re-prompt. One directory listing of the
-root is enough to find the `.git` entries, so it should be a single prompt,
-not one per repo.
+`$ARGUMENTS`, when given, overrides the default: it is the directory holding
+the repos to sync - use it and skip discovery. Verify the directory contains at
+least one subdirectory with a `.git` entry (or is itself a git repo). If it does
+not, stop and ask the operator for the correct directory - do not guess or
+default to any fixed path. The same applies to an empty `$ARGUMENTS` when the
+project root is not a git repo and has no git subdirectories: ask, never walk
+to a parent directory looking for repos.
 
-1. List the resolved root and check each subdirectory for a `.git` entry. Discover
-   the repos this way - the set changes over time, so do not work from a hardcoded
-   list.
+When `$ARGUMENTS` points outside the current project's working directory, the
+first access to it raises one `external_directory` approval prompt - that is
+what the permission guards. Surface it to the operator instead of treating it
+as an error - approving it "always" covers the rest of the session, so the
+sweep does not re-prompt. With the default in-project scope no such prompt
+appears at all, so a normal run needs no external approval.
+
+1. Enumerate the scope: check the scope directory itself (the project root, or
+   `$ARGUMENTS` when given) and each of its subdirectories for a `.git` entry.
+   Discover the repos this way - the set changes over time, so do not work from
+   a hardcoded list. Do not list anything above the scope directory.
 2. Run `git branch -a` in each repo. A repo is in scope only if `develop` exists,
    locally or as `origin/develop`.
 3. No `develop` branch means out of scope: skip the repo and report it as skipped.
@@ -56,4 +64,4 @@ End with a per-repo table: repo name, resulting branch, whether it moved, how ma
 commits ahead/behind of the remote, and status (OK / dirty-skipped / skipped /
 no remote / diverged).
 
-Optional repo root directory: $ARGUMENTS
+Optional scope directory override (defaults to the current chat project): $ARGUMENTS
