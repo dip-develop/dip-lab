@@ -1,367 +1,187 @@
 # Developer Workstation — Agent Guide
 
-This file is read by opencode when you open a project inside the
-developer workstation container. It defines what agents are allowed to do.
+Read by opencode in every session in this container. Scope: what agents may do.
 
 ## Stack
 
-- Container: Debian Bookworm + Flutter SDK (stable) + Dart + opencode CLI v2 + Tailwind CSS CLI + Node.js 24 LTS
-- Build entrypoint: `opencode serve --hostname 0.0.0.0 --port 4096`
-- Companion tmux session: `tmux attach -t dev` (started by ENTRYPOINT)
-- Container name: `dev-agent` (OpenCode v2 version)
+- Debian Bookworm + Flutter SDK (stable) + Dart + opencode CLI v2 + Node.js 24 LTS.
+- `opencode serve --hostname 0.0.0.0 --port 4096`; tmux `dev`; container `dev-agent`.
 
 ## Database Quick Reference (Always Available)
 
-**Critical database information is included here so it's available in every project.**
+Only `dev_test_*` databases are reachable. Prod names (`production`, `app`,
+`cloud`, `gallery`) are forbidden — the `db-safe` wrapper refuses them.
 
-### Test Credentials (from dev-agent/.env)
-- **PostgreSQL**: `postgres:5432` → USER: `$TEST_POSTGRES_USER`, DB: `dev_test_*`
-- **MySQL**: `mysql:3306` → USER: `$TEST_MYSQL_USER`, DB: `dev_test_*`
-- **Redis**: `redis:6379` → DB index: `$TEST_REDIS_DB` (default 15)
+| Service | Host | Creds |
+|---|---|---|
+| PostgreSQL | `postgres:5432` | `$TEST_POSTGRES_USER` / `$TEST_POSTGRES_PASSWORD` / `$TEST_POSTGRES_DB` |
+| MySQL | `mysql:3306` | `$TEST_MYSQL_USER` / `$TEST_MYSQL_PASSWORD` / `$TEST_MYSQL_DB` |
+| Redis | `redis:6379` | `$TEST_REDIS_PASSWORD`, DB index `$TEST_REDIS_DB` (default 15) |
 
-### Common Commands
+Creds come from `dev-agent/.env`; `PGPASSWORD`/`MYSQL_PWD`/`REDISCLI_AUTH` are
+already exported. The test users hold server-side grants on `dev_test_%` only.
+
 ```bash
-# Connect to test DB
-psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB"
+psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB"   # connect
 mysql -h mysql -u "$TEST_MYSQL_USER" "$TEST_MYSQL_DB"
-redis-cli -h redis
-
-# Create feature-specific test DB
-psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB" \
-    -c "CREATE DATABASE dev_test_feature_name;"
-
-# Drop after tests
-psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB" \
-    -c "DROP DATABASE dev_test_feature_name;"
+redis-cli -h redis set dev_test:counter 1                          # namespace keys
+# one per-feature database, created and dropped through the same test DB:
+psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB" -c "CREATE DATABASE dev_test_feature_x;"
+psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB" -c "DROP DATABASE dev_test_feature_x;"
 ```
 
-### Safety Rules
-- ✅ **Allowed**: Work with databases `dev_test_*`
-- ❌ **Forbidden**: `production`, `app`, `cloud`, `gallery` and other prod databases
-- ❌ **Forbidden**: Redis indexes 0-14 (only TEST_REDIS_DB allowed)
-- The `db-safe` wrapper enforces these rules automatically
+- Never `DROP`/`TRUNCATE`/`FLUSHDB` a non-`dev_test_` DB or a non-`$TEST_REDIS_DB`
+  Redis index. Never `DELETE`/`UPDATE` prod rows. Don't bypass the wrapper
+  (`DBSAFE=0`) without operator approval.
+- Need a clean slate mid-run? Drop and recreate the test DB — never truncate a
+  shared one.
 
 ## Network
 
-The container is attached to the `internal` and `database` Docker
-networks. From inside the container, services are reachable by
-hostname:
-
-| Service | URL (inside this container) |
+| Service | URL |
 |---|---|
-| Automation (n8n) | `http://automation:5678` |
-| n8n health | `http://automation:5678/healthz` |
-| Hermes API Gateway | `http://hermes:8642` |
-| Hermes API Gateway health | `http://hermes:8642/health` |
-| Hermes API Gateway Dashboard | `http://hermes:9119` |
-| PostgreSQL (test user only) | `postgres:5432` (use `TEST_POSTGRES_USER` / `TEST_POSTGRES_PASSWORD` from `dev-agent/.env`) |
-| MySQL (test user only) | `mysql:3306` (use `TEST_MYSQL_USER` / `TEST_MYSQL_PASSWORD` from `dev-agent/.env`) |
-| Redis (test DB index only) | `redis:6379` (use `TEST_REDIS_PASSWORD` and `TEST_REDIS_DB` from `dev-agent/.env`) |
+| Automation (n8n) | `http://automation:5678` (`/healthz`) |
+| Hermes API Gateway | `http://hermes:8642` (`/health`), dashboard `:9119` |
+| PostgreSQL / MySQL | `postgres:5432` / `mysql:3306` (test creds only) |
+| Redis | `redis:6379` (test DB index only) |
+| opencode UI/API | `http://localhost:4096` (host `${BIND_IP:-127.0.0.1}:4096`, `OPENCODE_SERVER_PASSWORD`) |
 
-The opencode web UI/API itself is on `http://localhost:4096` (host:
-`http://${BIND_IP}:4096`, default `${BIND_IP}=127.0.0.1`). It is protected
-by `OPENCODE_SERVER_PASSWORD` from `dev-agent/.env`.
-
-## Database access (test only)
-
-**The container has database access, but it is strictly isolated:**
-
-- You connect as `TEST_POSTGRES_USER` / `TEST_MYSQL_USER` (not the
-  prod users). These test users have server-side
-  grants ONLY on databases whose name starts with `dev_test_`.
-- A bash wrapper (`db-safe`, symlinked to `psql` / `mysql` /
-  `mariadb` / `redis-cli` on PATH) refuses to talk to any non-test
-  database. Examples that will be rejected:
-  - `psql -d production`            → exit 1
-  - `psql -d app`                   → exit 1
-  - `mysql -D cloud`                → exit 1
-  - `redis-cli -n 0`                → exit 1
-  - `redis-cli SELECT 2`            → exit 1
-- The wrapper can be disabled per-command with `DBSAFE=0 ...` or
-  globally by setting `DB_SAFETY_GUARD=false` in `dev-agent/.env`.
-  Don't disable it without a reason - the prod creds are NOT
-  available inside the container, but the wrapper also protects
-  against typo'd DB names that happen to match a prod DB.
-
-### Working with test databases
-
-```bash
-# Connect to the pre-created test DB.
-psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB"
-mysql -h mysql -u "$TEST_MYSQL_USER" "$TEST_MYSQL_DB"
-redis-cli -h redis            # uses TEST_REDIS_DB index
-
-# Create a new isolated test DB for one feature under test.
-psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB" \
-    -c "CREATE DATABASE dev_test_feature_x;"
-# ... tests run against dev_test_feature_x ...
-# Drop it when done (the test user is the owner, so this works).
-psql -h postgres -U "$TEST_POSTGRES_USER" -d "$TEST_POSTGRES_DB" \
-    -c "DROP DATABASE dev_test_feature_x;"
-
-# Redis: namespace your keys with `dev_test:` so a future FLUSHDB on
-# the test index can never collide with prod keys.
-redis-cli SET dev_test:counter 1
-```
-
-The `PGPASSWORD`, `MYSQL_PWD`, `REDISCLI_AUTH` env vars are
-auto-exported in your shell from the container's `TEST_*_PASSWORD`
-values (see `~/.config/dev-agent/env.sh`).
+Reach other services only over HTTP/TCP from inside the container. Never touch
+their Docker containers.
 
 ## Docker
 
-- This container runs **without** `docker.sock` and **without**
-  `--privileged`. The user inside is not in the `docker` group, so
-  `docker` and `docker compose` are not even installed.
-- If a task seems to need to build/run containers, say so explicitly and
-  the operator will run those steps or grant a scoped exception. Do not
-  try to work around the permission denial.
+No `docker.sock`, no `--privileged`, no `docker`/`docker compose` installed. If a
+task seems to need a container build/run, say so — the operator runs it. Never run
+`docker`, `systemctl`, or firewall commands. `sudo` is fine for installing
+packages inside the container only.
 
 ## Git workflow (Git Flow)
 
-Long-lived branches: `main` (production, tagged releases) and `develop`
-(integration). Nothing lands on either except through pull requests — the
-operator merges.
+`main` = production (tagged), `develop` = integration. Nothing lands on either
+except via PR; the operator merges and tags.
 
-| Branch | Branch from | Open PR into | Example |
-|---|---|---|---|
-| `feature/<topic>` | `develop` | `develop` | `feature/login-page` |
-| `bugfix/<topic>` | `develop` | `develop` | `bugfix/null-avatar` |
-| `chore/<topic>` | `develop` | `develop` | `chore/bump-test-deps` (dependency/CI maintenance) |
-| `hotfix/<topic>` | `main` | `main` AND `develop` (two PRs) | `hotfix/crash-on-start` |
-| `release/<version>` | `develop` | `main` AND `develop` (two PRs) | `release/1.4.0` |
-| `backmerge/<version>` | `main` | `develop` | `backmerge/1.4.0` |
+| Branch | From | PR into |
+|---|---|---|
+| `feature/<topic>` | `develop` | `develop` |
+| `bugfix/<topic>` | `develop` | `develop` |
+| `chore/<topic>` (deps/CI) | `develop` | `develop` |
+| `hotfix/<topic>` | `main` | `main` AND `develop` (two PRs) |
+| `release/<version>` | `develop` | `main` AND `develop` (two PRs) |
+| `backmerge/<version>` | `main` | `develop` |
 
-Workflow:
-
-1. Create the branch from the correct base, e.g.
-   `git checkout develop && git checkout -b feature/<topic>`.
-2. Commit in small, single-purpose chunks with clear messages.
-3. Push the branch (`git push -u origin feature/<topic>`) and open
-   the PR with `gh pr create --base develop` — the base MUST match
-   the table; `gh pr create` alone defaults to the repo's default
+1. Branch off the table's base. A repo that only has `main` and no `develop`
+   is single-branch: branch `feature/*` off `main` and open the PR with
+   `--base main`. Check `git branch -a` rather than assuming the two-branch
+   flow.
+2. Commit in small, single-purpose chunks.
+3. `git push -u origin <branch>`, then `gh pr create --base <base>`. **The base
+   must match the table** — plain `gh pr create` defaults to the repo default
    branch, which is usually wrong.
-4. Stop and summarize what is ready for review. The operator
-   merges PRs, creates release tags, and pushes `main`/`develop`.
+4. Stop and summarize; the operator merges, tags and pushes `main`/`develop`.
 
-Repos with no `develop` branch (single-branch projects such as
-`dip-lab`) use `feature/*` off `main` and `gh pr create --base main`; run
-`git branch -a` first rather than assuming the table applies.
+Every PR body references its issue: `Refs #<n>`, or `Closes #<n>` **only** when
+the PR's base is the repo's default branch (the auto-close keyword is inert for
+merges into non-default branches).
 
-### Back-merge: `main` into `develop` after every release
+**Back-merge `main` into `develop` after every release.** `main` must stay a
+subset of `develop`'s history. Before starting work, check drift with
+`git rev-list --count develop..origin/main`; if non-zero and no back-merge PR is
+open, propose one first: cut `backmerge/<version>` from `origin/main`, push, and
+open `gh pr create --base develop`. Never `--head main`. Release/hotfix merges
+into `main` use merge commits, never squash (squashing rewrites history and
+breaks every later back-merge).
 
-`main` must stay a subset of `develop`'s history. Anything that
-lands on `main` (release/hotfix merges, GitHub-side fixes) makes
-`develop` lag; resolve the drift immediately with a back-merge PR —
-never let it accumulate:
-
-1. Cut `backmerge/<version>` from `origin/main`, push it, and open
-   `gh pr create --base develop` titled e.g.
-   `chore: back-merge main into develop (1.4.0)`. The operator
-   merges it. Do not use `--head main` — a `backmerge/*` branch
-   keeps the protected-branch rules intact.
-2. Before starting new work in a repo, check for missed back-merges:
-   `git fetch` then `git rev-list --count develop..origin/main`;
-   non-zero with no open back-merge PR → propose one first.
-3. Merging release/hotfix PRs into `main` must use merge commits,
-   never squash — squashing rewrites `main`'s history and makes
-   every later back-merge conflict (operator action).
-
-### Dependabot & CI maintenance
-
-- Dependency updates and CI fixes belong on `develop`. Every repo
-  must set `target-branch: develop` on each ecosystem entry in
-  `.github/dependabot.yml` — the default is the repo's default
-  branch (usually `main`), which is the main drift source.
-- Never retarget or rebase an incoming dependency/CI PR onto
-  `main`; do that work on `chore/*` branches off `develop`.
-- Auto-back-merge on release (GitHub Action on `release: published`
-  / push to `main`, opening the `backmerge/*` PR) is recommended —
-  but it is operator infrastructure; agents may propose it, never
-  install or schedule it themselves.
+**Dependabot & CI maintenance** belongs on `develop`: every ecosystem entry in
+`.github/dependabot.yml` needs `target-branch: develop`, and an incoming
+dependency/CI PR must never be retargeted onto `main` — redo it on `chore/*`.
 
 ### Git flow — never
 
-- Never commit or push directly to `main` or `develop`; pushes to
-  them are hard-denied at the permission layer.
-- Never merge into `main`/`develop`, tag releases, delete branches,
-  or force-push — release/hotfix merges and tagging are operator
-  actions. Back-merges are delivered as PRs, never as local merges
-  pushed onward.
-- Never open PRs with `main`/`develop` itself as the head — the
-  only sanctioned flow toward `develop` is the `backmerge/*` branch
-  described above; never branch off another PR branch, always off
-  the table's base.
-
-Trade-off: for tiny single-author projects Git Flow is heavier than
-GitHub Flow, but this environment standardizes on Git Flow.
+- Never commit or push directly to `main`/`develop`.
+- Never merge into `main`/`develop`, tag a release, delete a branch, or
+  force-push. Those are operator actions.
+- Never open a PR with `main`/`develop` as the head; `backmerge/*` is the only
+  sanctioned path toward `develop`, and branches always come off the table's base.
 
 ## Roadmap & TODO
 
-Chat history is not durable. Any state worth keeping outlives the
-session.
+Chat history is not durable — keep state in the repo.
 
-### Roadmap (long-lived) → GitHub issues
-
-- Larger planned work, known bugs, and improvement ideas go to GitHub
-  issues via `gh issue create --repo <owner/repo>`.
-- One issue per topic, descriptive title, body with context and
-  acceptance criteria. Label with a milestone if the repo uses them.
-- Do not reopen a near-duplicate: check `gh issue list` first.
-- Orchestrator may file issues; the operator still decides order and
-  assignment.
-
-### Working TODO (current) → `TODO.md` in the project root
-
-- `TODO.md` is the short-lived working list for active work.
-- Format: one item per line, `- [ ]` unchecked / `- [x]` done, newest
-  items at the top. Keep at most ~20 items — archive or move finished
-  topics to issues.
-- The planner reads `TODO.md` before planning; the orchestrator
-  updates it (check off, add follow-ups) as steps complete.
-- `TODO.md` changes ride in the feature branch — they land via the
-  normal PR, never directly on `develop`.
-
-### Planned work → issue at planning time
-
-- When the planner returns a multi-step plan, the orchestrator
-  proposes creating a GitHub issue for it before dispatching coders
-  (default: one issue for the plan, steps as `- [ ]` checkboxes in
-  the body; per-step issues when they are independently actionable).
-  The operator decides whether to file; one-shot drive-by fixes need
-  no issue.
-- Every PR body for that work references the issue: `Refs #<n>` —
-  or `Closes #<n>` ONLY when the PR's base is the repo's default
-  branch: GitHub's auto-close keyword is inert for merges into
-  non-default branches, so Git Flow (develop-based) repos must close
-  explicitly.
-- After the operator merges, the orchestrator closes the linked
-  issue with a pointer:
-  `gh issue close <n> --comment "Done in PR #<m> (<sha>)"`.
-
-### Roadmap — never
-
-- Never keep progress lists only in chat ("I'll remember it").
-- Never duplicate the same task in both an issue and `TODO.md`
-  without a pointer to the other.
-- Never close an issue whose implementing PR has not merged yet
-  (`Closes #N` in a develop-based PR does NOT auto-close).
+- **Roadmap (long-lived)** → GitHub issues via `gh issue create --repo
+  <owner/repo>`: one issue per topic, descriptive title, body with context and
+  acceptance criteria. Check `gh issue list` before filing a near-duplicate.
+- **Working TODO (current)** → `TODO.md` in the project root: one item per line,
+  `- [ ]` / `- [x]`, newest at top, ~20 items max. The planner reads it before
+  planning; the orchestrator checks items off as steps land. `TODO.md` changes
+  ride in the feature branch, never land directly on `develop`.
+- **Multi-step plans** get a tracking issue before coders are dispatched (steps
+  as `- [ ]` checkboxes). Once the operator merges, close it explicitly:
+  `gh issue close <n> --comment "Done in PR #<m> (<sha>)"` — `Closes #N` in a
+  develop-based PR does *not* auto-close.
+- Never keep progress only in chat; never duplicate a task in both an issue and
+  `TODO.md` without a pointer to the other.
 
 ## Scheduled jobs
 
-- Creating a recurring job is an operator action, same as installing the
-  auto-back-merge GitHub Action described under *Git workflow* above: agents may
-  propose a cron job (what it would run, how often) but must not create
-  one themselves. (The `opencode-cron` plugin was removed as non-functional
-  under V2.)
-- Reason: a recurring job runs unattended against whichever model it's
-  configured to use, against that model's own OpenCode Go usage cap
-  (5h/week/month tranches -- see opencode.ai/docs/go), with no approval
-  step in the loop, unlike a normal ask-gated bash command.
+Creating a recurring job is an operator action, same as installing the
+auto-back-merge GitHub Action. Agents may propose a cron job (what it runs, how
+often) but must not create one — an unattended run burns a model's own usage cap
+with no approval step in the loop.
 
 ## Things to never do
 
-- Never edit `.env`, secrets, SSH keys, WireGuard config, or anything
-  outside the project working directory mounted at `/home/develop/projects`.
-- Never run `docker`, `systemctl`, or firewall commands. `sudo` is
-  allowed for installing packages/tools inside the container
-  (e.g. `sudo apt-get install ...`), never for altering system/network
-  config or anything outside the container.
+- Never edit `.env`, secrets, SSH keys, WireGuard config, or anything outside the
+  project directory under `/home/develop/projects`.
 - Never push to `main`/`develop` or delete branches.
-- Never touch other services' Docker containers. Only reach them over HTTP/TCP from inside
-  the container, as documented in the **Network** table above.
-- Never `DROP DATABASE` / `TRUNCATE` / `FLUSHDB` against a
-  non-`dev_test_` PostgreSQL/MySQL database, or a non-`TEST_REDIS_DB`
-  Redis index. The `db-safe` wrapper enforces this; do not bypass it
-  (`DBSAFE=0`) without operator approval.
-- Never `DELETE FROM <prod_table>` or `UPDATE` prod data. The test
-  users do not have privileges on prod DBs, so the server will
-  reject the SQL - but if a future change widens the grant, the
-  history here says "do not do this".
+- Never touch other services' containers; never run `docker`/`systemctl`/
+  firewall commands.
+- Never read or print secrets: `.env` files, `printenv`, `gh auth token`.
+  `*.env.example` templates are fine.
+- Never `DELETE FROM <prod_table>` or `UPDATE` prod data.
 
 ## Package research policy
 
-When you need information about a third-party package (anything under
-`~/.pub-cache` or another dependency cache), consult documentation
-FIRST. Treat reading package sources as a last resort.
+Docs first, sources last:
 
-Order of preference:
+1. MCP doc servers — `dart` (`pub_dev_search`, `read_package_uris`,
+   `rip_grep_packages`), `serverpod` (`ask-docs`, `get-guide`, `list-guides`),
+   `jaspr` (`list_doc_files`, `read_doc_page`).
+2. README, CHANGELOG, `example/`.
+3. pub.dev / project website.
 
-1. MCP doc servers, when available for the ecosystem:
-   - `dart` MCP: `pub_dev_search`, `read_package_uris` (README /
-     `example/` via `package:` and `package-root:` URIs),
-     `rip_grep_packages`.
-   - `serverpod` MCP: `ask-docs`, `get-guide`, `list-guides`.
-   - `jaspr` MCP: `list_doc_files`, `read_doc_page`.
-   (tool names may be prefixed with the server name, e.g. `dart_pub_dev_search`.)
-2. The package's README, CHANGELOG, and `example/` directory.
-3. Official docs / API reference on pub.dev or the project website.
-
-Only if docs do not answer the question: read sources under
-`~/.pub-cache`, surgically — search for the specific symbol or
-signature (e.g. with `rg`), do not browse whole files or dump large
-source chunks into your output. Cite package + symbol + version.
-
-Rationale: docs match the resolved version and stay current; cached
-sources may not, and doc tools are cheaper and more targeted.
+Only if docs don't answer: read `~/.pub-cache` **surgically** — search for the
+symbol, never browse whole files. Cite package + symbol + version. Rationale:
+docs match the resolved version; cached sources may not.
 
 ## Shell execution policy: how permissions match a command
 
-The permission checker splits a shell line into fragments and matches
-each one against the allow/ask/deny rules in `opencode.jsonc` and the
-agent's own `permissions:` block. Two different rules apply, and
-confusing them is the common mistake:
+The checker splits a shell line into fragments and matches each against the
+allow/ask/deny rules. Two rules:
 
-- Choosing the rule: for one action + resource pair the **last** matching
-  rule wins (opencode.ai/v2/docs/permissions, "Matching"), so a block
-  is written catch-all first and the specific rules after it —
-  `subagent: "*"` deny then `subagent: "tester"` allow. That is the
-  idiom in `agents/orchestrator.md` and `agents/coder.md`.
-- Combining fragments: across the fragments of one shell line the
-  strictest result wins — any `deny` denies the whole line, otherwise
-  any `ask` asks for it, otherwise it runs.
+- **Choosing the rule** — for one action + resource pair the *last* match wins.
+  Write a catch-all first and the specific rule after it.
+- **Combining fragments** — across the fragments of one line the strictest wins:
+  any `deny` denies the line, else any `ask` asks, else it runs.
 
-So one unlisted stage inside a pipe asks for the whole line — but a pipe
-whose every stage is allow-listed runs unattended.
+So one unlisted stage inside a pipe asks for the whole line. `&&`, `;`, `||` and
+pipes are checked stage by stage, not rejected wholesale — split into separate
+calls only when a stage is *not* allow-listed, or you want the approval.
 
-- Keep each stage on the allow-list. `sed -n '1,5p' f.md | head -20`
-  needs both `sed *` and `head *`; add the missing stage to the agent's
-  list (and to `opencode.jsonc`) or the whole pipe prompts.
-- `&&`, `;`, `||` and pipes are fine — they are checked stage by stage,
-  not rejected wholesale. Split into separate calls only when a stage
-  is *not* allow-listed, or when you specifically want the approval.
-- The one construct that does not decompose in practice is a line
-  starting with a shell keyword (`for`, `while`, `if`, `case`): there
-  is no first command to match, so the line asks in full. Rewrite it as
-  repeated single-purpose calls, or accept the prompt when a loop
-  really is the shorter form.
-- Poll for a slow result (CI, a long build) with repeated simple calls
-  — `sleep 45`, then `gh pr view ...` — not a shell loop.
-- Hex dumps: `hexdump` and `xxd` are **not installed** in this image
-  (`hexdump` lives in `bsdextrautils`, `xxd` in its own package, and
-  neither is in the apt list in `dev-agent/Dockerfile`). Use `od` from
-  coreutils — `od -c` for escapes, `od -A x -t x1z` for hex + ASCII.
-  `od *` is allow-listed; the other two are not, on purpose: an allow
-  rule for a missing binary turns a visible prompt into a silent
-  exit 127 that reads like "no data there".
-- Never put bare `|`, `||`, or `&&` characters inside a quoted regex
-  in a shell line the splitter sees (e.g. `grep 'a|b'`). Use separate
-  `-e` patterns, or the dedicated grep tool, instead — the splitter
-  can't tell a literal pipe inside quotes from a real one.
-
-Keeping every stage allow-listed is the difference between routine
-work running autonomously and every other step stalling on an
-avoidable approval round-trip. Anything that legitimately needs
-approval — say what it does and why, then wait.
+- Lines starting with a shell keyword (`for`, `while`, `if`, `case`) have no
+  first command to match, so they always ask in full. Rewrite as repeated
+  single-purpose calls, or accept the prompt.
+- Poll slow results (CI, long builds) with repeated `sleep 45` then `gh pr view`
+  calls — never a shell loop.
+- Never put bare `|`, `||` or `&&` characters inside a quoted regex the splitter
+  sees (e.g. `grep 'a|b'`). Use separate `-e` patterns or the grep tool.
+- Hex dumps: use `od` (coreutils). `hexdump` and `xxd` are **not installed** —
+  an allow rule for a missing binary turns a visible prompt into a silent
+  exit 127.
 
 ## Testing expectations
 
-- Run `dart analyze` and `dart test` (or the project's equivalents) before
-  calling a change done. Delegate to the `tester` subagent.
-- Use `flutter analyze` / `flutter test` for Flutter projects.
-- For projects that need a real database: the
-  `tester` subagent should use the test creds documented above. Use
-  a per-feature test database (e.g. `dev_test_<feature>`) and drop
-  it after the run.
-- If a test needs a "clean slate" mid-run, drop and recreate the
-  test DB - do not attempt to truncate a shared one.
+- Run `dart analyze` and `dart test` (Flutter: `flutter analyze` /
+  `flutter test`) before calling a change done — delegate to `tester`.
+- DB-backed tests: `dev_test_*` databases with the `TEST_*` creds above, one
+  per-feature database (`dev_test_<feature>`), dropped after the run.

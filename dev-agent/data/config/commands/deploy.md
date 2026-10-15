@@ -105,7 +105,7 @@ Brief runbook:
 ### Project specifics
 
 Ask the user for:
-- **Project name** (kebab-case, e.g. `gewerber`)
+- **Project name** (kebab-case, e.g. `my-app`)
 - **Router prefix** (short, e.g. `gwb`)
 - **Base domain** (e.g. `example.com`)
 - **Project type**: `serverpod` or `jaspr`
