@@ -1,6 +1,6 @@
 ---
 name: dart-add-unit-test
-description: Use when adding or fixing unit tests for Dart code.
+description: Write and organize unit tests for functions, methods, and classes using `package:test`. Use when creating new logic or fixing bugs to ensure code remains correct and regression-free.
 metadata:
   model: models/gemini-3.1-pro-preview
   last_modified: Mon, 03 Aug 2026 21:51:24 GMT

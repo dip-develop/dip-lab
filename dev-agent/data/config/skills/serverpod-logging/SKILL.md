@@ -1,6 +1,6 @@
 ---
 name: serverpod-logging
-description: Use when adding Serverpod logging or debugging server calls.
+description: Serverpod logging — session.log, log levels, persistence, retention, console output. Use when adding logging or debugging server calls.
 ---
 
 # Serverpod Logging

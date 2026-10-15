@@ -1,6 +1,6 @@
 ---
 name: serverpod-modules
-description: Use when adding Serverpod modules or shared code.
+description: Create and use Serverpod modules — adding modules, generator.yaml nicknames, model references, creating custom modules. Use when working with modules or shared server/client code.
 ---
 
 # Serverpod Modules

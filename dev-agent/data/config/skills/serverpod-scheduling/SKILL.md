@@ -1,6 +1,6 @@
 ---
 name: serverpod-scheduling
-description: Use when scheduling one-off or recurring Serverpod work.
+description: Schedule future work in Serverpod — FutureCall, callWithDelay, callAtTime, recurring tasks, cancellation. Use when scheduling one-off or recurring tasks.
 ---
 
 # Serverpod Scheduling (Future Calls)

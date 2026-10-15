@@ -1,6 +1,6 @@
 ---
 name: serverpod-server-events
-description: Use for streams, cross-server state, or pub/sub messaging.
+description: Serverpod message system — postMessage, addListener, createStream, global messages via Redis. Use when coordinating streams, sharing state across servers, or pub/sub messaging.
 ---
 
 # Serverpod Server Events

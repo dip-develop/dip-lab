@@ -1,6 +1,6 @@
 ---
 name: serverpod-endpoints
-description: Use when creating RPC endpoints or Session codegen.
+description: Define Serverpod endpoints, use Session, pass parameters, and call from client. Use when creating RPC endpoints, working with Session, or client code generation.
 ---
 
 # Serverpod Endpoints

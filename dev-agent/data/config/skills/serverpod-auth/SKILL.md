@@ -1,6 +1,6 @@
 ---
 name: serverpod-auth
-description: Use when a feature needs sign-in, auth checks, or scopes.
+description: Serverpod authentication — signing in users, checking whether they are authenticated, assigning scopes (e.g. admin). Use when adding features that require the user to be signed in.
 ---
 
 # Serverpod Authentication

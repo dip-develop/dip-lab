@@ -1,6 +1,6 @@
 ---
 name: serverpod-streams
-description: 'Use when building real-time features: chat, live updates.'
+description: Real-time streaming in Serverpod — Stream parameters and return types, WebSocket lifecycle, error handling. Use when building real-time features, chat, live updates, or WebSocket streaming.
 ---
 
 # Serverpod Streams

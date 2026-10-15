@@ -1,6 +1,6 @@
 ---
 name: jaspr-pre-rendering-and-hydration
-description: 'Static/server mode Jaspr: SSR/SSG, async data, @client, hydration.'
+description: Use when working in a **static** or **server** mode Jaspr project. Covers SSR/SSG, async data fetching, the @client annotation, hydration, and handling dual entrypoints (.server.dart vs .client.dart).
 metadata:
   jaspr_version: 0.23.4
 ---

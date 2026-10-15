@@ -1,6 +1,6 @@
 ---
 name: dart-write-documentation
-description: Effective Dart rules for /// doc comments on any declaration.
+description: "Rules and formatting guidelines for writing Dart /// API documentation and doc comments. Use when documenting Dart code, writing doc comments for any Dart declaration (libraries, classes, methods, variables, etc.), or when instructed to follow the Effective Dart documentation guidelines."
 ---
 
 # Writing Dart API Documentation

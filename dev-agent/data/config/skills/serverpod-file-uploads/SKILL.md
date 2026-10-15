@@ -1,6 +1,6 @@
 ---
 name: serverpod-file-uploads
-description: Use when implementing Serverpod uploads or storage backends.
+description: File uploads in Serverpod — upload descriptions, verification, storage backends (database, S3, GCP). Use when implementing file uploads or cloud storage.
 ---
 
 # Serverpod File Uploads

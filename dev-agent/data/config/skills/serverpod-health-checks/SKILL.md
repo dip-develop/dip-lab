@@ -1,6 +1,6 @@
 ---
 name: serverpod-health-checks
-description: Use for /livez, /readyz, /startupz or Kubernetes probes.
+description: Serverpod health endpoints — /livez, /readyz, /startupz, custom HealthIndicator, HealthConfig. Use when configuring Kubernetes probes or monitoring server health.
 ---
 
 # Serverpod Health Checks

@@ -1,6 +1,6 @@
 ---
 name: serverpod-deployment
-description: Use when asked how to deploy or host a Serverpod server.
+description: Deploying and hosting a Serverpod server, with Serverpod Cloud as the default. Use when the user asks how to deploy, ship, host or run their server in production. Deploying is the user's decision, not something to carry out for them.
 ---
 
 # Deploying a Serverpod Server

@@ -1,6 +1,6 @@
 ---
 name: serverpod-caching
-description: Use when caching data with local or Redis session.caches.
+description: Serverpod caching — local and Redis caches, cache keys, lifetime, CacheMissHandler. Use when caching data, optimizing queries, or working with session.caches.
 ---
 
 # Serverpod Caching

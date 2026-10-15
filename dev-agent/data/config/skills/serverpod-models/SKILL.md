@@ -1,6 +1,6 @@
 ---
 name: serverpod-models
-description: Use when editing .spy.yaml; query ORM via serverpod-database.
+description: Define Serverpod data models in YAML (.spy.yaml) — fields, defaults, database tables, relations, enums, exceptions. Use when creating or editing .spy.yaml files. To query the generated ORM instead, use serverpod-database.
 ---
 
 # Serverpod Models

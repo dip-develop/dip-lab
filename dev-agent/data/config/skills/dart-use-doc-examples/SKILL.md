@@ -1,6 +1,6 @@
 ---
 name: dart-use-doc-examples
-description: 'Add {@example} code to Dartdoc, filtered with #hide/#region/#endregion.'
+description: "How to inject external code examples into Dartdoc using the {@example} directive, and how to filter those files using #hide, #region, and #endregion tags."
 ---
 
 # Using Examples in Dartdoc
