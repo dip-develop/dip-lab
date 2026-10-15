@@ -1,6 +1,6 @@
 ---
 name: serverpod-overview
-description: Serverpod overview — what it is, project structure, how to work with. Always use at least once when working with projects that use Serverpod.
+description: Always use at least once on a Serverpod project.
 ---
 
 # Serverpod Overview

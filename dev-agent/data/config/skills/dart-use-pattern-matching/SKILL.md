@@ -1,13 +1,6 @@
 ---
 name: dart-use-pattern-matching
-description: >-
-  Applies Dart 3 pattern matching, switch expressions, and destructuring
-  idiomatically to validate data schemas, handle algebraic data types, and
-  decompose control flow. Use when refactoring complex if-else chains,
-  parsing polymorphic JSON or API responses, destructuring Lists, URI/path
-  segments, String.split() tokens, Records, or Maps, or enforcing exhaustiveness
-  on sealed classes. Don't use for simple boolean conditions, single-variable
-  type promotion (use `is`), or basic collection filtering.
+description: Dart 3 patterns for complex branching, not simple booleans.
 metadata:
   model: models/gemini-3.1-pro-preview
   last_modified: Wed, 23 Sep 2026 22:10:00 GMT

@@ -1,7 +1,6 @@
 ---
 name: dart-use-path-package
-description: >-
-  Cross-platform file and directory path manipulation, segment splitting, extension extraction, and context conversion using `package:path` and `package:file`. Use when writing, inspecting, joining, splitting, or refactoring file paths, directory names, or extensions, or replacing raw string path operations (`.split('/')`, `'$dir/$file'`, `.endsWith('.ext')`, `.replaceAll('\\', '/')`). Don't use for HTTP network URI routing, database query strings, or non-path string processing.
+description: Path handling with package:path and package:file, not string ops.
 metadata:
   model: models/gemini-3.1-pro-preview
   last_modified: Wed, 23 Sep 2026 22:10:00 GMT

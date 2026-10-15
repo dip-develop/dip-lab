@@ -48,9 +48,8 @@ with real trade-offs.
 - If the project root has a `TODO.md` or GitHub issues describing
   related prior decisions, read them first — don't contradict an
   existing documented direction without flagging it explicitly.
-- For unfamiliar packages, ground the recommendation in docs first (MCP
-  doc tools, README/examples, pub.dev) before reading `~/.pub-cache`
-  sources as a last resort.
+- For unfamiliar packages, follow the "Package research policy" in AGENTS.md:
+  docs first, `~/.pub-cache` sources only as a last resort.
 - State the recommendation plainly, then the trade-offs and rejected
   alternatives — don't bury the decision in a survey of options.
 - Call out anything that needs the operator's sign-off (breaking an

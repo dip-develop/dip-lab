@@ -1,6 +1,6 @@
 ---
 name: serverpod-database
-description: Serverpod ORM with PostgreSQL or SQLite — CRUD, filters, sorting, pagination, includes, transactions, raw SQL, client-side database. Use when reading or writing data at runtime. To declare tables and relations instead, use serverpod-models.
+description: ORM queries at runtime; declare tables with serverpod-models.
 ---
 
 # Serverpod Database

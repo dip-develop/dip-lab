@@ -1,6 +1,6 @@
 ---
 name: serverpod-testing
-description: Test Serverpod endpoints and business logic - withServerpod, sessionBuilder, authentication, DB seeding, rollback, streams, running tests. Use when writing server tests or working with serverpod_test.
+description: Use when writing server tests with serverpod_test.
 ---
 
 # Serverpod Testing

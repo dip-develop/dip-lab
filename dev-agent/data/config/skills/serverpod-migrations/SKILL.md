@@ -1,6 +1,6 @@
 ---
 name: serverpod-migrations
-description: Serverpod database migrations — when and how to create/apply/repair migrations. Use whenever database schema changes are involved.
+description: 'Use when the schema changes: create, apply, repair migrations.'
 ---
 
 # Serverpod Migrations

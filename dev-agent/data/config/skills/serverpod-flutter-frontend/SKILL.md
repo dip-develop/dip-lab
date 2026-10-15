@@ -1,6 +1,6 @@
 ---
 name: serverpod-flutter-frontend
-description: Build highly distinctive, production-ready Flutter interfaces with exceptional design fidelity. Use when designing a new app or new screens from scratch, where no visual language is established yet. Do not use when extending or fixing screens in an app that already has a design system, theme or style guide — follow what the app already does instead.
+description: Design new Flutter apps or screens from scratch. Not if a theme exists.
 ---
 
 # Flutter Frontend Design

@@ -1,6 +1,6 @@
 ---
 name: dart-resolve-package-conflicts
-description: Workflow for fixing package version conflicts. Use this when `pub get` fails due to incompatible package versions.
+description: Use when pub get fails on incompatible package versions.
 metadata:
   model: models/gemini-3.1-pro-preview
   last_modified: Fri, 24 Apr 2026 15:11:14 GMT

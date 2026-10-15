@@ -36,8 +36,8 @@ appears at all, so a normal run needs no external approval.
    above the scope directory.
 2. Per repo, in scope only if it has BOTH branches — check with
    `git branch -a`: remote-only `origin/develop` / `origin/main` count too (a
-   fresh clone has no local branches). A single-branch repo (e.g. `dip-lab`,
-   `main` only) is out of scope: report it as N/A — there is nothing to
+   fresh clone has no local branches). A single-branch repo (`main` only) is
+   out of scope: report it as N/A — there is nothing to
    back-merge into a branch that does not exist — and touch nothing. Do NOT
    create `develop` to make such a repo in scope.
 3. Measure drift per in-scope repo, two separate calls in order (a line starting

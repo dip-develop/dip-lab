@@ -1,6 +1,6 @@
 ---
 name: serverpod-sessions
-description: Serverpod session types, lifecycle, InternalSession, cleanup callbacks. Use when creating sessions manually outside a request, when work outlives the request that started it, or when a closed session throws a StateError.
+description: Use for sessions outside a request or StateError when closed.
 ---
 
 # Serverpod Sessions

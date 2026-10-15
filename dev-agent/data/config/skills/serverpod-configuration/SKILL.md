@@ -1,6 +1,6 @@
 ---
 name: serverpod-configuration
-description: Configure Serverpod — YAML config, environment variables, passwords, run modes, generator.yaml, TLS. Use when setting up environments, API/database/Redis settings, managing secrets or overriding configurations for tests.
+description: Serverpod YAML config, env vars, run modes, generator.yaml, TLS.
 ---
 
 # Serverpod Configuration

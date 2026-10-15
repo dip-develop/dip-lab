@@ -1,6 +1,6 @@
 ---
 name: serverpod-upgrading
-description: Upgrade Serverpod — minor/patch updates, major upgrades (2.x to 3.0, 3.x to 4.0). Use when upgrading Serverpod versions or updating dependencies.
+description: Use when upgrading Serverpod versions or its dependencies.
 ---
 
 # Serverpod minor/patch upgrade
