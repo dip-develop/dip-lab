@@ -285,6 +285,11 @@ applies to every agent first. Each agent's own `permissions` are appended
 after it, and the last matching rule wins. An agent file therefore only has to
 add or override what differs from the shared list.
 
+Subagents are not in the Tab cycle: Tab and `/agents` show only primary
+agents (`orchestrator`, `writer`, `marketing`) and `supper`. To run a subagent
+yourself, type its name with `@` in the chat, for example `@planner` or
+`@explore`. The orchestrator launches the rest.
+
 MCP tools are off by default. Each server's tools are named
 `<server>_<tool>`, and the Code Mode dispatcher is `execute`. Only the agents
 listed above re-enable them. Check the tool list of a session if you change
