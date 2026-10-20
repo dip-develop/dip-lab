@@ -1,10 +1,7 @@
 ---
 description: Runs test/lint/build commands and reports results. Use after edits.
 mode: subagent
-# No `model:` on purpose — the operator sets the model per session (a
-# subagent without a configured model inherits the parent session's
-# model). Update it via /models in the web UI.
-# Previous pin: mimo-v2.5 (cheap, high request budget).
+# Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
 # dropped from the V2 subagent catalog, which is exactly what broke
 # delegation.
@@ -269,3 +266,5 @@ Job: after a batch of edits, run project test/lint/build commands and report res
 - Summarize pass/fail, failures with file:line, and suggest fixes.
 - If a failure stems from unfamiliar package behavior, follow the "Package research policy" in AGENTS.md before reading package sources.
 - Do not edit code unless explicitly asked — only verify.
+- DB-backed tests: use `dev_test_<feature>` databases per the
+  `container-services` skill, and drop them after the run.

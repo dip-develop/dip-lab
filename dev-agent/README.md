@@ -125,7 +125,7 @@ recreation. An interactive `gh auth login` works too, but its
 | `.env.example` | Template - copy to `.env` and fill in |
 | `setup.sh` | Creates `data/config/agents/` if missing |
 | `AGENTS.md` | Read by opencode when you open a project - agent rules **and the full global policy** (git flow, roadmap/TODO, docs-before-sources, flat-shell rules), inlined here because opencode V2 does not load the `instructions` config key |
-| `data/config/opencode.jsonc` | Multi-agent config: title, compaction, summary, explore, docs. Bind-mounted to `~/.config/opencode` (read-write) |
+| `data/config/opencode.jsonc` | Global config: default agent, subagent depth, shared permission rules (incl. MCP off by default), MCP servers, LSP. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host). Do **not** set `hidden: true` on a subagent - in V2 that removes it from the `subagent` tool catalog, so the orchestrator can no longer launch it |
 | `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`, `/sync-repos`, `/triage-issues`, `/backmerge-check`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
 
@@ -261,44 +261,40 @@ exception:
   (test user) / `TEST_REDIS_DB` index (Redis), and client-side gated
   by the `db-safe` wrapper on PATH.
 
-## Model provider: OpenCode Go
+## Agent roles and tool access
 
-Agents run on [OpenCode Go](https://opencode.ai/go), a flat-rate
-subscription covering a curated set of open-weight coding models behind
-one API key. There is no `provider` block in `opencode.jsonc` for it —
-it's a built-in provider, referenced as `opencode-go/<model-id>`.
+The config is provider- and model-agnostic. No agent pins a model: every
+agent inherits the session model, so change the model with `/models` and
+it applies to every role. To pin a role to a different model, add a
+`model:` line to that agent's frontmatter. Use the `provider/model` ID that
+`/models` shows.
 
-1. Subscribe at opencode.ai/go and copy the API key.
-2. Start the container, open the web UI, run `/connect`, and pick
-   "OpenCode Go". The credential is written to `auth.json` in the
-   `opencode-data` volume (see the state table above) — never to a
-   git-tracked file or `.env`.
-3. Run `/models` any time to see the current model IDs; the roster
-   changes as OpenCode adds/retires models.
+| Agent | Mode | Can launch | Reads code | Edits | Shell | MCP docs |
+|---|---|---|---|---|---|---|
+| `orchestrator` | primary (default) | planner, coder, tester, reviewer, architect, explore | no (delegates) | ask | status and PR read commands, git | no |
+| `planner` | subagent | none | yes | no | no | yes |
+| `architect` | subagent | none | yes | no | no | yes |
+| `explore` | built-in subagent | none | yes | no | no | no |
+| `coder` | subagent | tester, reviewer | yes | yes | yes | yes |
+| `tester` | subagent | none | yes | no | test and lint commands | no |
+| `reviewer` | subagent | none | yes | no | read-only git and lint | no |
+| `supper` | all | itself | yes | yes | yes (guards kept) | yes |
 
-**Model selection:** no agent pins a model. Every file in
-`data/config/agents/` deliberately omits `model:`, so each agent
-inherits the session model and the operator picks per session with
-`/models`. The single default lives in `data/config/opencode.jsonc`
-(`"model"`) and applies when a session hasn't chosen one. Each agent
-keeps a comment recording what it used to pin and why, so the previous
-split can be restored deliberately if wanted.
+How the rules combine: the shared `permissions` list in `opencode.jsonc`
+applies to every agent first. Each agent's own `permissions` are appended
+after it, and the last matching rule wins. An agent file therefore only has to
+add or override what differs from the shared list.
 
-The reason that split existed is worth keeping in mind: each Go model
-carries its **own** dollar-based usage limit (5-hour / weekly / monthly
-tranches of a per-model monthly cap that itself varies by model, e.g.
-$15/$30/$60) — not one shared pool split across every model. High-frequency
-roles were therefore pinned to cheap, high-request-budget models and
-low-frequency roles to stronger ones, with `architect` kept separate from
-`planner` so a 1M-context model was spent only on genuine cross-module
-design decisions. Removing the pins does not merge those budgets; it means
-one session model applies to every role, so a single expensive model now
-covers the whole delegation tree. Re-pin per role if that matters for how
-you work.
+MCP tools are off by default. Each server's tools are named
+`<server>_<tool>`, and the Code Mode dispatcher is `execute`. Only the agents
+listed above re-enable them. Check the tool list of a session if you change
+this.
 
-If a model gets renamed or retired upstream, `/models` in the web UI
-is the source of truth — update the `model` key in
-`data/config/opencode.jsonc` to match.
+Delegation has a cost. Each subagent call starts a fresh session with its own
+instructions and tool definitions, and every model turn is billed. Use
+subagents for work that would otherwise fill the orchestrator's context: broad
+reads (`explore`), one planner step per coder call, and one tester and one
+reviewer pass per batch.
 
 ## Troubleshooting
 

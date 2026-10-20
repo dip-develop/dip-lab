@@ -1,11 +1,7 @@
 ---
 description: Reviews diffs for correctness, style and open-core boundaries.
 mode: subagent
-# No `model:` on purpose — the operator sets the model per session (a
-# subagent without a configured model inherits the parent session's
-# model). Update it via /models in the web UI.
-# Previous pin: glm-5.3 (a stronger model, chosen because this role
-# runs far less often than coder/tester).
+# Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
 # dropped from the V2 subagent catalog, which is exactly what broke
 # delegation.

@@ -1,14 +1,7 @@
 ---
 description: Breaks tasks into ordered concrete steps for coder. Read-only planning, no edits.
 mode: subagent
-# No `model:` on purpose — the operator sets the model per session (a
-# subagent without a configured model inherits the parent session's
-# model, and selecting a primary agent does not change the session
-# model). Update it via /models in the web UI.
-# Previous pin, kept for the rationale: deepseek-v4-pro — a cheap,
-# high-request-budget model, because this runs on every non-trivial
-# task. Unpinning it does not make planner expensive; it makes the
-# session model apply, which is the operator's call.
+# Model: no pin. The agent inherits the session model.
 # NOT `hidden: true`. In V2 that flag removes the agent from the
 # subagent catalog (opencode.ai/v2/docs/agents, "Hidden"), so a hidden
 # subagent cannot be launched by the primary at all: the orchestrator
@@ -30,6 +23,19 @@ permissions:
   - action: webfetch
     resource: "*"
     effect: allow
+# Docs-first lookups: MCP doc tools are re-enabled for this role.
+  - action: "execute"
+    resource: "*"
+    effect: allow
+  - action: "dart_*"
+    resource: "*"
+    effect: allow
+  - action: "jaspr_*"
+    resource: "*"
+    effect: allow
+  - action: "serverpod_*"
+    resource: "*"
+    effect: allow
 ---
 
 You are the planner subagent for the orchestrator.
@@ -43,12 +49,12 @@ Job: break a non-trivial task into an ordered list of small, concrete steps.
   `backmerge/<version>` PR (cut from `origin/main`) into `develop`,
   opened right after the release PR merges — see the "Git workflow (Git Flow)"
   table in AGENTS.md.
-- Output steps as a numbered list, each step = one file or one function, with clear acceptance criteria.
+- Output steps as a numbered list. Each step is one reviewable change that a single coder call can finish. It may touch several files. Give each step clear acceptance criteria.
 - Write step titles as short imperative phrases: the orchestrator may
   file the plan as a GitHub issue before implementation (see
   "Roadmap & TODO" in AGENTS.md), and the titles become the body's
   `- [ ]` checklist.
-- Keep steps cheap for coder to execute in isolation.
+- Keep steps self-contained so coder can execute one without the others in context.
 - Flag risks, open questions, and dependencies.
 - Do not implement — only plan.
 - If the task genuinely needs a cross-module design decision (new

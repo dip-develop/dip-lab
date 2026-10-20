@@ -1,10 +1,7 @@
 ---
 description: Full-autonomous senior developer. Runs tasks end-to-end without approval prompts and may spawn only itself as subagent for parallel work. Other agents cannot launch it.
 mode: all
-# No `model:` on purpose — the operator sets the model per session
-# (a subagent without a configured model inherits the parent
-# session's model, and selecting a primary agent does not change the
-# session model). Update it via /models in the web UI.
+# Model: no pin. The agent inherits the session model.
 permissions:
   # Full autonomy: everything allowed by default; only the safety
   # guards below carve out denies (last match wins, so denies trail).
@@ -228,6 +225,19 @@ permissions:
     effect: deny
   - action: subagent
     resource: "supper"
+    effect: allow
+# Docs-first lookups: MCP doc tools are re-enabled for this role.
+  - action: "execute"
+    resource: "*"
+    effect: allow
+  - action: "dart_*"
+    resource: "*"
+    effect: allow
+  - action: "jaspr_*"
+    resource: "*"
+    effect: allow
+  - action: "serverpod_*"
+    resource: "*"
     effect: allow
 ---
 

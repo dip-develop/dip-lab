@@ -127,9 +127,9 @@ services:
       # Without this the API/UI is reachable with no auth on whatever
       # BIND_IP you set.
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD in dev-agent/.env, see .env.example}
-      # OpenCode Go needs no provider API key here: run `/connect` inside
-      # the container once and pick "OpenCode Go" -- the credential is
-      # written to auth.json in the opencode-data volume (see README's
+      # Model provider credentials are not passed here: run `/connect`
+      # inside the container once and pick your provider -- the credential
+      # is written to auth.json in the opencode-data volume (see README's
       # state/persistence table), not passed via the environment.
       # GitHub token for the `gh` CLI. Passed via env so authentication
       # survives container recreation without persisting a token inside
