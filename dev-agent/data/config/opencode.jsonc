@@ -23,9 +23,9 @@
       "**/*.freezed.dart"
     ]
   },
-  // No custom "provider" block: opencode-go is a built-in provider.
+  // No custom "provider" block: providers are configured with /connect.
   // Auth lives in auth.json (the opencode-data volume), written by
-  // `/connect` -> "OpenCode Go" inside the container -- not by config here.
+  // `/connect` inside the container (pick the provider there), not by config here.
   // No "instructions" key on purpose. OpenCode V2 accepts the field but
   // does not load its entries (opencode.ai/v2/docs/config, "Instructions":
   // "OpenCode accepts this field but does not load its entries; use AGENTS.md
@@ -45,7 +45,7 @@
   //     config guide page does not.
   //  2. each agent's own `- action: subagent` block, which decides WHICH
   //     agent a caller may launch: orchestrator -> planner/coder/
-  //     tester/reviewer/architect (supper denied); coder -> tester/
+  //     tester/reviewer/architect/explore (supper denied); coder -> tester/
   //     reviewer only; planner/tester/reviewer/architect/marketing/
   //     writer blanket deny; supper -> itself only.
   // Raise the depth only together with a matching allow in the calling
@@ -75,20 +75,29 @@
     // V2 form of the V1 flat "webfetch"/"websearch" allow: resource "*".
     { "action": "webfetch", "resource": "*", "effect": "allow" },
     { "action": "websearch", "resource": "*", "effect": "allow" },
+    // Read-only search tools for every agent. The orchestrator overrides
+    // these in its own file: it has no read access and delegates lookups.
+    { "action": "glob", "resource": "*", "effect": "allow" },
+    { "action": "grep", "resource": "*", "effect": "allow" },
+    // MCP tools are OFF for every agent by default. Each MCP server's tools
+    // are named <server>_<tool>. The Code Mode dispatcher is "execute".
+    // Agents that need docs-first lookups (coder, planner, architect,
+    // supper) re-allow these in their own frontmatter. The later rule wins.
+    { "action": "execute", "resource": "*", "effect": "deny" },
+    { "action": "dart_*", "resource": "*", "effect": "deny" },
+    { "action": "jaspr_*", "resource": "*", "effect": "deny" },
+    { "action": "serverpod_*", "resource": "*", "effect": "deny" },
     // Secrets stay unreadable by default, even for agents with otherwise
     // broad read access.
     { "action": "read", "resource": "*", "effect": "allow" },
     { "action": "read", "resource": "*.env", "effect": "deny" },
     { "action": "read", "resource": "*.env.*", "effect": "deny" },
     { "action": "read", "resource": "*.env.example", "effect": "allow" },
-    // Shared baseline for ad-hoc/manual sessions using this config directly
-    // (e.g. default_agent with no agent .md override). Merge semantics are
-    // documented in V2 (opencode.ai/v2/docs/agents, "Merging"): global
-    // permissions are applied first and agent-specific rules are appended
-    // after, so the combined list is still last-match-wins. Each agent .md
-    // file deliberately repeats the subset it needs rather than relying on
-    // partial merge -- de-duplicating is safe, but re-listing keeps each
-    // agent's effective policy readable in one place.
+    // Shared baseline for every agent. Per the V2 permissions docs, each
+    // agent's own rules are APPENDED after this list (last match wins), so
+    // an agent file only needs to add or override what differs from here.
+    // Read-only shell commands below are open to every agent; agents that
+    // must not read (the orchestrator) deny them again in their frontmatter.
     { "action": "shell", "resource": "*", "effect": "ask" },
     { "action": "shell", "resource": "sleep", "effect": "allow" },
     { "action": "shell", "resource": "sleep *", "effect": "allow" },

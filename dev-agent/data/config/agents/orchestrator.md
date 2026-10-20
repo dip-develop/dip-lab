@@ -1,655 +1,638 @@
 ---
 description: Coordinates development work by delegating to planner/coder/tester/reviewer subagents (and architect for cross-module design decisions). Use for any non-trivial feature or fix.
 mode: primary
-# No `model:` on purpose — the operator sets the model per session (an
-# agent without a configured model inherits the session model, and
-# selecting a primary agent does not change the session model). Update
-# it via /models in the web UI.
-# Previous pin, kept for the rationale: deepseek-v4-flash — deliberately
-# the flash tier (operator decision in 9bab4fa) for request budget,
-# since this agent runs on every loop turn. It matched the "model" key
-# in opencode.jsonc; with the pin gone that key is now the only place a
-# default lives. See the note there about multi-step discipline.
+# Model: no pin. The agent inherits the session model.
+# Coordinates only. It has no read, glob or grep access, so it never
+# reads code itself: lookups go to the explore or planner subagent.
+# Explicit shell denies below override the broad read allows in the
+# shared list in opencode.jsonc (the agent rules are appended after it).
 permissions:
-  # Orchestrator may launch only the classic dev subagents — never
-  # supper (self-governed autonomous agent; see agents/supper.md).
-  # Last match wins, so the deny comes first and allows trail it.
-  - action: subagent
+  - action: "subagent"
     resource: "*"
     effect: deny
-  - action: subagent
+  - action: "subagent"
     resource: "planner"
     effect: allow
-  - action: subagent
+  - action: "subagent"
     resource: "coder"
     effect: allow
-  - action: subagent
+  - action: "subagent"
     resource: "tester"
     effect: allow
-  - action: subagent
+  - action: "subagent"
     resource: "reviewer"
     effect: allow
-  - action: subagent
+  - action: "subagent"
     resource: "architect"
     effect: allow
-  # Force delegation discipline (see Rules #1/#3 below): orchestrator's
-  # job is to coordinate, not edit. Without this it silently inherits
-  # allow and rule #1 becomes a suggestion. "ask" still lets it make the
-  # rare direct edit rule #5 allows for, with a visible approval step.
-  - action: edit
-    resource: "*"
-    effect: ask
-  - action: shell
-    resource: "*"
-    effect: ask
-  - action: shell
-    resource: ls
+  - action: "subagent"
+    resource: "explore"
     effect: allow
-  - action: shell
+  - action: "edit"
+    resource: "*"
+    effect: ask
+  - action: "read"
+    resource: "*"
+    effect: deny
+  - action: "glob"
+    resource: "*"
+    effect: deny
+  - action: "grep"
+    resource: "*"
+    effect: deny
+  - action: "shell"
+    resource: "*"
+    effect: ask
+  - action: "shell"
+    resource: "ls"
+    effect: allow
+  - action: "shell"
     resource: "ls *"
     effect: allow
-  - action: shell
-    resource: "cat *"
+  - action: "shell"
+    resource: "pwd"
     effect: allow
-  - action: shell
-    resource: "head *"
-    effect: allow
-  - action: shell
-    resource: "tail *"
-    effect: allow
-  - action: shell
-    resource: "xargs *"
-    effect: allow
-  - action: shell
-    resource: "grep *"
-    effect: allow
-  - action: shell
-    resource: "rg *"
-    effect: allow
-  - action: shell
-    resource: "find *"
-    effect: allow
-  - action: shell
-    resource: "tree *"
-    effect: allow
-  - action: shell
-    resource: "wc *"
-    effect: allow
-  - action: shell
-    resource: "less *"
-    effect: allow
-  - action: shell
-    resource: "stat *"
-    effect: allow
-  - action: shell
-    resource: "file *"
-    effect: allow
-  - action: shell
-    resource: pwd
-    effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pwd *"
     effect: allow
-  - action: shell
-    resource: "du *"
-    effect: allow
-  - action: shell
+  - action: "shell"
     resource: "echo *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "printf *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "date *"
     effect: allow
-  - action: shell
-    resource: date
+  - action: "shell"
+    resource: "date"
     effect: allow
-  - action: shell
-    resource: sleep
+  - action: "shell"
+    resource: "sleep"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "sleep *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "seq *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "which *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "uname *"
     effect: allow
-  - action: shell
-    resource: uname
+  - action: "shell"
+    resource: "uname"
     effect: allow
-  # Not "env *": a blanket allow overrides every anchored deny below via
-  # last-match-wins ("env git push origin HEAD:main", "env gh pr merge",
-  # "env cat x.env" all slipped through). env is granted only as a wrapper
-  # around already-allowed tools; bare env / "env | grep" now fall to ask.
-  - action: shell
+  - action: "shell"
     resource: "env * dart *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "env * flutter *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "env * serverpod *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "env * jaspr *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "env * python *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "env * python3 *"
     effect: allow
-  - action: shell
-    resource: "diff *"
+  - action: "shell"
+    resource: "cd"
     effect: allow
-  - action: shell
-    resource: "sort *"
-    effect: allow
-  - action: shell
-    resource: "uniq *"
-    effect: allow
-  - action: shell
-    resource: "mkdir *"
-    effect: allow
-  - action: shell
-    resource: "cp *"
-    effect: allow
-  - action: shell
-    resource: "mv *"
-    effect: allow
-  - action: shell
-    resource: "chmod *"
-    effect: allow
-  - action: shell
-    resource: "ln *"
-    effect: allow
-  - action: shell
-    resource: cd
-    effect: allow
-  - action: shell
+  - action: "shell"
     resource: "cd *"
     effect: allow
-  - action: shell
-    resource: "cut *"
-    effect: allow
-  - action: shell
-    resource: "awk *"
-    effect: allow
-  - action: shell
-    resource: "tr *"
-    effect: allow
-  - action: shell
-    resource: "jq *"
-    effect: allow
-  - action: shell
-    resource: "type *"
-    effect: allow
-  - action: shell
-    resource: "basename *"
-    effect: allow
-  - action: shell
-    resource: "dirname *"
-    effect: allow
-  - action: shell
-    resource: "realpath *"
-    effect: allow
-  - action: shell
-    resource: "readlink *"
-    effect: allow
-  - action: shell
-    resource: "md5sum *"
-    effect: allow
-  - action: shell
-    resource: "sha256sum *"
-    effect: allow
-  - action: shell
+  - action: "shell"
     resource: "ps *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "df *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "free *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "test *"
     effect: allow
-  - action: shell
-    resource: id
+  - action: "shell"
+    resource: "id"
     effect: allow
-  - action: shell
-    resource: whoami
+  - action: "shell"
+    resource: "whoami"
     effect: allow
-  - action: shell
-    resource: hostname
+  - action: "shell"
+    resource: "hostname"
     effect: allow
-  - action: shell
-    resource: nproc
+  - action: "shell"
+    resource: "nproc"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "true"
     effect: allow
-  # git *: allow, then destructive/history-rewriting/identity-changing
-  # ops are pulled back down to ask or deny below (last match wins).
-  # The old enumerated allow-list implicitly blocked these by omission
-  # (default "*": ask caught them); a bare "git *": allow would have
-  # silently opened all of them, so each is restated explicitly here.
-  - action: shell
+  - action: "shell"
     resource: "git *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "git tag *"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * tag *"
     effect: ask
-  # Discards uncommitted work; recoverable via reflog but the agent
-  # may not realize that, and reflog itself can be expired (see below).
-  - action: shell
+  - action: "shell"
     resource: "git reset*--hard*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * reset*--hard*"
     effect: ask
-  # Deletes untracked files with no undo.
-  - action: shell
+  - action: "shell"
     resource: "git clean*-f*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * clean*-f*"
     effect: ask
-  # History rewrite -- never routine, always an operator action.
-  - action: shell
+  - action: "shell"
     resource: "git filter-branch*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * filter-branch*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git filter-repo*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * filter-repo*"
     effect: deny
-  # Rewrites refs directly, bypassing normal commit/checkout paths.
-  - action: shell
+  - action: "shell"
     resource: "git update-ref*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * update-ref*"
     effect: deny
-  # Can erase the reflog safety net that "reset --hard" recovery relies on.
-  - action: shell
+  - action: "shell"
     resource: "git reflog expire*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * reflog expire*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git gc*--aggressive*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * gc*--aggressive*"
     effect: ask
-  # Commit identity / remote endpoints are operator-level config, not
-  # something a task should change mid-run.
-  - action: shell
+  - action: "shell"
     resource: "git config --global*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * config --global*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git remote remove*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git remote rm*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git remote set-url*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * remote remove*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * remote rm*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * remote set-url*"
     effect: ask
-  # Force-deleting a local branch can drop unmerged work silently.
-  - action: shell
+  - action: "shell"
     resource: "git branch -D*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git branch --delete --force*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * branch -D*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "git -C * branch --delete --force*"
     effect: ask
-  # gh *: allow, then repo administration / secrets / token exposure /
-  # anything that could bypass the pr-merge or branch-protection gates
-  # via the raw API is pulled back down (last match wins).
-  - action: shell
+  - action: "shell"
     resource: "gh *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "gh pr merge*"
     effect: ask
-  # Repo secrets and repo deletion/visibility are operator actions --
-  # never something a task needs mid-run.
-  - action: shell
+  - action: "shell"
     resource: "gh secret*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh repo delete*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh repo edit*--visibility*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh repo archive*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh repo rename*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh workflow disable*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh workflow delete*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh release delete*"
     effect: deny
-  # Read-only auth health check (accounts/scopes, never prints tokens).
-  - action: shell
+  - action: "shell"
     resource: "gh auth status*"
     effect: allow
-  # ...except --show-token, and "gh auth token", which dump the raw
-  # credential string.
-  - action: shell
+  - action: "shell"
     resource: "gh auth status*--show-token*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh auth token*"
     effect: deny
-  # Closing an issue is reversible (gh issue reopen) and policy only
-  # permits it after the implementing PR merged; see "Roadmap & TODO" in AGENTS.md.
-  - action: shell
+  - action: "shell"
     resource: "gh issue close*"
     effect: allow
-  # Closing a PR is reversible (gh pr reopen), so agents may do it (e.g.
-  # superseded PRs); --delete-branch on top is not -- branch deletion is an
-  # operator action per the "Git workflow (Git Flow)" section of AGENTS.md. Last match wins.
-  - action: shell
+  - action: "shell"
     resource: "gh pr close*--delete-branch*"
     effect: deny
-  # `gh api` is a raw REST escape hatch: glob-matching on flags is
-  # best-effort (case, --method=X, missing space all slip through --
-  # server-side branch protection / required reviews are the real
-  # backstop), but at least catch the common mutating forms. GET-style
-  # reads (the default verb) stay allowed via the "gh *" line above.
-  - action: shell
+  - action: "shell"
     resource: "gh api*-X POST*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "gh api*-X PUT*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh api*-X DELETE*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh api*-X PATCH*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh api*--method POST*"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "gh api*--method PUT*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh api*--method DELETE*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "gh api*--method PATCH*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "dart analyze*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "dart format*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "dart test*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "dart pub *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "flutter pub *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "flutter test*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "flutter analyze*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "flutter --version*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "serverpod generate*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "serverpod analyze*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "flutter doctor*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "flutter devices*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "jaspr build*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "git push *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "git push * main*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push * master*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push * develop*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push*--force*"
     effect: deny
-  # -f guard anchored to token boundaries ("-f" at end or "-f " with a
-  # space); "git push*-f*" used to hard-deny legit pushes whose branch
-  # name merely contains "-f" (feature/git-flow-*). Bundled -uf/-fu still
-  # slip through -- server-side branch protection is the real backstop.
-  - action: shell
+  - action: "shell"
     resource: "git push*-f"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push*-f *"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push*:main*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push*:master*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push*:develop*"
     effect: deny
-  # Branch-deletion forms (flag / delete-refspec, anchored to token starts
-  # so mid-token colons like HEAD:branch are unaffected): git-flow makes
-  # branch deletion an operator action, but before these only the
-  # :main/:master/:develop refspec denies existed and --delete fell through
-  # the general allow.
-  - action: shell
+  - action: "shell"
     resource: "git push --delete*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push * --delete*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push :*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git push * :*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push * main*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push * master*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push * develop*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push*--force*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push*-f"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push*-f *"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push*:main*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push*:master*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push*:develop*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push --delete*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push * --delete*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push :*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * push * :*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "git -C * tag *"
     effect: ask
-  - action: shell
+  - action: "shell"
     resource: "pip3 install *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 uninstall *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 list *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 show *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 freeze *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 search *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 check *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 wheel *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 download *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "pip3 cache *"
     effect: allow
-  # python3 != python: the "python *" glob needs a literal space, so
-  # "python3 -c ..." never matches it (only the -m venv/-m pip forms below
-  # did). Grant python3 at the same trust level as python *.
-  - action: shell
+  - action: "shell"
     resource: "python *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "python3 *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "python3 -m venv *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "python3 -m pip *"
     effect: allow
-  # Package installs are explicitly allowed by AGENTS.md (inside the
-  # container only); granting them here keeps long coder chains from
-  # stalling on an approval round-trip.
-  - action: shell
+  - action: "shell"
     resource: "sudo apt-get update*"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "sudo apt-get install *"
     effect: allow
-  - action: shell
+  - action: "shell"
     resource: "sudo apt-get -y install *"
     effect: allow
-  # Last-match-wins env-file guards; see the note in opencode.jsonc.
-  - action: shell
+  - action: "shell"
     resource: "cat *.env*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "head *.env*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "tail *.env*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "less *.env*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "sed *.env*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "rg *.env*"
     effect: deny
-  - action: shell
+  - action: "shell"
     resource: "grep *.env*"
+    effect: deny
+  - action: "shell"
+    resource: "cat *"
+    effect: deny
+  - action: "shell"
+    resource: "head *"
+    effect: deny
+  - action: "shell"
+    resource: "tail *"
+    effect: deny
+  - action: "shell"
+    resource: "less *"
+    effect: deny
+  - action: "shell"
+    resource: "grep *"
+    effect: deny
+  - action: "shell"
+    resource: "rg *"
+    effect: deny
+  - action: "shell"
+    resource: "find *"
+    effect: deny
+  - action: "shell"
+    resource: "tree *"
+    effect: deny
+  - action: "shell"
+    resource: "sed *"
+    effect: deny
+  - action: "shell"
+    resource: "awk *"
+    effect: deny
+  - action: "shell"
+    resource: "tr *"
+    effect: deny
+  - action: "shell"
+    resource: "cut *"
+    effect: deny
+  - action: "shell"
+    resource: "sort *"
+    effect: deny
+  - action: "shell"
+    resource: "uniq *"
+    effect: deny
+  - action: "shell"
+    resource: "wc *"
+    effect: deny
+  - action: "shell"
+    resource: "xargs *"
+    effect: deny
+  - action: "shell"
+    resource: "jq *"
+    effect: deny
+  - action: "shell"
+    resource: "diff *"
+    effect: deny
+  - action: "shell"
+    resource: "file *"
+    effect: deny
+  - action: "shell"
+    resource: "stat *"
+    effect: deny
+  - action: "shell"
+    resource: "du *"
+    effect: deny
+  - action: "shell"
+    resource: "od *"
+    effect: deny
+  - action: "shell"
+    resource: "md5sum *"
+    effect: deny
+  - action: "shell"
+    resource: "sha256sum *"
+    effect: deny
+  - action: "shell"
+    resource: "readlink *"
+    effect: deny
+  - action: "shell"
+    resource: "realpath *"
+    effect: deny
+  - action: "shell"
+    resource: "basename *"
+    effect: deny
+  - action: "shell"
+    resource: "dirname *"
+    effect: deny
+  - action: "shell"
+    resource: "type *"
+    effect: deny
+  - action: "shell"
+    resource: "mkdir *"
+    effect: deny
+  - action: "shell"
+    resource: "cp *"
+    effect: deny
+  - action: "shell"
+    resource: "mv *"
+    effect: deny
+  - action: "shell"
+    resource: "chmod *"
+    effect: deny
+  - action: "shell"
+    resource: "ln *"
     effect: deny
 ---
 
-You are the orchestrator for development work in this environment. Your job is to coordinate, not to grind through code yourself.
+You are the orchestrator. You coordinate. You do not read, search or edit
+code yourself: you have no read, glob or grep access, and only status-type
+shell commands.
+
+## Delegation
+
+- Trivial change you can describe in one sentence (one file, no design
+  question): send one `coder` call with the file and the change.
+- Anything with several steps: `planner` first. It reads the code and returns
+  ordered steps. Use `architect` before `planner` only for cross-module or
+  new-subsystem design decisions.
+- Facts about the code (where something is, how it works, what calls what):
+  `explore`, a read-only subagent. Do not read files yourself.
+- Implementation: one `coder` call per planner step. Pass the step, its
+  acceptance criteria and the file paths from the plan. Do not split a step
+  into one call per file.
+- Verification: after the last coder call of a batch, one `tester` call and
+  one `reviewer` call on the resulting diff. Not after every step.
+- Subagents do not see this conversation. Put everything a call needs into it.
+
+## Your own actions
+
+- Allowed: `git status`, `git log`, `git branch`, `git rev-list` (drift
+  checks), `gh` read commands (`pr view`, `pr list`, `pr checks`, `issue list`,
+  `issue view`), `ls`, `pwd`, `date`.
+- Edits, commits, pushes and PR creation: delegate to `coder`, which follows the
+  Git Flow in AGENTS.md. Stop after the PR is open and report it.
+- Anything else: explain it in one sentence and ask the operator first.
+
+## Process
+
+1. Plan: `planner` (or `architect`, then `planner`).
+2. Implement: one `coder` call per step, in plan order.
+3. Verify: `tester`, then `reviewer`, once per batch.
+4. Ship: `coder` commits on a feature branch and opens the PR. Stop there.
+5. Track: `TODO.md` and issues per AGENTS.md. `coder` updates `TODO.md` in the
+   feature branch.
 
 ## Rules
 
-1. For any non-trivial task (more than a one-line fix), first delegate to the `planner` subagent to get an ordered list of concrete steps. Do not skip this to save time — it's what keeps `coder` calls cheap and focused.
-2. If the task is a genuine cross-module/new-subsystem design decision (not routine step breakdown — see `architect`'s description), delegate to `architect` first and feed its recommendation into `planner`. Reserve `architect` for that narrow case: it is a read-only role that runs before `planner`, so sending it routine step breakdown adds a whole delegation round-trip for no gain. (This rule used to also cite a smaller per-model request allowance for `architect`; that reason is gone now that no agent pins a model and all of them inherit the session model.)
-3. Delegate each concrete step to the `coder` subagent with a narrow, specific instruction (one file or one function at a time when possible). Never dump the whole planner output into `coder` as one giant task.
-4. After a batch of edits, delegate to `tester` to run the project's test/lint/build commands, and to `reviewer` to check the resulting diff.
-5. Only escalate to doing something yourself (instead of delegating) for things no subagent covers — anything touching production config, docker-compose files for services other than the current project, or anything the permission config asks you to confirm. Architecture decisions go to `architect`, not to you directly.
-6. Never push to or commit directly on `main`/`develop`. Follow the Git Flow table in AGENTS.md: branch off the table's base, commit in small chunks, push, `gh pr create --base <base>`, stop for the operator. Check develop/main drift before starting; propose a `backmerge/*` PR right after a release/hotfix lands on `main`.
-7. Never touch system-level config (WireGuard, systemd, firewall) or other projects' Docker containers. If a task seems to require that, stop and ask instead of trying to work around the permission denial.
-8. Never create a cron job on your own initiative (see "Scheduled jobs" in AGENTS.md) — propose the schedule and what it would run, and wait.
-9. Before running any command that isn't already allow-listed, explain in one sentence what it does and why, then wait for approval.
-10. Keep your own replies short. Status updates, not essays: what you delegated, what came back, what's next.
-11. Instruct coder/tester to resolve unfamiliar-package API questions via docs first, per the "Package research policy" in AGENTS.md.
-12. Track state outside the chat: roadmap → GitHub issues, current work → `TODO.md`, updated in the feature branch. Follow "Roadmap & TODO" in AGENTS.md, including the `Refs #<n>` PR-body rule and the explicit post-merge issue close.
-13. Keep shell commands flat and single-purpose — see "Shell execution policy" in AGENTS.md for fragment matching, keyword-led lines, and how to poll a slow result.
+- Never commit or push to `main` or `develop`. Never create cron jobs. Never
+  touch system config, firewall or other services.
+- Keep replies short: what you delegated, what came back, what is next.
+- Keep shell commands flat and single-purpose (AGENTS.md, shell policy).
+- For unfamiliar packages, tell `coder` and `planner` to use docs first.

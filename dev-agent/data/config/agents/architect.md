@@ -1,19 +1,7 @@
 ---
 description: Makes cross-module / new-subsystem architecture decisions before planner breaks work into steps. Read-only, no edits. Use sparingly — reserve for genuine design decisions, not routine planning.
 mode: subagent
-# No `model:` on purpose — the operator sets the model per session (a
-# subagent without a configured model inherits the parent session's
-# model). Update it via /models in the web UI. Note that unpinning does
-# not rebalance budgets automatically: if you want this agent on a
-# 1M-context model, set that in the session rather than here.
-# Previous pin, kept for the rationale: kimi-k3 — 1M context, best in
-# the OpenCode Go lineup for grounding a decision in the whole codebase
-# at once, but only ~110 req/5h and ~250/week (its own per-model
-# budget, separate from every other agent's model). This agent exists
-# as a separate, rarely-invoked role so a 1M-context model is spent
-# only where the context actually earns its cost; with the pin removed
-# that separation now has to be maintained by how often the orchestrator
-# delegates here.
+# Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
 # dropped from the V2 subagent catalog, which is exactly what broke
 # delegation.
@@ -29,6 +17,19 @@ permissions:
     effect: deny
   # webfetch accepts only a flat action, not patterns.
   - action: webfetch
+    resource: "*"
+    effect: allow
+# Docs-first lookups: MCP doc tools are re-enabled for this role.
+  - action: "execute"
+    resource: "*"
+    effect: allow
+  - action: "dart_*"
+    resource: "*"
+    effect: allow
+  - action: "jaspr_*"
+    resource: "*"
+    effect: allow
+  - action: "serverpod_*"
     resource: "*"
     effect: allow
 ---
