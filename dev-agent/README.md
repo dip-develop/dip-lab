@@ -407,3 +407,19 @@ Not verified yet, to check in the container with `pi` before relying on it:
   The guards are restated in each agent that allows `git push`, so the result
   is safe either way.
 - That `pi-agent-router` finds all agents in `~/.pi/agent/agents`.
+
+## Web UI for pi (pi-web)
+
+`@agegr/pi-web` runs inside the container on port 8080 in its own tmux session
+(`web`), next to `opencode serve`. It reads the same pi state (sessions and
+`models.json` in the `pi-state` volume).
+
+- Open `http://127.0.0.1:8080` on the Docker host. Login: user `pi`, password
+  `PI_WEB_PASSWORD` from `dev-agent/.env`. The container will not start without
+  it.
+- Only the host loopback is published by default. To open it from another
+  machine, set `PI_WEB_BIND_IP` in `.env`. Then put it behind HTTPS or a VPN
+  (Tailscale). Basic Auth over plain HTTP exposes the password on the network.
+- pi-web can run an agent with the same rights as the container. Treat it like
+  a shell.
+- Logs: `docker exec -it dev-agent tmux attach -t web`.

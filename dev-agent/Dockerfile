@@ -176,6 +176,14 @@ ARG PI_VERSION=1.4.0
 RUN npm install -g @earendil-works/pi-coding-agent@${PI_VERSION} \
     && pi --version
 
+# pi-web: browser UI for pi (@agegr/pi-web). Installed to a prefix owned by
+# develop, not /usr/lib, because it writes its .next cache inside its own
+# package directory at runtime. Pinned like the other tools.
+ARG PI_WEB_VERSION=0.12.2
+RUN npm install --prefix /opt/pi-web @agegr/pi-web@${PI_WEB_VERSION} \
+    && chown -R develop:develop /opt/pi-web
+ENV PATH="/opt/pi-web/node_modules/.bin:${PATH}"
+
 # Mount points for the shared layer (~/.agents) and pi state (~/.pi/agent).
 RUN mkdir -p /home/develop/.agents /home/develop/.pi/agent \
     && chown -R develop:develop /home/develop/.agents /home/develop/.pi
@@ -374,4 +382,4 @@ WORKDIR /home/develop/projects
 # The port binding (0.0.0.0 inside the container) is fine - the
 # host-side restriction happens via the ports: mapping in
 # docker-compose.yml (default 127.0.0.1:4096:4096).
-ENTRYPOINT ["/bin/sh", "-c", "tmux new-session -d -s dev && exec opencode serve --hostname 0.0.0.0 --port 4096"]
+ENTRYPOINT ["/bin/sh", "-c", "tmux new-session -d -s dev && tmux new-session -d -s web 'pi-web --hostname 0.0.0.0 --port 8080 --no-open' && exec opencode serve --hostname 0.0.0.0 --port 4096"]
