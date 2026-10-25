@@ -1,9 +1,5 @@
 {
   "$schema": "https://pi.dev/schemas/settings.schema.json",
-  "packages": [
-    "npm:pi-permission-system@0.8.0",
-    "npm:pi-agent-router@0.9.0"
-  ],
   "defaultTools": [
     "read",
     "bash",

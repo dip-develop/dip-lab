@@ -14,8 +14,9 @@ permission:
     "mcp": deny
     "edit:notes/marketing/**": allow
     "write:notes/marketing/**": allow
-    "webfetch": allow
-    "websearch": allow
+    "web_search": allow
+    "fetch_content": allow
+    "get_search_content": allow
   bash:
     "*": deny
 ---

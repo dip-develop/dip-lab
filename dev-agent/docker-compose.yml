@@ -112,6 +112,7 @@ services:
       - pi-state:/home/develop/.pi/agent
       - ./data/shared/AGENTS.md:/home/develop/.pi/agent/AGENTS.md
       - ./data/pi/settings.json:/home/develop/.pi/agent/settings.json
+      - ./data/pi/router-config.json:/home/develop/.pi/agent/router-config.json
       - ./data/pi/pi-permissions.jsonc:/home/develop/.pi/agent/pi-permissions.jsonc
       - ./data/shared/mcp/pi.json:/home/develop/.pi/agent/mcp.json
       - ./data/pi/agents:/home/develop/.pi/agent/agents

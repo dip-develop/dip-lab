@@ -15,8 +15,9 @@ permission:
     "edit:*.txt": allow
     "write:*.md": allow
     "write:*.txt": allow
-    "webfetch": allow
-    "websearch": allow
+    "web_search": allow
+    "fetch_content": allow
+    "get_search_content": allow
   bash:
     "*": ask
     "ls *": allow

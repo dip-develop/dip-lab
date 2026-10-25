@@ -22,8 +22,11 @@
     "write": "ask",
     "task": "deny",
     "mcp": "deny",
-    "webfetch": "allow",
-    "websearch": "allow"
+    "web_search": "allow",
+    "fetch_content": "allow",
+    "get_search_content": "allow",
+    "lens_diagnostics": "allow",
+    "lens_diagnostic_mark": "allow"
   },
   "bash": {
     "*": "ask",

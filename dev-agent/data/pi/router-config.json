@@ -1,0 +1,10 @@
+{
+  "debug": false,
+  "maxParallelDelegationConcurrency": 4,
+  "delegatedExtensions": [
+    "pi-permission-system",
+    "pi-sensitive-guard",
+    "pi-web-access",
+    "pi-lens"
+  ]
+}

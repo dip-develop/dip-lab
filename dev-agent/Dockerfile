@@ -188,6 +188,9 @@ ENV PATH="/opt/pi-web/node_modules/.bin:${PATH}"
 RUN mkdir -p /home/develop/.agents /home/develop/.pi/agent \
     && chown -R develop:develop /home/develop/.agents /home/develop/.pi
 
+COPY pi-extensions.sh /usr/local/bin/pi-extensions
+RUN chmod 755 /usr/local/bin/pi-extensions
+
 USER develop
 WORKDIR /home/develop
 
@@ -382,4 +385,4 @@ WORKDIR /home/develop/projects
 # The port binding (0.0.0.0 inside the container) is fine - the
 # host-side restriction happens via the ports: mapping in
 # docker-compose.yml (default 127.0.0.1:4096:4096).
-ENTRYPOINT ["/bin/sh", "-c", "tmux new-session -d -s dev && tmux new-session -d -s web 'pi-web --hostname 0.0.0.0 --port 8080 --no-open' && exec opencode serve --hostname 0.0.0.0 --port 4096"]
+ENTRYPOINT ["/bin/sh", "-c", "pi-extensions; tmux new-session -d -s dev && tmux new-session -d -s web 'pi-web --hostname 0.0.0.0 --port 8080 --no-open' && exec opencode serve --hostname 0.0.0.0 --port 4096"]

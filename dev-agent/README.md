@@ -358,7 +358,7 @@ is not tool-specific:
 | `data/shared/` | `~/.agents` | `skills/` (read by both tools), `commands/`, `agents/` (prompt bodies), `mcp/`, `AGENTS.md` |
 | `data/config/` | `~/.config/opencode` | opencode only: `opencode.jsonc`, generated `agents/` |
 | `data/pi/` | files inside `~/.pi/agent` | pi only: `settings.json`, `pi-permissions.jsonc`, generated `agents/` |
-| `pi-state` volume | `~/.pi/agent` | pi state, not in git: `auth.json`, sessions, installed npm packages |
+| `pi-state` volume | `~/.pi/agent` | pi state, not in git: `auth.json`, sessions, `extensions/` (installed at start) |
 
 Wiring:
 
@@ -380,10 +380,19 @@ Agents are written once and rendered for each tool:
    and `data/pi/agents/`. Commit the generated files too. Do not edit them.
 
 Using pi: `docker exec -it dev-agent tmux attach -t dev`, then `pi`. Switch
-agents with `/agent`; `orchestrator` is the default. The packages in
-`data/pi/settings.json` are pinned. On first start pi installs them into the
-`pi-state` volume. If they are missing, run `pi install <source>` once per
-package. `pi install` takes a single source.
+agents with `/agent`; `orchestrator` is the default.
+
+Extensions are pinned in `dev-agent/pi-extensions.sh` and installed at container
+start into `~/.pi/agent/extensions/<name>`, the folder layout pi and
+`pi-agent-router` use. The router loads subagent extensions only from there,
+so `pi install` is not used. It also cannot load them from `npm/`. Current set:
+`pi-permission-system`, `pi-agent-router`, `pi-sensitive-guard`, `pi-lens`
+(LSP, linters, diagnostics), `pi-web-access` (web search and fetch). The router
+config is `data/pi/router-config.json`; it lists which extensions subagents
+load. `pi-sensitive-guard` is required for delegation: the router refuses to
+delegate without it.
+
+Check what loaded: `docker exec -it dev-agent pi config` lists them.
 
 What differs from opencode:
 
