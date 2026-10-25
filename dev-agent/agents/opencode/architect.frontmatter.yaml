@@ -1,0 +1,33 @@
+description: Makes cross-module / new-subsystem architecture decisions before planner breaks work into steps. Read-only, no edits. Use sparingly — reserve for genuine design decisions, not routine planning.
+mode: subagent
+# Model: no pin. The agent inherits the session model.
+# NOT `hidden: true` -- see the note in planner.md. Hidden agents are
+# dropped from the V2 subagent catalog, which is exactly what broke
+# delegation.
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: subagent
+    resource: "*"
+    effect: deny
+  # webfetch accepts only a flat action, not patterns.
+  - action: webfetch
+    resource: "*"
+    effect: allow
+# Docs-first lookups: MCP doc tools are re-enabled for this role.
+  - action: "execute"
+    resource: "*"
+    effect: allow
+  - action: "dart_*"
+    resource: "*"
+    effect: allow
+  - action: "jaspr_*"
+    resource: "*"
+    effect: allow
+  - action: "serverpod_*"
+    resource: "*"
+    effect: allow

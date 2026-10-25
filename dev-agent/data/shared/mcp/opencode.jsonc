@@ -1,0 +1,27 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "jaspr": {
+        "type": "remote",
+        "url": "https://docs.jaspr.site/mcp",
+        "disabled": false
+      },
+      "dart": {
+        "type": "local",
+        "command": [
+          "dart",
+          "mcp-server"
+        ],
+        "disabled": false
+      },
+      "serverpod": {
+        "type": "local",
+        "command": [
+          "serverpod_mcp"
+        ],
+        "disabled": false
+      }
+    }
+  }
+}

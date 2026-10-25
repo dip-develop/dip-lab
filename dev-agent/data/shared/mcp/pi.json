@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "jaspr": {
+      "url": "https://docs.jaspr.site/mcp"
+    },
+    "dart": {
+      "command": "dart",
+      "args": [
+        "mcp-server"
+      ]
+    },
+    "serverpod": {
+      "command": "serverpod_mcp",
+      "args": []
+    }
+  }
+}

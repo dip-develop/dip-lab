@@ -1,0 +1,19 @@
+name: marketing
+description: "Business/marketing strategist for positioning, pricing, outreach. No code edits."
+mode: primary
+permission:
+  tools:
+    "read": allow
+    "grep": allow
+    "find": allow
+    "ls": allow
+    "edit": deny
+    "write": deny
+    "task": deny
+    "mcp": deny
+    "edit:notes/marketing/**": allow
+    "write:notes/marketing/**": allow
+    "webfetch": allow
+    "websearch": allow
+  bash:
+    "*": deny

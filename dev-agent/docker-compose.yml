@@ -100,6 +100,17 @@ services:
     volumes:
       - ./data/config:/home/develop/.config/opencode
       - ./data/projects:/home/develop/projects
+      # Shared layer for every agent CLI: skills (~/.agents/skills, loaded by
+      # opencode and pi), slash-command bodies, global AGENTS.md, MCP defs.
+      - ./data/shared:/home/develop/.agents
+      # pi: state (auth.json, sessions, installed packages) lives in a named
+      # volume; only config files are bind-mounted from the repo.
+      - pi-state:/home/develop/.pi/agent
+      - ./data/shared/AGENTS.md:/home/develop/.pi/agent/AGENTS.md
+      - ./data/pi/settings.json:/home/develop/.pi/agent/settings.json
+      - ./data/pi/pi-permissions.jsonc:/home/develop/.pi/agent/pi-permissions.jsonc
+      - ./data/shared/mcp/pi.json:/home/develop/.pi/agent/mcp.json
+      - ./data/pi/agents:/home/develop/.pi/agent/agents
       # State that must survive container recreation (./manager.sh update):
       # opencode auth (auth.json from /connect) + session history.
       - opencode-data:/home/develop/.local/share/opencode
@@ -123,6 +134,11 @@ services:
       - GIT_COMMITTER_EMAIL=${GIT_COMMITTER_EMAIL:-dev-agent@diplab.local}
       # Built-in websearch (Exa) for marketing/writer agents.
       - OPENCODE_ENABLE_EXA=1
+      # Shared MCP servers (deep-merged over opencode.jsonc; objects merge by key).
+      - OPENCODE_CONFIG=/home/develop/.agents/mcp/opencode.jsonc
+      # pi: no update check, no telemetry (same posture as opencode update=disable).
+      - PI_SKIP_VERSION_CHECK=1
+      - PI_TELEMETRY=0
       # Required because opencode serve is always-on and port-mapped.
       # Without this the API/UI is reachable with no auth on whatever
       # BIND_IP you set.
@@ -198,3 +214,4 @@ volumes:
   pub-cache:
   dart-server:
   dart-tool:
+  pi-state:

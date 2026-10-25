@@ -5,6 +5,8 @@
 # Data directories (local) - exclude service data, keep dev-agent/config
 */data/*
 !dev-agent/data/config/
+!dev-agent/data/shared/
+!dev-agent/data/pi/
 
 # Proxy (sensitive)
 proxy/acme.json
@@ -38,4 +40,3 @@ Thumbs.db
 *.backup
 *.old
 backups/
-dev-agent/data/config/skills/

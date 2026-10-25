@@ -169,6 +169,17 @@ RUN mkdir -p /home/develop/.ssh /home/develop/.local/share/opencode \
              /home/develop/.local/share/opencode \
              /home/develop/.dartServer /home/develop/.dart-tool
 
+# pi dev agent (pi-coding-agent). Installed globally as root so the binary
+# lives in the image. Its extensions (pi-permission-system, pi-agent-router)
+# are pinned in data/pi/settings.json and installed into the pi-state volume.
+ARG PI_VERSION=1.4.0
+RUN npm install -g @earendil-works/pi-coding-agent@${PI_VERSION} \
+    && pi --version
+
+# Mount points for the shared layer (~/.agents) and pi state (~/.pi/agent).
+RUN mkdir -p /home/develop/.agents /home/develop/.pi/agent \
+    && chown -R develop:develop /home/develop/.agents /home/develop/.pi
+
 USER develop
 WORKDIR /home/develop
 

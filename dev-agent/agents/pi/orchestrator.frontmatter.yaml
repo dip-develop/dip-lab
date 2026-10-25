@@ -1,0 +1,75 @@
+name: orchestrator
+description: "Coordinates development work by delegating to planner/coder/tester/reviewer subagents (and architect for cross-module design decisions). Use for any non-trivial feature or fix."
+mode: primary
+permission:
+  tools:
+    "read": deny
+    "grep": deny
+    "find": deny
+    "ls": deny
+    "edit": ask
+    "write": ask
+    "task": allow
+    "mcp": deny
+  bash:
+    "*": ask
+    "ls *": allow
+    "pwd": allow
+    "date*": allow
+    "git status*": allow
+    "git log*": allow
+    "git diff*": allow
+    "git branch*": allow
+    "git rev-list*": allow
+    "gh pr view*": allow
+    "gh pr list*": allow
+    "gh pr checks*": allow
+    "gh issue view*": allow
+    "gh issue list*": allow
+    "cat *": deny
+    "head *": deny
+    "tail *": deny
+    "grep *": deny
+    "rg *": deny
+    "find *": deny
+    "sed *": deny
+    "awk *": deny
+    "gh pr merge*": ask
+    "git push * main*": deny
+    "git push * master*": deny
+    "git push * develop*": deny
+    "git push*--force*": deny
+    "git push*-f": deny
+    "git push*-f *": deny
+    "git push*:main*": deny
+    "git push*:master*": deny
+    "git push*:develop*": deny
+    "git push --delete*": deny
+    "git push * --delete*": deny
+    "git push :*": deny
+    "git push * :*": deny
+    "git filter-branch*": deny
+    "git filter-repo*": deny
+    "git update-ref*": deny
+    "git reflog expire*": deny
+    "gh secret*": deny
+    "gh repo delete*": deny
+    "gh release delete*": deny
+    "gh workflow delete*": deny
+    "gh auth token*": deny
+    "gh auth status*--show-token*": deny
+    "gh api*-X PUT*": deny
+    "gh api*-X DELETE*": deny
+    "gh api*-X PATCH*": deny
+    "gh api*--method PUT*": deny
+    "gh api*--method DELETE*": deny
+    "gh api*--method PATCH*": deny
+    "gh pr close*--delete-branch*": deny
+    "cat *.env*": deny
+    "head *.env*": deny
+    "tail *.env*": deny
+    "less *.env*": deny
+    "sed *.env*": deny
+    "rg *.env*": deny
+    "grep *.env*": deny
+    "printenv*": deny
