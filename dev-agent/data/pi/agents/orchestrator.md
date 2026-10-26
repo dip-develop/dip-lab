@@ -8,6 +8,9 @@ permission:
     "grep": deny
     "find": deny
     "ls": deny
+    "ffgrep": deny
+    "fffind": deny
+    "multi_grep": deny
     "edit": ask
     "write": ask
     "task": allow

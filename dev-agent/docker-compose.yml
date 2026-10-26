@@ -146,6 +146,8 @@ services:
       # pi: no update check, no telemetry (same posture as opencode update=disable).
       - PI_SKIP_VERSION_CHECK=1
       - PI_TELEMETRY=0
+      # remote-pi (mobile remote control) is off unless set to 1. See README.
+      - PI_REMOTE_PI=${PI_REMOTE_PI:-0}
       # pi-web: Basic Auth (user "pi"). Required: the container refuses to start
       # without it, same as OPENCODE_SERVER_PASSWORD.
       - PI_WEB_PASSWORD=${PI_WEB_PASSWORD:?set PI_WEB_PASSWORD in dev-agent/.env, see .env.example}

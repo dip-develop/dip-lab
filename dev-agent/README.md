@@ -383,14 +383,47 @@ Using pi: `docker exec -it dev-agent tmux attach -t dev`, then `pi`. Switch
 agents with `/agent`; `orchestrator` is the default.
 
 Extensions are pinned in `dev-agent/pi-extensions.sh` and installed at container
-start into `~/.pi/agent/extensions/<name>`, the folder layout pi and
-`pi-agent-router` use. The router loads subagent extensions only from there,
-so `pi install` is not used. It also cannot load them from `npm/`. Current set:
-`pi-permission-system`, `pi-agent-router`, `pi-sensitive-guard`, `pi-lens`
-(LSP, linters, diagnostics), `pi-web-access` (web search and fetch). The router
-config is `data/pi/router-config.json`; it lists which extensions subagents
-load. `pi-sensitive-guard` is required for delegation: the router refuses to
-delegate without it.
+start into `~/.pi/agent/extensions/<folder>`. That is the layout the router loads
+subagent extensions from, so `pi install` is not used. Host-provided packages
+(`pi-ai`, `pi-tui`, `pi-coding-agent`) are never installed into extension folders.
+
+Installed by default:
+
+- `pi-permission-system`, `pi-agent-router`, `pi-sensitive-guard`: permissions,
+  delegation, and the guard the router requires for delegation.
+- `pi-lens`: LSP, linters, diagnostics (`lens_*`, `pilens_*`).
+- `pi-web-access`: web search and fetch.
+- `pi-fff`: fast fuzzy find and grep (`ffgrep`, `fffind`, `multi_grep`). It returns file
+  contents, so the orchestrator denies these names as well as `read`/`grep`/`find`.
+- `pi-memory`: markdown memory and scratchpad (`memory_*`, `scratchpad`). Files live in the
+  `pi-state` volume.
+- `plannotator`: plan review (`plannotator_submit_plan`).
+- `rpiv-todo`, with its peer `rpiv-i18n` installed into `~/.pi/agent/node_modules`.
+
+Not installed:
+
+- `pi-background-tasks`: its peer range `^0.81 - ^0.84` excludes pi 1.x.
+- `remote-pi`: opt-in with `PI_REMOTE_PI=1`. It depends on its own
+  `@earendil-works/pi-coding-agent@^0.79.10`, and its mobile relay defaults to a community
+  server that can read routed plaintext. Enable it only with a relay you trust or your own.
+
+Compatibility: `pi-permission-system` 0.8.0 and `pi-agent-router` 0.9.0 declare
+`pi-coding-agent` `^0.74 - ^0.80`. The image pins pi 1.4.0, which is outside that range. Run
+the smoke test below before relying on permissions or delegation. If it fails, pin pi to a
+0.80.x in the Dockerfile (`PI_VERSION`). `pi-memory` needs `>=0.81.1`, so it will not load
+on 0.80.x.
+
+Smoke test after start:
+
+1. `docker exec -it dev-agent pi config` lists every extension folder.
+2. In `orchestrator`, ask it to read a file. It must refuse, because `read` is denied.
+3. Ask it to send a read-only lookup to `explore`. It must run.
+
+If the first two results are reversed, stop and check the extensions before you use the
+container.
+
+Config: `data/pi/router-config.json` (delegated extensions) and `data/pi/pi-permissions.jsonc`
+(policy).
 
 Check what loaded: `docker exec -it dev-agent pi config` lists them.
 

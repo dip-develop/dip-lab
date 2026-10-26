@@ -5,6 +5,7 @@
     "pi-permission-system",
     "pi-sensitive-guard",
     "pi-web-access",
-    "pi-lens"
+    "pi-lens",
+    "pi-fff"
   ]
 }
