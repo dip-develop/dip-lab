@@ -1,0 +1,50 @@
+description: Breaks tasks into ordered concrete steps for coder. Read-only planning, no edits.
+mode: subagent
+# Model: no pin. The agent inherits the session model.
+# NOT `hidden: true`. In V2 that flag removes the agent from the
+# subagent catalog (opencode.ai/v2/docs/agents, "Hidden"), so a hidden
+# subagent cannot be launched by the primary at all: the orchestrator
+# still names it in its rules while the `subagent` tool never offers
+# it, and delegation silently collapses. `mode: subagent` already keeps
+# the agent out of the primary-agent picker, so hiding is redundant as
+# well as harmful.
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: deny
+  - action: subagent
+    resource: "*"
+    effect: deny
+  # webfetch accepts only a flat action, not patterns.
+  - action: webfetch
+    resource: "*"
+    effect: allow
+# Docs-first lookups: MCP doc tools are re-enabled for this role.
+  - action: "execute"
+    resource: "*"
+    effect: allow
+  - action: "dart_*"
+    resource: "*"
+    effect: allow
+  - action: "jaspr_*"
+    resource: "*"
+    effect: allow
+  - action: "serverpod_*"
+    resource: "*"
+    effect: allow
+  # Read-only git history for release/hotfix and drift planning.
+  - action: shell
+    resource: "git status *"
+    effect: allow
+  - action: shell
+    resource: "git log *"
+    effect: allow
+  - action: shell
+    resource: "git branch *"
+    effect: allow
+  - action: shell
+    resource: "git rev-list *"
+    effect: allow

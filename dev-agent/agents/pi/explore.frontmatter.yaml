@@ -1,0 +1,15 @@
+name: explore
+description: "Read-only codebase exploration for the orchestrator: finds files and explains how code works. Never edits files or runs shell commands."
+mode: subagent
+permission:
+  tools:
+    "read": allow
+    "grep": allow
+    "find": allow
+    "ls": allow
+    "edit": deny
+    "write": deny
+    "task": deny
+    "mcp": deny
+  bash:
+    "*": deny

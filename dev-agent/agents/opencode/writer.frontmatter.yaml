@@ -1,0 +1,100 @@
+description: Drafts articles, docs and marketing copy. Edits only markdown/text under docs/business.
+mode: primary
+# Model: no pin. The agent inherits the session model.
+permissions:
+  # Rules are evaluated with the LAST match winning (see opencode.jsonc).
+  # The general deny must come FIRST so the specific *.md/*.txt allows
+  # below it can actually take effect -- the reverse order made every
+  # rule match any .md/.txt path and the trailing deny win, silently
+  # blocking this agent's entire job (drafting docs/articles).
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "*.md"
+    effect: allow
+  - action: edit
+    resource: "*.txt"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "gh pr create*"
+    effect: allow
+  - action: shell
+    resource: "gh pr list*"
+    effect: allow
+  - action: shell
+    resource: "gh pr view*"
+    effect: allow
+  - action: shell
+    resource: "gh issue create*"
+    effect: allow
+  - action: shell
+    resource: "gh issue list*"
+    effect: allow
+  - action: shell
+    resource: "ls"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
+  - action: shell
+    resource: "cat *"
+    effect: allow
+  - action: shell
+    resource: "find *"
+    effect: allow
+  - action: shell
+    resource: "grep *"
+    effect: allow
+  - action: shell
+    resource: "rg *"
+    effect: allow
+  - action: shell
+    resource: "xargs *"
+    effect: allow
+  - action: shell
+    resource: "head *"
+    effect: allow
+  - action: shell
+    resource: "tail *"
+    effect: allow
+  - action: shell
+    resource: "wc *"
+    effect: allow
+  - action: shell
+    resource: "git status*"
+    effect: allow
+  - action: shell
+    resource: "git diff*"
+    effect: allow
+  - action: shell
+    resource: "git log*"
+    effect: allow
+  # Last-match-wins env-file guards; see the note in opencode.jsonc.
+  - action: shell
+    resource: "cat *.env*"
+    effect: deny
+  - action: shell
+    resource: "head *.env*"
+    effect: deny
+  - action: shell
+    resource: "tail *.env*"
+    effect: deny
+  - action: shell
+    resource: "less *.env*"
+    effect: deny
+  - action: shell
+    resource: "sed *.env*"
+    effect: deny
+  - action: shell
+    resource: "rg *.env*"
+    effect: deny
+  - action: shell
+    resource: "grep *.env*"
+    effect: deny

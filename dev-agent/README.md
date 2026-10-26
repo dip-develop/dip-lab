@@ -127,7 +127,7 @@ recreation. An interactive `gh auth login` works too, but its
 | `AGENTS.md` | Read by opencode when you open a project - agent rules **and the full global policy** (git flow, roadmap/TODO, docs-before-sources, flat-shell rules), inlined here because opencode V2 does not load the `instructions` config key |
 | `data/config/opencode.jsonc` | Global config: default agent, subagent depth, shared permission rules (incl. MCP off by default), MCP servers, LSP. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host). Do **not** set `hidden: true` on a subagent - in V2 that removes it from the `subagent` tool catalog, so the orchestrator can no longer launch it |
-| `data/config/commands/` | Custom slash commands (`/test`, `/review`, `/pr`, `/sync-repos`, `/triage-issues`, `/backmerge-check`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
+| `data/config/commands` (symlink) | Custom slash commands, shared with pi through `data/shared/commands` (`/test`, `/review`, `/pr`, `/sync-repos`, `/triage-issues`, `/backmerge-check`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
 
 ## Slash commands
 
@@ -347,3 +347,88 @@ it, and weakens the runaway guard.
 - Global policy lives in `AGENTS.md`, not a separate `instructions/` directory:
   opencode V2 accepts the `instructions` key but does not load its entries, so
   files placed there are silently ignored by every agent.
+
+## Shared agent layer and pi
+
+opencode and pi (pi-coding-agent) run side by side and share everything that
+is not tool-specific:
+
+| Path in repo | Mounted at / used as | Holds |
+|---|---|---|
+| `data/shared/` | `~/.agents` | `skills/` (read by both tools), `commands/`, `agents/` (prompt bodies), `mcp/`, `AGENTS.md` |
+| `data/config/` | `~/.config/opencode` | opencode only: `opencode.jsonc`, generated `agents/` |
+| `data/pi/` | files inside `~/.pi/agent` | pi only: `settings.json`, `pi-permissions.jsonc`, generated `agents/` |
+| `pi-state` volume | `~/.pi/agent` | pi state, not in git: `auth.json`, sessions, `extensions/` (installed at start) |
+
+Wiring:
+
+- `data/config/AGENTS.md` and `data/config/commands` are symlinks into
+  `data/shared`. They point at `/home/develop/.agents/...`, so they resolve
+  only inside the container.
+- opencode loads extra MCP definitions from `data/shared/mcp/opencode.jsonc`
+  via `OPENCODE_CONFIG`. The objects merge on top of `opencode.jsonc`.
+- pi reads the same MCP definitions from `data/shared/mcp/pi.json`.
+
+Agents are written once and rendered for each tool:
+
+1. Edit the prompt body in `data/shared/agents/<name>.md`. Use the placeholders
+   `{{DELEGATE_TOOL}}`, `{{FILE_SEARCH}}` and `{{ID_NOTE}}` where the tool name
+   differs between opencode and pi.
+2. Edit the tool frontmatter in `agents/opencode/<name>.frontmatter.yaml` or
+   `agents/pi/<name>.frontmatter.yaml`.
+3. Run `python3 dev-agent/render-agents.py`. It writes `data/config/agents/`
+   and `data/pi/agents/`. Commit the generated files too. Do not edit them.
+
+Using pi: `docker exec -it dev-agent tmux attach -t dev`, then `pi`. Switch
+agents with `/agent`; `orchestrator` is the default.
+
+Extensions are pinned in `dev-agent/pi-extensions.sh` and installed at container
+start into `~/.pi/agent/extensions/<name>`, the folder layout pi and
+`pi-agent-router` use. The router loads subagent extensions only from there,
+so `pi install` is not used. It also cannot load them from `npm/`. Current set:
+`pi-permission-system`, `pi-agent-router`, `pi-sensitive-guard`, `pi-lens`
+(LSP, linters, diagnostics), `pi-web-access` (web search and fetch). The router
+config is `data/pi/router-config.json`; it lists which extensions subagents
+load. `pi-sensitive-guard` is required for delegation: the router refuses to
+delegate without it.
+
+Check what loaded: `docker exec -it dev-agent pi config` lists them.
+
+What differs from opencode:
+
+- pi has no built-in permission prompts. Rules come from `pi-permission-system`
+  (`data/pi/pi-permissions.jsonc`, plus `permission:` in each agent's
+  frontmatter). Subagent `ask` requests are forwarded to the main session.
+- Delegation goes only through the orchestrator's `task` tool
+  (`pi-agent-router`). Coder, tester and reviewer cannot call each other, so
+  verification runs through the orchestrator. opencode allowed coder to call
+  tester and reviewer directly.
+- `supper` cannot delegate to itself in pi. The router has no self-only mode.
+- `explore` is an explicit subagent with a `read`/`grep`/`find` allowlist.
+  opencode has it built in.
+- LSP (`lsp.dart`, `lsp.serverpod`) and the file watcher are not ported.
+
+Not verified yet, to check in the container with `pi` before relying on it:
+
+- How `pi-permission-system` matches bash compound lines (`&&`, `|`) and
+  resource-qualified paths such as `read:**/*.env`.
+- Whether agent-frontmatter bash rules add to the global list or replace it.
+  The guards are restated in each agent that allows `git push`, so the result
+  is safe either way.
+- That `pi-agent-router` finds all agents in `~/.pi/agent/agents`.
+
+## Web UI for pi (pi-web)
+
+`@agegr/pi-web` runs inside the container on port 8080 in its own tmux session
+(`web`), next to `opencode serve`. It reads the same pi state (sessions and
+`models.json` in the `pi-state` volume).
+
+- Open `http://127.0.0.1:8080` on the Docker host. Login: user `pi`, password
+  `PI_WEB_PASSWORD` from `dev-agent/.env`. The container will not start without
+  it.
+- Only the host loopback is published by default. To open it from another
+  machine, set `PI_WEB_BIND_IP` in `.env`. Then put it behind HTTPS or a VPN
+  (Tailscale). Basic Auth over plain HTTP exposes the password on the network.
+- pi-web can run an agent with the same rights as the container. Treat it like
+  a shell.
+- Logs: `docker exec -it dev-agent tmux attach -t web`.
