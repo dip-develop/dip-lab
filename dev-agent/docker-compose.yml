@@ -7,7 +7,9 @@
 # (or switched to a smaller profile like `core` / `no-ai`).
 #
 # Container name: dev-agent (matches /home/develop/ inside).
-# Port: 4096 (opencode serve web UI/API), bound to 127.0.0.1 by default.
+# Ports: OPENCODE_PORT (opencode serve, default 4096) and PI_WEB_PORT (pi-web,
+# default 4097), each used both inside the container and on the host.
+# Bind address for both: OPENCODE_BIND_IP / PI_WEB_BIND_IP, default 127.0.0.1.
 #
 # Connects to the rest of the lab via the shared `internal` network so
 # the agents can reach:
@@ -88,13 +90,13 @@ services:
     # here instead of starving the rest of the lab.
 
     # Default 127.0.0.1 - this is a developer tool, not a public service.
-    # Override BIND_IP in .env if you need LAN access (and trust the LAN).
+    # Override OPENCODE_BIND_IP in .env if you need LAN access (and trust the LAN).
     ports:
-      - "${BIND_IP:-127.0.0.1}:4096:4096"
+      - "${OPENCODE_BIND_IP:-127.0.0.1}:${OPENCODE_PORT:-4096}:${OPENCODE_PORT:-4096}"
       # pi-web (browser UI for pi). Default is loopback only. To reach it from
       # another machine, set PI_WEB_BIND_IP and put it behind TLS or a VPN:
       # the password is Basic Auth over plain HTTP.
-      - "${PI_WEB_BIND_IP:-127.0.0.1}:${PI_WEB_PORT:-8080}:8080"
+      - "${PI_WEB_BIND_IP:-127.0.0.1}:${PI_WEB_PORT:-4097}:${PI_WEB_PORT:-4097}"
 
     # Bind-mount the entire opencode config directory so edits to
     # opencode.json / prompts / skills / agents take effect without a
@@ -148,9 +150,13 @@ services:
       # without it, same as OPENCODE_SERVER_PASSWORD.
       - PI_WEB_PASSWORD=${PI_WEB_PASSWORD:?set PI_WEB_PASSWORD in dev-agent/.env, see .env.example}
       - PI_WEB_NO_OPEN=1
+      - PI_WEB_PORT=${PI_WEB_PORT:-4097}
+      # opencode serve listens on this port inside the container; the ENTRYPOINT and
+      # the healthcheck read it from here, so one variable controls both.
+      - OPENCODE_PORT=${OPENCODE_PORT:-4096}
       # Required because opencode serve is always-on and port-mapped.
       # Without this the API/UI is reachable with no auth on whatever
-      # BIND_IP you set.
+      # OPENCODE_BIND_IP you set.
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD in dev-agent/.env, see .env.example}
       # Model provider credentials are not passed here: run `/connect`
       # inside the container once and pick your provider -- the credential
@@ -195,7 +201,7 @@ services:
       # Check the opencode serve port actually answers. Any HTTP
       # response counts (even 401 Unauthorized from password auth) -
       # what matters is that the listener is up.
-      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:4096 || exit 1"]
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:$$OPENCODE_PORT || exit 1"]
       interval: 1m
       timeout: 10s
       retries: 3

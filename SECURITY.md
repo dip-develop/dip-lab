@@ -60,5 +60,5 @@ When deploying DIP-Lab:
   production deployments where reproducibility matters.
 - **dev-agent container** - The developer workstation has
   `opencode serve` always on. By default it binds to `127.0.0.1`. If
-  you set `BIND_IP=0.0.0.0`, the `OPENCODE_SERVER_PASSWORD` is your
+  you set `OPENCODE_BIND_IP=0.0.0.0`, the `OPENCODE_SERVER_PASSWORD` is your
   only authentication.

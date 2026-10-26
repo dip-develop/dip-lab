@@ -18,7 +18,7 @@ cp dev-agent/.env.example dev-agent/.env
 ./manager.sh logs dev-agent --tail 50
 ```
 
-The web UI is then at `http://127.0.0.1:4096` (change `BIND_IP` in
+The web UI is then at `http://127.0.0.1:4096` (change `OPENCODE_BIND_IP` in
 `.env` if you need LAN access and trust the LAN).
 
 ## What's in the image
@@ -419,11 +419,11 @@ Not verified yet, to check in the container with `pi` before relying on it:
 
 ## Web UI for pi (pi-web)
 
-`@agegr/pi-web` runs inside the container on port 8080 in its own tmux session
+`@agegr/pi-web` runs inside the container on port 4097 in its own tmux session
 (`web`), next to `opencode serve`. It reads the same pi state (sessions and
 `models.json` in the `pi-state` volume).
 
-- Open `http://127.0.0.1:8080` on the Docker host. Login: user `pi`, password
+- Open `http://127.0.0.1:4097` on the Docker host. Login: user `pi`, password
   `PI_WEB_PASSWORD` from `dev-agent/.env`. The container will not start without
   it.
 - Only the host loopback is published by default. To open it from another
