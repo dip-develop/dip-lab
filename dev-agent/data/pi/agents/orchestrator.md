@@ -97,7 +97,7 @@ the IDs, so never guess. Names like `explorer` do not exist.
   ordered steps. Use `architect` before `planner` only for cross-module or
   new-subsystem design decisions.
 - Facts about the code (where something is, how it works, what calls what):
-  `explore`, a read-only subagent. Do not read files yourself.
+  `explore`, a read-only subagent. Do not read files yourself. If a command is denied, do not try another command for the same content: send the lookup to `explore`.
 - Implementation: one `coder` call per planner step. Pass the step, its
   acceptance criteria and the file paths from the plan. Do not split a step
   into one call per file.
