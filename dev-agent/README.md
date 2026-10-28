@@ -465,3 +465,12 @@ Not verified yet, to check in the container with `pi` before relying on it:
 - pi-web can run an agent with the same rights as the container. Treat it like
   a shell.
 - Logs: `docker exec -it dev-agent tmux attach -t web`.
+
+## Checks
+
+`python3 dev-agent/tests/check_orchestrator_shell.py` simulates the opencode rules of
+`orchestrator` against the expectations in the script: which shell commands and
+subagents it may use, and which file reads it may not do. It applies the documented
+OpenCode V2 semantics (last matching rule wins, `" *"` also matches the bare command),
+so it checks the rules as written, not the running opencode. Run it after any change
+to `permissions` in `opencode.jsonc` or `agents/opencode/orchestrator.frontmatter.yaml`.

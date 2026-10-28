@@ -1,5 +1,5 @@
 ---
-description: Drafts articles, docs and marketing copy. Edits only markdown/text under docs/business.
+description: "Writing. Drafts articles, docs and marketing copy; edits only *.md and *.txt. Use for prose, not code."
 mode: primary
 # Model: no pin. The agent inherits the session model.
 permissions:

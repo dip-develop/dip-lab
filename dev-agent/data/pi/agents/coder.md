@@ -1,6 +1,6 @@
 ---
 name: coder
-description: "Executes one planner step (one reviewable change, may touch several files). Use for implementation."
+description: "Implementation. Edits files and runs allowed commands; no pushes or merges. Use for one planner step, which may touch several files."
 mode: subagent
 permission:
   tools:

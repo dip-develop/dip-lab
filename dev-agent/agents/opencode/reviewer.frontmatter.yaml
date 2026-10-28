@@ -1,4 +1,4 @@
-description: Reviews diffs for correctness, style and open-core boundaries.
+description: "Review. Checks diffs for correctness, style and open-core boundaries; no edits. Use before a change is merged."
 mode: subagent
 # Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
