@@ -1,6 +1,6 @@
 ---
 name: planner
-description: "Breaks tasks into ordered concrete steps for coder. Read-only planning, no edits."
+description: "Planning. Read-only, no edits; splits a task into ordered steps for coder. Use before any multi-step change."
 mode: subagent
 permission:
   tools:

@@ -1,5 +1,5 @@
 name: reviewer
-description: "Reviews diffs for correctness, style and open-core boundaries."
+description: "Review. Checks diffs for correctness, style and open-core boundaries; no edits. Use before a change is merged."
 mode: subagent
 permission:
   tools:

@@ -1,4 +1,4 @@
-description: Executes one planner step (one reviewable change, may touch several files). Use for implementation.
+description: "Implementation. Edits files and runs allowed commands; no pushes or merges. Use for one planner step, which may touch several files."
 mode: subagent
 # Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are

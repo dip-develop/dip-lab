@@ -1,5 +1,5 @@
 ---
-description: Coordinates development work by delegating to planner/coder/tester/reviewer subagents (and architect for cross-module design decisions). Use for any non-trivial feature or fix.
+description: "Development coordination. Delegates planning, coding, testing and review to subagents; reads nothing itself. Use for any non-trivial feature or fix."
 mode: primary
 # Model: no pin. The agent inherits the session model.
 # Coordinates only. It has no read, glob or grep access, so it never

@@ -1,6 +1,6 @@
 ---
 name: supper
-description: "Full-autonomous senior developer. Runs tasks end-to-end without approval prompts and may spawn only itself as subagent for parallel work. Other agents cannot launch it."
+description: "Autonomous developer. Runs a whole task end-to-end without approval prompts. Use only when the user asks for unattended work."
 mode: all
 permission:
   tools:

@@ -1,4 +1,4 @@
-description: Runs test/lint/build commands and reports results. Use after edits.
+description: "Verification. Runs tests, lint and build and reports results; no edits. Use after each batch of edits."
 mode: subagent
 # Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are

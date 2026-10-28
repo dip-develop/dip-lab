@@ -1,5 +1,5 @@
 ---
-description: Makes cross-module / new-subsystem architecture decisions before planner breaks work into steps. Read-only, no edits. Use sparingly — reserve for genuine design decisions, not routine planning.
+description: "Architecture decisions. Read-only, no edits. Use for cross-module or new-subsystem design, before planner splits the work into steps."
 mode: subagent
 # Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are

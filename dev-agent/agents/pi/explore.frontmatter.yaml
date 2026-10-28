@@ -1,5 +1,5 @@
 name: explore
-description: "Read-only codebase exploration for the orchestrator: finds files and explains how code works. Never edits files or runs shell commands."
+description: "Codebase lookup. Read-only, no shell. Use to find files and explain code instead of reading files yourself."
 mode: subagent
 permission:
   tools:

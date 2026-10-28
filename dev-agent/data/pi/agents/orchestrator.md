@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: "Coordinates development work by delegating to planner/coder/tester/reviewer subagents (and architect for cross-module design decisions). Use for any non-trivial feature or fix."
+description: "Development coordination. Delegates planning, coding, testing and review to subagents; reads nothing itself. Use for any non-trivial feature or fix."
 mode: primary
 permission:
   tools:

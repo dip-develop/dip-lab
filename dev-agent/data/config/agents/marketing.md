@@ -1,5 +1,5 @@
 ---
-description: Business/marketing strategist for positioning, pricing, outreach. No code edits.
+description: "Business strategy: positioning, pricing, outreach. Edits only notes/marketing/**. Use for marketing and business questions, not code."
 mode: primary
 # Model: no pin. The agent inherits the session model.
 permissions:

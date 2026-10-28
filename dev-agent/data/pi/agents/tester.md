@@ -1,6 +1,6 @@
 ---
 name: tester
-description: "Runs test/lint/build commands and reports results. Use after edits."
+description: "Verification. Runs tests, lint and build and reports results; no edits. Use after each batch of edits."
 mode: subagent
 permission:
   tools:
