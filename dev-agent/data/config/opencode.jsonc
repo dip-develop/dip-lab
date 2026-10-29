@@ -23,6 +23,7 @@
       "**/*.freezed.dart"
     ]
   },
+  "formatter": true,
   // No custom "provider" block: providers are configured with /connect.
   // Auth lives in auth.json (the opencode-data volume), written by
   // `/connect` inside the container (pick the provider there), not by config here.
