@@ -1,6 +1,10 @@
 ---
 description: Check open GitHub issues and confirm closing the already-fixed ones
+agent: coder
+subagent: true
 ---
+If you are the orchestrator, hand the whole job below to one `coder` subagent call. Closing issues still waits for the operator's confirmation.
+
 Triage this repo's open issues and close only the verifiably fixed ones:
 
 1. Scope: derive `owner/repo` from the current git remote (`git remote
@@ -9,8 +13,7 @@ Triage this repo's open issues and close only the verifiably fixed ones:
 2. List what is open with `gh issue list --repo <owner/repo>`. If `gh` is
    missing or unauthenticated, report that and stop — do not fail hard.
    Work issue by issue with flat, single-purpose commands: a line starting with
-   `for`/`while`/`if` asks in full (see "Shell execution policy: how permissions
-   match a command" in `AGENTS.md`).
+   `for`/`while`/`if` asks in full.
 3. Establish whether each issue is actually fixed:
    - fixing commit: `git log --all --grep <n>`; repeated `--grep` patterns
      are OR'd by git, use separate ones, never a `|` inside a quoted pattern.
@@ -27,8 +30,7 @@ Triage this repo's open issues and close only the verifiably fixed ones:
      for feature/bugfix/chore PRs, and `main` for a hotfix or release PR, which
      is why both bases can matter in one repo. A squash-merged PR head sha is not
      an ancestor (safe false negative); merge commits are the policy anyway.
-4. The governing rule, and it MUST hold (see "Roadmap & TODO" in
-   `AGENTS.md`): never close an issue whose implementing PR has not merged.
+4. The governing rule, and it MUST hold (see "Work tracking" in `AGENTS.md`): never close an issue whose implementing PR has not merged.
    GitHub's `Closes #N` is inert for merges into non-default branches, so a
    develop-based PR neither auto-closes its issue nor puts the fix on `main`.
    Count an issue as fixed only when the fix is verifiably reachable from

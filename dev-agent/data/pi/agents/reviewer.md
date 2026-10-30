@@ -1,103 +1,13 @@
 ---
 name: reviewer
 description: "Review. Checks diffs for correctness, style and open-core boundaries; no edits. Use before a change is merged."
-mode: subagent
-permission:
-  tools:
-    "read": allow
-    "grep": allow
-    "find": allow
-    "ls": allow
-    "edit": deny
-    "write": deny
-    "task": deny
-    "mcp": deny
-  bash:
-    "*": ask
-    "ls *": allow
-    "cat *": allow
-    "head *": allow
-    "tail *": allow
-    "grep *": allow
-    "rg *": allow
-    "find *": allow
-    "wc *": allow
-    "sort *": allow
-    "uniq *": allow
-    "diff *": allow
-    "sed *": allow
-    "awk *": allow
-    "jq *": allow
-    "tree *": allow
-    "file *": allow
-    "stat *": allow
-    "echo *": allow
-    "printf *": allow
-    "true": allow
-    "pwd": allow
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-    "git show *": allow
-    "git branch*": allow
-    "git grep *": allow
-    "git remote*": allow
-    "git ls-remote*": allow
-    "git rev-parse*": allow
-    "git ls-files*": allow
-    "git blame*": allow
-    "git fetch*": allow
-    "git stash list*": allow
-    "git stash show*": allow
-    "git config --get*": allow
-    "gh pr list*": allow
-    "gh pr view*": allow
-    "gh pr checks*": allow
-    "gh pr diff*": allow
-    "gh issue view*": allow
-    "gh issue list*": allow
-    "gh run list*": allow
-    "gh run view*": allow
-    "dart analyze*": allow
-    "dart format*": allow
-    "git push * main*": deny
-    "git push * master*": deny
-    "git push * develop*": deny
-    "git push*--force*": deny
-    "git push*-f": deny
-    "git push*-f *": deny
-    "git push*:main*": deny
-    "git push*:master*": deny
-    "git push*:develop*": deny
-    "git push --delete*": deny
-    "git push * --delete*": deny
-    "git push :*": deny
-    "git push * :*": deny
-    "git filter-branch*": deny
-    "git filter-repo*": deny
-    "git update-ref*": deny
-    "git reflog expire*": deny
-    "gh secret*": deny
-    "gh repo delete*": deny
-    "gh release delete*": deny
-    "gh workflow delete*": deny
-    "gh auth token*": deny
-    "gh auth status*--show-token*": deny
-    "gh api*-X PUT*": deny
-    "gh api*-X DELETE*": deny
-    "gh api*-X PATCH*": deny
-    "gh api*--method PUT*": deny
-    "gh api*--method DELETE*": deny
-    "gh api*--method PATCH*": deny
-    "gh pr close*--delete-branch*": deny
-    "cat *.env*": deny
-    "head *.env*": deny
-    "tail *.env*": deny
-    "less *.env*": deny
-    "sed *.env*": deny
-    "rg *.env*": deny
-    "grep *.env*": deny
-    "printenv*": deny
+advertise: true
+defaultContext: fresh
+tools: read, grep, find, ls, bash
+extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts, /home/develop/.pi/agent/extensions/pi-sensitive-guard/index.ts
+inheritProjectContext: true
+inheritGlobalContext: true
+inheritSkills: true
 ---
 
 You are the reviewer subagent.
@@ -108,9 +18,7 @@ Job: review the diff produced by coder.
 - Check correctness, style (dart analyze/format), open-core boundaries, AGENTS.md rules.
 - Flag missing tests, enum-first violations, stub/commercial leaks, security issues.
 - Suggest concrete fixes, do not re-implement unless trivial.
-- Git-flow drift: flag release/hotfix work that landed on `main`
-  without a follow-up `backmerge/*` PR into `develop`, and any
-  dependabot/CI maintenance targeting `main` instead of `develop`.
+- Git-flow drift, in repos that have `develop` (git-flow skill): flag release/hotfix work that landed on `main` without a follow-up `backmerge/*` PR into `develop`, and dependabot/CI maintenance targeting `main` instead of `develop`.
 
 ## Checklist term definitions
 

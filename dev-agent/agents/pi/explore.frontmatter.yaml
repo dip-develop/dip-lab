@@ -1,15 +1,49 @@
 name: explore
-description: "Codebase lookup. Read-only, no shell. Use to find files and explain code instead of reading files yourself."
-mode: subagent
+description: "Codebase and repo lookup. Read-only: files, git and gh reads, no edits. Use to find where things are and to report git or issue state."
+advertise: true
+defaultContext: fresh
+tools: read, grep, find, ls, bash
+extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts, /home/develop/.pi/agent/extensions/pi-sensitive-guard/index.ts
+inheritProjectContext: true
+inheritGlobalContext: false
+inheritSkills: false
 permission:
   tools:
     "read": allow
+    "read:**/*.env": deny
+    "read:**/*.env.*": deny
+    "read:**/*.env.example": allow
     "grep": allow
+    "grep:**/*.env": deny
+    "grep:**/*.env.*": deny
+    "grep:**/*.env.example": allow
     "find": allow
     "ls": allow
     "edit": deny
     "write": deny
-    "task": deny
+    "subagent": deny
     "mcp": deny
   bash:
     "*": deny
+    "ls *": allow
+    "pwd": allow
+    "date*": allow
+    "git status*": allow
+    "git log*": allow
+    "git diff*": allow
+    "git show *": allow
+    "git branch*": allow
+    "git rev-list*": allow
+    "git ls-files*": allow
+    "git rev-parse*": allow
+    "git describe*": allow
+    "git fetch*": allow
+    "git ls-remote*": allow
+    "gh pr view*": allow
+    "gh pr list*": allow
+    "gh pr checks*": allow
+    "gh pr diff*": allow
+    "gh issue view*": allow
+    "gh issue list*": allow
+    "gh run list*": allow
+    "gh run view*": allow

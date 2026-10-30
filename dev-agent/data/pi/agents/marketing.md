@@ -1,24 +1,12 @@
 ---
 name: marketing
 description: "Business strategy: positioning, pricing, outreach. Edits only notes/marketing/**. Use for marketing and business questions, not code."
-mode: primary
-permission:
-  tools:
-    "read": allow
-    "grep": allow
-    "find": allow
-    "ls": allow
-    "edit": deny
-    "write": deny
-    "task": deny
-    "mcp": deny
-    "edit:notes/marketing/**": allow
-    "write:notes/marketing/**": allow
-    "web_search": allow
-    "fetch_content": allow
-    "get_search_content": allow
-  bash:
-    "*": deny
+defaultContext: fresh
+tools: read, grep, find, ls, edit, write
+extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts
+inheritProjectContext: false
+inheritGlobalContext: false
+inheritSkills: false
 ---
 
 You are a business/marketing strategist advising on a software product or service.

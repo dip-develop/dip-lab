@@ -333,9 +333,7 @@ Job: review the diff produced by coder.
 - Check correctness, style (dart analyze/format), open-core boundaries, AGENTS.md rules.
 - Flag missing tests, enum-first violations, stub/commercial leaks, security issues.
 - Suggest concrete fixes, do not re-implement unless trivial.
-- Git-flow drift: flag release/hotfix work that landed on `main`
-  without a follow-up `backmerge/*` PR into `develop`, and any
-  dependabot/CI maintenance targeting `main` instead of `develop`.
+- Git-flow drift, in repos that have `develop` (git-flow skill): flag release/hotfix work that landed on `main` without a follow-up `backmerge/*` PR into `develop`, and dependabot/CI maintenance targeting `main` instead of `develop`.
 
 ## Checklist term definitions
 

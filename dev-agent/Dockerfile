@@ -170,8 +170,9 @@ RUN mkdir -p /home/develop/.ssh /home/develop/.local/share/opencode \
              /home/develop/.dartServer /home/develop/.dart-tool
 
 # pi dev agent (pi-coding-agent). Installed globally as root so the binary
-# lives in the image. Its extensions (pi-permission-system, pi-agent-router)
-# are pinned in data/pi/settings.json and installed into the pi-state volume.
+# lives in the image. Its extensions (pi-subagents, pi-permission-system, ...)
+# are pinned in pi-extensions.sh and installed into the pi-state volume.
+# pi-subagents 0.84.0 needs pi >= 1.2.0.
 ARG PI_VERSION=1.4.0
 RUN npm install -g @earendil-works/pi-coding-agent@${PI_VERSION} \
     && pi --version

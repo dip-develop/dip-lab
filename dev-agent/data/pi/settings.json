@@ -12,6 +12,9 @@
   "prompts": [
     "~/.agents/commands"
   ],
+  "subagents": {
+    "disableBuiltins": true
+  },
   "enableInstallTelemetry": false,
   "defaultProjectTrust": "never"
 }
