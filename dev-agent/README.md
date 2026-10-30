@@ -124,7 +124,7 @@ recreation. An interactive `gh auth login` works too, but its
 | `docker-compose.yml` | Service definition, joins the `internal` network |
 | `.env.example` | Template - copy to `.env` and fill in |
 | `setup.sh` | Creates `data/config/agents/` if missing |
-| `AGENTS.md` | Read by opencode when you open a project - agent rules **and the full global policy** (git flow, roadmap/TODO, docs-before-sources, flat-shell rules), inlined here because opencode V2 does not load the `instructions` config key |
+| `AGENTS.md` | Read by opencode and pi in every session: the git and work-tracking rules, and the cron rule. Role rules live in the agent prompts, procedures in skills. Inlined here because opencode V2 does not load the `instructions` config key. |
 | `data/config/opencode.jsonc` | Global config: default agent, subagent depth, shared permission rules (incl. MCP off by default), MCP servers, LSP. Bind-mounted to `~/.config/opencode` (read-write) |
 | `data/config/agents/` | Per-agent system prompts (bind-mounted read-write so you can edit from the host). Do **not** set `hidden: true` on a subagent - in V2 that removes it from the `subagent` tool catalog, so the orchestrator can no longer launch it |
 | `data/config/commands` (symlink) | Custom slash commands, shared with pi through `data/shared/commands` (`/test`, `/review`, `/pr`, `/sync-repos`, `/triage-issues`, `/backmerge-check`) - markdown with frontmatter, bind-mounted to `~/.config/opencode/commands/` (editable without rebuild) |
@@ -331,19 +331,14 @@ it, and weakens the runaway guard.
   local `.opencode/opencode.json`.
 - Permission baseline blocks destructive shell and secret access by
   default; loosen in your fork as needed.
-- Global "docs before sources" package policy, inlined in `data/config/AGENTS.md`; agents consult MCP doc tools / README / pub.dev before reading `~/.pub-cache` sources. Source reading is not hard-denied — it stays a documented last resort (bash reads like `rg`/`cat` are allow-listed; the read tool may prompt since `~/.pub-cache` falls under `external_directory: ask`).
+- Package policy ("docs before sources") lives in the coder, architect, supper and tester prompts; agents consult MCP doc tools / README / pub.dev before reading `~/.pub-cache` sources. Source reading is not hard-denied — it stays a documented last resort (bash reads like `rg`/`cat` are allow-listed; the read tool may prompt since `~/.pub-cache` falls under `external_directory: ask`).
 - Git policy for **this** repo is single-branch: `main` is the default and
   the only long-lived branch — there is no `develop`. Branch `feature/*`
   (or `fix/*`, `chore/*`) off `main` and open the PR with
   `gh pr create --base main`. Pushes to `main` are hard-denied at the
   permission layer, including refspec forms (`HEAD:main`, `:main`
   deletions).
-- The general Git Flow table (`main` + `develop`, back-merges, release
-  trains) in `data/config/AGENTS.md` describes the *other* repos this
-  container works on — e.g. `gewerber`, which does use `develop`. That file
-  is mounted globally at `/home/develop/.config/opencode`, which is why its
-  `develop` push-deny rules still apply to those repos and are simply inert
-  here. Run `git branch -a` before assuming a table applies.
+- The general Git Flow table (`main` + `develop`, back-merges, release trains) lives in the `git-flow` skill (`data/shared/skills/git-flow/`). It describes the *other* repos this container works on, e.g. `gewerber`, which does use `develop`. The skill detects the base per repo with `git ls-remote --heads origin develop`, so it never assumes a table applies here. Run `git branch -a` before assuming one does.
 - Global policy lives in `AGENTS.md`, not a separate `instructions/` directory:
   opencode V2 accepts the `instructions` key but does not load its entries, so
   files placed there are silently ignored by every agent.
@@ -357,7 +352,7 @@ is not tool-specific:
 |---|---|---|
 | `data/shared/` | `~/.agents` | `skills/` (read by both tools), `commands/`, `agents/` (prompt bodies), `mcp/`, `AGENTS.md` |
 | `data/config/` | `~/.config/opencode` | opencode only: `opencode.jsonc`, generated `agents/` |
-| `data/pi/` | files inside `~/.pi/agent` | pi only: `settings.json`, `pi-permissions.jsonc`, generated `agents/` |
+| `data/pi/` | files inside `~/.pi/agent` and `~/.pi/policy` | pi only: `settings.json`, `subagent-config.json`, `APPEND_SYSTEM.md` (generated), `agents/` (generated), `policy/` (generated `agents/`, plus `pi-permissions.jsonc`) |
 | `pi-state` volume | `~/.pi/agent` | pi state, not in git: `auth.json`, sessions, `extensions/` (installed at start) |
 
 Wiring:
@@ -376,79 +371,57 @@ Agents are written once and rendered for each tool:
    differs between opencode and pi.
 2. Edit the tool frontmatter in `agents/opencode/<name>.frontmatter.yaml` or
    `agents/pi/<name>.frontmatter.yaml`.
-3. Run `python3 dev-agent/render-agents.py`. It writes `data/config/agents/`
-   and `data/pi/agents/`. Commit the generated files too. Do not edit them.
+3. Run `python3 dev-agent/render-agents.py`. It writes `data/config/agents/` (opencode), `data/pi/agents/` (pi child agents), `data/pi/policy/agents/` (pi permissions) and `data/pi/APPEND_SYSTEM.md` (pi main session). Commit the generated files too. Do not edit them.
 
-Using pi: `docker exec -it dev-agent tmux attach -t dev`, then `pi`. Switch
-agents with `/agent`; `orchestrator` is the default.
+Using pi: `docker exec -it dev-agent tmux attach -t dev`, then `pi`. The orchestrator is the main session. Its prompt comes from `data/pi/APPEND_SYSTEM.md`, generated from the orchestrator prompt and tagged as the active agent. pi has no agent switcher: the container's pi is the orchestrator.
 
-Extensions are pinned in `dev-agent/pi-extensions.sh` and installed at container
-start into `~/.pi/agent/extensions/<folder>`. That is the layout the router loads
-subagent extensions from, so `pi install` is not used. Host-provided packages
-(`pi-ai`, `pi-tui`, `pi-coding-agent`) are never installed into extension folders.
+Extensions are pinned in `dev-agent/pi-extensions.sh` and installed at container start into `~/.pi/agent/extensions/<folder>`. The folder name `subagent` is fixed: pi-subagents reads its config from `extensions/subagent/config.json`. `pi install` is not used. Host-provided packages (`pi-ai`, `pi-tui`, `pi-coding-agent`) are never installed into extension folders.
+
+Delegation is `pi-subagents` (pinned 0.84.0). Subagents are markdown files in `~/.pi/agent/agents/` (mounted from `data/pi/agents/`). The orchestrator calls them with the `subagent` tool; agents with `advertise: true` are listed in its prompt. Each agent's `tools:` line is a strict allowlist, and `extensions:` lists the extensions that child loads. A child never gets the `subagent` tool, so delegation does not nest. `data/pi/subagent-config.json` sets `toolActivation: eager`, so the `subagent` tool is active from the first request. Builtin subagents are disabled (`subagents.disableBuiltins` in `data/pi/settings.json`).
+
+Permissions come from `pi-permission-system`. Its policy lives in `data/pi/policy/` (mounted at `~/.pi/policy` and selected with `PI_PERMISSION_SYSTEM_POLICY_AGENT_DIR`): `pi-permissions.jsonc` plus one `agents/<name>.md` per agent with the `permission:` block. The policy stays out of the agent directory because pi-subagents rejects a `permission:` block in an agent file. The main session and each child identify themselves with an `<active_agent name="...">` tag in the system prompt, and the permission system takes that agent's rules from it. A child that runs bash loads `pi-permission-system` and `pi-sensitive-guard` through `extensions:`. Each child repeats the `.env` read and grep denies after its `allow` rules, so the protection does not depend on how the policy layers are ordered.
 
 Installed by default:
 
-- `pi-permission-system`, `pi-agent-router`, `pi-sensitive-guard`: permissions,
-  delegation, and the guard the router requires for delegation.
-- `pi-lens`: LSP, linters, diagnostics (`lens_*`, `pilens_*`).
-- `pi-web-access`: web search and fetch.
-- `pi-fff`: fast fuzzy find and grep (`ffgrep`, `fffind`, `multi_grep`). It returns file
-  contents, so the orchestrator denies these names as well as `read`/`grep`/`find`.
-- `pi-memory`: markdown memory and scratchpad (`memory_*`, `scratchpad`). Files live in the
-  `pi-state` volume.
-- `plannotator`: plan review (`plannotator_submit_plan`).
-- `rpiv-todo`, with its peer `rpiv-i18n` installed into `~/.pi/agent/node_modules`.
+- `pi-subagents` (folder `subagent`): delegation and the `subagent` tool.
+- `pi-permission-system`, `pi-sensitive-guard`: permissions and the bash guard.
+- `pi-web-access`: web search and fetch, for planner, architect, coder and supper.
+- `pi-lens`, `pi-fff`, `pi-memory`, `plannotator`: diagnostics, fuzzy find, memory and plan review.
 
 Not installed:
 
+- `pi-agent-router`: replaced by pi-subagents. It declares pi `^0.74` to `^0.80`, and the image runs pi 1.4.0.
+- `rpiv-todo`: work tracking is GitHub issues only.
 - `pi-background-tasks`: its peer range `^0.81 - ^0.84` excludes pi 1.x.
-- `remote-pi`: opt-in with `PI_REMOTE_PI=1`. It depends on its own
-  `@earendil-works/pi-coding-agent@^0.79.10`, and its mobile relay defaults to a community
-  server that can read routed plaintext. Enable it only with a relay you trust or your own.
+- `remote-pi`: opt-in with `PI_REMOTE_PI=1`. It bundles its own `@earendil-works/pi-coding-agent@^0.79.10`, a second copy next to the pi 1.4.0 host. Its default relay is a third-party server (`relay-rp1.jacobmoura.work`, the "community default" in its `config.js`). Set your own relay before enabling it.
 
-Compatibility: `pi-permission-system` 0.8.0 and `pi-agent-router` 0.9.0 declare
-`pi-coding-agent` `^0.74 - ^0.80`. The image pins pi 1.4.0, which is outside that range. Run
-the smoke test below before relying on permissions or delegation. If it fails, pin pi to a
-0.80.x in the Dockerfile (`PI_VERSION`). `pi-memory` needs `>=0.81.1`, so it will not load
-on 0.80.x.
+Compatibility: pi-subagents needs pi-ai 1.2.0 or newer, so the image stays on pi 1.4.0. `pi-permission-system` 0.8.0 and `pi-sensitive-guard` 0.5.0 still declare peer ranges up to pi 0.80. They are the pinned packages that do not list pi 1.x, so the smoke test below must pass before relying on bash or read rules.
 
 Smoke test after start:
 
-1. `docker exec -it dev-agent pi config` lists every extension folder.
-2. In `orchestrator`, ask it to read a file. It must refuse, because `read` is denied.
-3. Ask it to send a read-only lookup to `explore`. It must run.
+1. `docker exec -it dev-agent pi config` lists the `subagent` folder and `pi-permission-system`.
+2. Ask the orchestrator to read a file. It has no read tool to call, so it should delegate to `explore`.
+3. Ask: "Use explore to list the top-level files of this repo." A `subagent` call must appear, and the child's progress must show in the conversation.
+4. Ask `tester` to `cat` a `.env` file. The policy must refuse it.
 
-If the first two results are reversed, stop and check the extensions before you use the
-container.
+If 2 or 3 fails, stop and check the extensions before using the container.
 
-Config: `data/pi/router-config.json` (delegated extensions) and `data/pi/pi-permissions.jsonc`
-(policy).
+Config: `data/pi/settings.json` (`subagents`), `data/pi/subagent-config.json`, `data/pi/policy/` (`pi-permissions.jsonc` and the generated `agents/`), and `data/pi/APPEND_SYSTEM.md` (generated from the orchestrator prompt).
 
-Check what loaded: `docker exec -it dev-agent pi config` lists them.
+Not verified yet, to check in the container:
+
+- How `pi-permission-system` matches bash compound lines (`&&`, `|`) and resource-qualified paths such as `read:**/*.env`.
+- That pi 1.4.0 keeps the `<active_agent>` tag from `APPEND_SYSTEM.md` in the main session's system prompt.
+- Whether `mcp:` entries resolve against the servers in `data/shared/mcp/pi.json`.
 
 What differs from opencode:
 
-- pi has no built-in permission prompts. Rules come from `pi-permission-system`
-  (`data/pi/pi-permissions.jsonc`, plus `permission:` in each agent's
-  frontmatter). Subagent `ask` requests are forwarded to the main session.
-- Delegation goes only through the orchestrator's `task` tool
-  (`pi-agent-router`). Coder, tester and reviewer cannot call each other, so
-  verification runs through the orchestrator. opencode allowed coder to call
-  tester and reviewer directly.
-- `supper` cannot delegate to itself in pi. The router has no self-only mode.
-- `explore` is an explicit subagent with a `read`/`grep`/`find` allowlist.
-  opencode has it built in.
+- pi has no built-in permission prompts. Rules come from `pi-permission-system`. Subagent `ask` requests are forwarded to the main session.
+- Delegation is the `subagent` tool, used only by the main session. Children are the agents in `data/pi/agents`.
+- `explore` is a child with read-only tools (`read`, `grep`, `find`, `ls`) and a read-only allowlist for git and gh. opencode has it built in.
+- A child with `mcp:` tools is rejected at launch when one of those servers is not connected: pi-subagents requires every selected tool to be present. Remove the `mcp:` entry from that agent's `tools:` line to make it independent of MCP servers.
+- There is no agent switcher. writer, marketing and supper run only as child agents.
 - LSP (`lsp.dart`, `lsp.serverpod`) and the file watcher are not ported.
-
-Not verified yet, to check in the container with `pi` before relying on it:
-
-- How `pi-permission-system` matches bash compound lines (`&&`, `|`) and
-  resource-qualified paths such as `read:**/*.env`.
-- Whether agent-frontmatter bash rules add to the global list or replace it.
-  The guards are restated in each agent that allows `git push`, so the result
-  is safe either way.
-- That `pi-agent-router` finds all agents in `~/.pi/agent/agents`.
 
 ## Web UI for pi (pi-web)
 
@@ -467,6 +440,8 @@ Not verified yet, to check in the container with `pi` before relying on it:
 - Logs: `docker exec -it dev-agent tmux attach -t web`.
 
 ## Checks
+
+`python3 dev-agent/tests/check_pi_agents.py` checks the pi layout that pi-subagents and pi-permission-system depend on: tools allowlists, no nested delegation, and the policy split.
 
 `python3 dev-agent/tests/check_orchestrator_shell.py` simulates the opencode rules of
 `orchestrator` against the expectations in the script: which shell commands and

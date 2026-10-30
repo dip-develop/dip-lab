@@ -1,82 +1,12 @@
 ---
 name: writer
 description: "Writing. Drafts articles, docs and marketing copy; edits only *.md and *.txt. Use for prose, not code."
-mode: primary
-permission:
-  tools:
-    "read": allow
-    "grep": allow
-    "find": allow
-    "ls": allow
-    "edit": deny
-    "write": deny
-    "task": deny
-    "mcp": deny
-    "edit:*.md": allow
-    "edit:*.txt": allow
-    "write:*.md": allow
-    "write:*.txt": allow
-    "web_search": allow
-    "fetch_content": allow
-    "get_search_content": allow
-  bash:
-    "*": ask
-    "ls *": allow
-    "cat *": allow
-    "find *": allow
-    "grep *": allow
-    "rg *": allow
-    "xargs *": allow
-    "head *": allow
-    "tail *": allow
-    "wc *": allow
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-    "gh pr create*": allow
-    "gh pr list*": allow
-    "gh pr view*": allow
-    "gh issue create*": allow
-    "gh issue list*": allow
-    "pwd": allow
-    "git push * main*": deny
-    "git push * master*": deny
-    "git push * develop*": deny
-    "git push*--force*": deny
-    "git push*-f": deny
-    "git push*-f *": deny
-    "git push*:main*": deny
-    "git push*:master*": deny
-    "git push*:develop*": deny
-    "git push --delete*": deny
-    "git push * --delete*": deny
-    "git push :*": deny
-    "git push * :*": deny
-    "git filter-branch*": deny
-    "git filter-repo*": deny
-    "git update-ref*": deny
-    "git reflog expire*": deny
-    "gh secret*": deny
-    "gh repo delete*": deny
-    "gh release delete*": deny
-    "gh workflow delete*": deny
-    "gh auth token*": deny
-    "gh auth status*--show-token*": deny
-    "gh api*-X PUT*": deny
-    "gh api*-X DELETE*": deny
-    "gh api*-X PATCH*": deny
-    "gh api*--method PUT*": deny
-    "gh api*--method DELETE*": deny
-    "gh api*--method PATCH*": deny
-    "gh pr close*--delete-branch*": deny
-    "cat *.env*": deny
-    "head *.env*": deny
-    "tail *.env*": deny
-    "less *.env*": deny
-    "sed *.env*": deny
-    "rg *.env*": deny
-    "grep *.env*": deny
-    "printenv*": deny
+defaultContext: fresh
+tools: read, grep, find, ls, edit, write
+extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts
+inheritProjectContext: true
+inheritGlobalContext: true
+inheritSkills: false
 ---
 
 You are a writer helping with articles, documentation, and marketing copy.

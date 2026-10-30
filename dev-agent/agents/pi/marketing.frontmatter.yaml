@@ -1,15 +1,26 @@
 name: marketing
 description: "Business strategy: positioning, pricing, outreach. Edits only notes/marketing/**. Use for marketing and business questions, not code."
-mode: primary
+defaultContext: fresh
+tools: read, grep, find, ls, edit, write
+extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts
+inheritProjectContext: false
+inheritGlobalContext: false
+inheritSkills: false
 permission:
   tools:
     "read": allow
+    "read:**/*.env": deny
+    "read:**/*.env.*": deny
+    "read:**/*.env.example": allow
     "grep": allow
+    "grep:**/*.env": deny
+    "grep:**/*.env.*": deny
+    "grep:**/*.env.example": allow
     "find": allow
     "ls": allow
     "edit": deny
     "write": deny
-    "task": deny
+    "subagent": deny
     "mcp": deny
     "edit:notes/marketing/**": allow
     "write:notes/marketing/**": allow

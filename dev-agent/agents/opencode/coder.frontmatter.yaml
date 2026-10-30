@@ -140,7 +140,7 @@ permissions:
     resource: "echo *"
     effect: allow
   # The "|| true" idiom: fragment-checked compounds need it, same as
-  # echo/printf above (see AGENTS.md "Shell execution policy").
+  # echo/printf above (see the shell rules in the coder prompt).
   - action: shell
     resource: "true"
     effect: allow
@@ -368,6 +368,12 @@ permissions:
     effect: deny
   # gh: merging PRs and managing repo secrets/settings are operator actions
   # (Git Flow); last match wins, so these trail the broad "gh *" allow.
+  - action: "shell"
+    resource: "gh issue create*"
+    effect: allow
+  - action: "shell"
+    resource: "git ls-remote*"
+    effect: allow
   - action: shell
     resource: "gh pr merge*"
     effect: deny

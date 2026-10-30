@@ -1,6 +1,10 @@
 ---
 description: Switch the current project's repos to their flow base and fast-forward them
+agent: coder
+subagent: true
 ---
+If you are the orchestrator, hand the whole job below to one `coder` subagent call instead of running it yourself.
+
 
 **Dirty tree is a hard stop.** Before switching any repo's branch, run `git status
 --porcelain` there. If the output is non-empty, do NOT switch: leave the repo on its
@@ -55,8 +59,7 @@ to a parent directory looking for repos.
    the repo as no remote and skip the sync for it - still honour the dirty-tree
    guard and never fail the whole run.
 
-Keep every stage allow-listed (see "Shell execution policy: how permissions match
-a command" in `AGENTS.md`): enumerate the folder once, then issue separate
+Keep every stage allow-listed (one command per line, no loops): enumerate the folder once, then issue separate
 per-repo commands rather than writing a loop - a line starting with `for` / `while`
 / `if` asks in full, because there is no first command to match.
 

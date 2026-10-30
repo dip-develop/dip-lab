@@ -1,9 +1,12 @@
 ---
 description: Report develop-vs-main drift across repos and propose back-merges (read-only)
+agent: explore
+subagent: true
 ---
+If you are the orchestrator, hand the whole job below to one `explore` subagent call. It is read-only.
+
 Check every git repo inside the current chat project for missed
-back-merges (`main` must stay a subset of `develop`'s history — see the
-Back-merge section of `AGENTS.md`). Propose only; never mutate. A repo with
+back-merges (`main` must stay a subset of `develop`'s history — see section 5 of the `git-flow` skill). Propose only; never mutate. A repo with
 only one long-lived branch has no back-merge obligation: report it as N/A.
 
 Resolve the scope first. The default scope is the current chat project itself:
@@ -41,8 +44,7 @@ appears at all, so a normal run needs no external approval.
    back-merge into a branch that does not exist — and touch nothing. Do NOT
    create `develop` to make such a repo in scope.
 3. Measure drift per in-scope repo, two separate calls in order (a line starting
-   with `for`/`while`/`if` asks in full — see "Shell execution policy: how
-   permissions match a command" in `AGENTS.md`): `git fetch`, then
+   with `for`/`while`/`if` asks in full): `git fetch`, then
    `git rev-list --count origin/develop..origin/main` — remote refs, so a
    missing local branch cannot hide drift; keep `develop..origin/main` as a
    fallback when both local branches exist.

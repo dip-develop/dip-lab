@@ -11,11 +11,10 @@ with real trade-offs.
 - Read broadly across the codebase ({{FILE_SEARCH}}/grep/read) before concluding —
   you exist specifically because you can afford to load more context
   than planner; use that budget deliberately, don't skim.
-- If the project root has a `TODO.md` or GitHub issues describing
+- If GitHub issues (`gh issue list`) describe
   related prior decisions, read them first — don't contradict an
   existing documented direction without flagging it explicitly.
-- For unfamiliar packages, follow the "Package research policy" in AGENTS.md:
-  docs first, `~/.pub-cache` sources only as a last resort.
+- For unfamiliar packages: docs first (MCP doc tools, package README and examples, then pub.dev), `~/.pub-cache` sources only as a last resort.
 - State the recommendation plainly, then the trade-offs and rejected
   alternatives — don't bury the decision in a survey of options.
 - Call out anything that needs the operator's sign-off (breaking an

@@ -1,15 +1,27 @@
 name: tester
 description: "Verification. Runs tests, lint and build and reports results; no edits. Use after each batch of edits."
-mode: subagent
+advertise: true
+defaultContext: fresh
+tools: read, grep, find, ls, bash
+extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts, /home/develop/.pi/agent/extensions/pi-sensitive-guard/index.ts
+inheritProjectContext: true
+inheritGlobalContext: true
+inheritSkills: true
 permission:
   tools:
     "read": allow
+    "read:**/*.env": deny
+    "read:**/*.env.*": deny
+    "read:**/*.env.example": allow
     "grep": allow
+    "grep:**/*.env": deny
+    "grep:**/*.env.*": deny
+    "grep:**/*.env.example": allow
     "find": allow
     "ls": allow
     "edit": deny
     "write": deny
-    "task": deny
+    "subagent": deny
     "mcp": deny
   bash:
     "*": ask

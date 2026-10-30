@@ -114,8 +114,9 @@ services:
       - pi-state:/home/develop/.pi/agent
       - ./data/shared/AGENTS.md:/home/develop/.pi/agent/AGENTS.md
       - ./data/pi/settings.json:/home/develop/.pi/agent/settings.json
-      - ./data/pi/router-config.json:/home/develop/.pi/agent/router-config.json
-      - ./data/pi/pi-permissions.jsonc:/home/develop/.pi/agent/pi-permissions.jsonc
+      - ./data/pi/APPEND_SYSTEM.md:/home/develop/.pi/agent/APPEND_SYSTEM.md
+      - ./data/pi/subagent-config.json:/home/develop/.pi/agent/subagent-config.json
+      - ./data/pi/policy:/home/develop/.pi/policy
       - ./data/shared/mcp/pi.json:/home/develop/.pi/agent/mcp.json
       - ./data/pi/agents:/home/develop/.pi/agent/agents
       # State that must survive container recreation (./manager.sh update):
@@ -146,6 +147,9 @@ services:
       # pi: no update check, no telemetry (same posture as opencode update=disable).
       - PI_SKIP_VERSION_CHECK=1
       - PI_TELEMETRY=0
+      # pi-permission-system reads pi-permissions.jsonc and agents/<name>.md from here, not
+      # from the agent dir, so pi-subagents never sees the permission blocks.
+      - PI_PERMISSION_SYSTEM_POLICY_AGENT_DIR=/home/develop/.pi/policy
       # remote-pi (mobile remote control) is off unless set to 1. See README.
       - PI_REMOTE_PI=${PI_REMOTE_PI:-0}
       # pi-web: Basic Auth (user "pi"). Required: the container refuses to start

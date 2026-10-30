@@ -1,6 +1,5 @@
 name: orchestrator
 description: "Development coordination. Delegates planning, coding, testing and review to subagents; reads nothing itself. Use for any non-trivial feature or fix."
-mode: primary
 permission:
   tools:
     "read": deny
@@ -10,9 +9,13 @@ permission:
     "ffgrep": deny
     "fffind": deny
     "multi_grep": deny
+    "pilens_*": deny
+    "lens_*": deny
+    "source_check": deny
     "edit": ask
     "write": ask
-    "task": allow
+    "subagent": allow
+    "bg_wait": allow
     "mcp": deny
   bash:
     "*": ask
