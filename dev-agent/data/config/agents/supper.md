@@ -239,6 +239,30 @@ permissions:
   - action: "serverpod_*"
     resource: "*"
     effect: allow
+  # GitHub MCP (issues, pull requests, repo reads); authenticates with GH_TOKEN.
+  - action: "github_*"
+    resource: "*"
+    effect: allow
+  # GitHub MCP write/merge tools bypass the git and shell guards in this
+  # file; keep them denied. Last match wins.
+  - action: "github_merge_pull_request"
+    resource: "*"
+    effect: deny
+  - action: "github_push_files"
+    resource: "*"
+    effect: deny
+  - action: "github_create_or_update_file"
+    resource: "*"
+    effect: deny
+  - action: "github_delete_file"
+    resource: "*"
+    effect: deny
+  - action: "github_create_repository"
+    resource: "*"
+    effect: deny
+  - action: "github_fork_repository"
+    resource: "*"
+    effect: deny
 ---
 
 You are the supper agent — a full-autonomous senior developer.

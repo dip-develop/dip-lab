@@ -25,6 +25,14 @@ permission:
     "mcp__dart__*": allow
     "mcp__jaspr__*": allow
     "mcp__serverpod__*": allow
+    "mcp__github__*": allow
+    # GitHub MCP write/merge tools bypass the bash guards; keep them denied.
+    "mcp__github__merge_pull_request": deny
+    "mcp__github__push_files": deny
+    "mcp__github__create_or_update_file": deny
+    "mcp__github__delete_file": deny
+    "mcp__github__create_repository": deny
+    "mcp__github__fork_repository": deny
   bash:
     "*": ask
     "ls *": allow

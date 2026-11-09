@@ -2,7 +2,7 @@
 name: supper
 description: "Autonomous developer. Runs a whole task end-to-end without approval prompts. Use only when the user asks for unattended work."
 defaultContext: fresh
-tools: read, grep, find, ls, edit, write, bash, mcp:dart, mcp:jaspr, mcp:serverpod, web_search, fetch_content, get_search_content
+tools: read, grep, find, ls, edit, write, bash, mcp:dart, mcp:jaspr, mcp:serverpod, mcp:github, web_search, fetch_content, get_search_content
 extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts, /home/develop/.pi/agent/extensions/pi-sensitive-guard/index.ts, /home/develop/.pi/agent/extensions/pi-web-access/dist/index.js
 inheritProjectContext: true
 inheritGlobalContext: true
