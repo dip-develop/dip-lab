@@ -12,6 +12,13 @@
     "serverpod": {
       "command": "serverpod_mcp",
       "args": []
+    },
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GH_TOKEN}",
+        "X-MCP-Toolsets": "context,repos,issues,pull_requests"
+      }
     }
   }
 }

@@ -3,7 +3,7 @@ name: coder
 description: "Implementation. Edits files and runs allowed commands; no pushes or merges. Use for one planner step, which may touch several files."
 advertise: true
 defaultContext: fresh
-tools: read, grep, find, ls, edit, write, bash, mcp:dart, mcp:jaspr, mcp:serverpod, web_search, fetch_content, get_search_content
+tools: read, grep, find, ls, edit, write, bash, mcp:dart, mcp:jaspr, mcp:serverpod, mcp:github, web_search, fetch_content, get_search_content
 extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts, /home/develop/.pi/agent/extensions/pi-sensitive-guard/index.ts, /home/develop/.pi/agent/extensions/pi-web-access/dist/index.js
 inheritProjectContext: true
 inheritGlobalContext: true

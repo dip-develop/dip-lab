@@ -83,11 +83,15 @@
     // MCP tools are OFF for every agent by default. Each MCP server's tools
     // are named <server>_<tool>. The Code Mode dispatcher is "execute".
     // Agents that need docs-first lookups (coder, planner, architect,
-    // supper) re-allow these in their own frontmatter. The later rule wins.
+    // supper) re-allow these in their own frontmatter; the write-capable
+    // roles (coder, supper) also re-enable the non-destructive github_*
+    // tools for GitHub work, denying writes and merges after the allow.
+    // The later rule wins.
     { "action": "execute", "resource": "*", "effect": "deny" },
     { "action": "dart_*", "resource": "*", "effect": "deny" },
     { "action": "jaspr_*", "resource": "*", "effect": "deny" },
     { "action": "serverpod_*", "resource": "*", "effect": "deny" },
+    { "action": "github_*", "resource": "*", "effect": "deny" },
     // Secrets stay unreadable by default, even for agents with otherwise
     // broad read access.
     { "action": "read", "resource": "*", "effect": "allow" },

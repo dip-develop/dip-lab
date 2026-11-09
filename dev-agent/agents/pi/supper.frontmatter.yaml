@@ -1,7 +1,7 @@
 name: supper
 description: "Autonomous developer. Runs a whole task end-to-end without approval prompts. Use only when the user asks for unattended work."
 defaultContext: fresh
-tools: read, grep, find, ls, edit, write, bash, mcp:dart, mcp:jaspr, mcp:serverpod, web_search, fetch_content, get_search_content
+tools: read, grep, find, ls, edit, write, bash, mcp:dart, mcp:jaspr, mcp:serverpod, mcp:github, web_search, fetch_content, get_search_content
 extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts, /home/develop/.pi/agent/extensions/pi-sensitive-guard/index.ts, /home/develop/.pi/agent/extensions/pi-web-access/dist/index.js
 inheritProjectContext: true
 inheritGlobalContext: true
@@ -31,6 +31,14 @@ permission:
     "mcp__dart__*": allow
     "mcp__jaspr__*": allow
     "mcp__serverpod__*": allow
+    "mcp__github__*": allow
+    # GitHub MCP write/merge tools bypass the bash guards; keep them denied.
+    "mcp__github__merge_pull_request": deny
+    "mcp__github__push_files": deny
+    "mcp__github__create_or_update_file": deny
+    "mcp__github__delete_file": deny
+    "mcp__github__create_repository": deny
+    "mcp__github__fork_repository": deny
   bash:
     "*": allow
     "gh pr merge*": deny

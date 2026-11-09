@@ -363,6 +363,22 @@ Wiring:
 - opencode loads extra MCP definitions from `data/shared/mcp/opencode.jsonc`
   via `OPENCODE_CONFIG`. The objects merge on top of `opencode.jsonc`.
 - pi reads the same MCP definitions from `data/shared/mcp/pi.json`.
+- Both CLIs also register GitHub's hosted MCP server
+  (`https://api.githubcopilot.com/mcp/`), authenticated with the `GH_TOKEN`
+  already exported into the container (`${GH_TOKEN}` in `pi.json`,
+  `{env:GH_TOKEN}` in `opencode.jsonc`). The `X-MCP-Toolsets` header limits it
+  to `context,repos,issues,pull_requests` to protect the context budget. The
+  server is read-write on purpose: `repos` carries the file writes
+  (`create_or_update_file`, `push_files`, `delete_file`) and repository
+  creation/forking, `pull_requests` carries `merge_pull_request`, so only coder
+  and supper re-enable `github_*`. Those tools are explicitly denied after that
+  allow for both roles, so the MCP cannot bypass the git/shell guards; every
+  other agent keeps `github_*` denied, and merging PRs stays the operator's
+  call. Without a token the server does not connect, and
+  pi then refuses to launch a child whose `tools:` line lists `mcp:github` --
+  coder and supper cannot start until `GH_TOKEN` is set. A child can also fail
+  to launch if the server has not finished connecting: wait until pi reports
+  it connected, then retry once.
 
 Agents are written once and rendered for each tool:
 
@@ -412,7 +428,6 @@ Not verified yet, to check in the container:
 
 - How `pi-permission-system` matches bash compound lines (`&&`, `|`) and resource-qualified paths such as `read:**/*.env`.
 - That pi 1.4.0 keeps the `<active_agent>` tag from `APPEND_SYSTEM.md` in the main session's system prompt.
-- Whether `mcp:` entries resolve against the servers in `data/shared/mcp/pi.json`.
 
 What differs from opencode:
 
