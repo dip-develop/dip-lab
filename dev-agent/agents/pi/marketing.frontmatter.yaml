@@ -1,7 +1,7 @@
 name: marketing
 description: "Business strategy: positioning, pricing, outreach. Edits only notes/marketing/**. Use for marketing and business questions, not code."
 defaultContext: fresh
-tools: read, grep, find, ls, edit, write
+tools: read, grep, find, ls, edit, write, mcp:gtm, mcp:google_analytics
 extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts
 inheritProjectContext: false
 inheritGlobalContext: false
@@ -21,7 +21,9 @@ permission:
     "edit": deny
     "write": deny
     "subagent": deny
-    "mcp": deny
+    "mcp": allow
+    "mcp__gtm__*": allow
+    "mcp__google_analytics__*": allow
     "edit:notes/marketing/**": allow
     "write:notes/marketing/**": allow
     "web_search": allow

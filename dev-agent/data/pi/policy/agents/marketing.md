@@ -15,7 +15,9 @@ permission:
     "edit": deny
     "write": deny
     "subagent": deny
-    "mcp": deny
+    "mcp": allow
+    "mcp__gtm__*": allow
+    "mcp__google_analytics__*": allow
     "edit:notes/marketing/**": allow
     "write:notes/marketing/**": allow
     "web_search": allow

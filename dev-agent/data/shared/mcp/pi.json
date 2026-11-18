@@ -19,6 +19,16 @@
         "Authorization": "Bearer ${GH_TOKEN}",
         "X-MCP-Toolsets": "context,repos,issues,pull_requests"
       }
+    },
+    "gtm": {
+      "url": "https://mcp.gtmeditor.com"
+    },
+    "google_analytics": {
+      "command": "pipx",
+      "args": [
+        "run",
+        "analytics-mcp"
+      ]
     }
   }
 }

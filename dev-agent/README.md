@@ -379,6 +379,16 @@ Wiring:
   coder and supper cannot start until `GH_TOKEN` is set. A child can also fail
   to launch if the server has not finished connecting: wait until pi reports
   it connected, then retry once.
+- `gtm` is the Google Tag Manager MCP
+  (`https://mcp.gtmeditor.com`, Streamable HTTP + Google OAuth; safe by design:
+  destructive operations such as publish and deletes require `confirm`), and
+  `google_analytics` is the Google Analytics MCP
+  (`pipx run analytics-mcp`, stdio, Google Application Default Credentials or a
+  service account, read-only unless `--allow-write`). Both are enabled for the
+  marketing agent only; GTM carries built-in safety (publish/destructive needs
+  confirm) and analytics stays read-only unless `--allow-write`. Google
+  Analytics needs credentials (`GOOGLE_APPLICATION_CREDENTIALS` / service
+  account) or a deployed instance; GTM uses OAuth via Google sign-in.
 
 Agents are written once and rendered for each tool:
 

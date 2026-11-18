@@ -92,6 +92,8 @@
     { "action": "jaspr_*", "resource": "*", "effect": "deny" },
     { "action": "serverpod_*", "resource": "*", "effect": "deny" },
     { "action": "github_*", "resource": "*", "effect": "deny" },
+    { "action": "gtm_*", "resource": "*", "effect": "deny" },
+    { "action": "google_analytics_*", "resource": "*", "effect": "deny" },
     // Secrets stay unreadable by default, even for agents with otherwise
     // broad read access.
     { "action": "read", "resource": "*", "effect": "allow" },

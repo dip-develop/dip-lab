@@ -31,6 +31,20 @@
         },
         "oauth": false,
         "disabled": false
+      },
+      "gtm": {
+        "type": "remote",
+        "url": "https://mcp.gtmeditor.com",
+        "disabled": false
+      },
+      "google_analytics": {
+        "type": "local",
+        "command": [
+          "pipx",
+          "run",
+          "analytics-mcp"
+        ],
+        "disabled": false
       }
     }
   }

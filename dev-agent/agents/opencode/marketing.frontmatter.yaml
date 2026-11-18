@@ -19,3 +19,13 @@ permissions:
   - action: subagent
     resource: "*"
     effect: deny
+  # Marketing MCP tools (Google Analytics + GTM) are re-enabled for this role.
+  - action: "execute"
+    resource: "*"
+    effect: allow
+  - action: "gtm_*"
+    resource: "*"
+    effect: allow
+  - action: "google_analytics_*"
+    resource: "*"
+    effect: allow

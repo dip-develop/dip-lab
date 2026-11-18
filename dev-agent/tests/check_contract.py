@@ -9,6 +9,9 @@ The GitHub MCP server is also pinned here: denied for every agent by default, re
 the write-capable coder and supper, with its write/merge tools denied again after that allow, and
 configured with an environment placeholder rather than a literal token.
 
+The Google Analytics and GTM MCP servers are pinned the same way: denied by default and enabled for
+the marketing agent only.
+
 Run from the repo root: python3 dev-agent/tests/check_contract.py
 Exit code 1 if any check fails.
 """
@@ -148,6 +151,49 @@ for name, gh, auth in (
 for name, raw in (("opencode", raw_oc), ("pi", raw_pi)):
     prefixes = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_")
     check(not any(prefix in raw for prefix in prefixes), f"{name} MCP: no literal GitHub token")
+
+# Google Analytics + GTM MCP servers: same deny-by-default posture, both enabled
+# for the marketing agent only.
+check('{ "action": "gtm_*", "resource": "*", "effect": "deny" }' in oc,
+      "opencode: gtm_* denied by default")
+check('{ "action": "google_analytics_*", "resource": "*", "effect": "deny" }' in oc,
+      "opencode: google_analytics_* denied by default")
+
+for agent in ("architect", "coder", "planner", "orchestrator", "reviewer", "supper", "tester", "writer", "marketing"):
+    fm = text(f"agents/opencode/{agent}.frontmatter.yaml")
+    if agent == "marketing":
+        check('- action: "execute"' in fm and '- action: "gtm_*"' in fm and '- action: "google_analytics_*"' in fm,
+              "opencode marketing: MCP allows present")
+    else:
+        check("gtm_*" not in fm and "google_analytics_*" not in fm,
+              f"opencode {agent}: no marketing MCP tools")
+
+for agent in ("architect", "planner", "explore", "orchestrator", "reviewer", "tester", "writer"):
+    check("mcp:gtm" not in text(f"agents/pi/{agent}.frontmatter.yaml") and
+          "mcp:google_analytics" not in text(f"agents/pi/{agent}.frontmatter.yaml"),
+          f"pi {agent}: no google_analytics/gtm MCP tools")
+    check("mcp__gtm__" not in text(f"data/pi/policy/agents/{agent}.md") and
+          "mcp__google_analytics__" not in text(f"data/pi/policy/agents/{agent}.md"),
+          f"pi {agent}: no google_analytics/gtm MCP policy")
+check("mcp:gtm" in text("agents/pi/marketing.frontmatter.yaml") and
+      "mcp:google_analytics" in text("agents/pi/marketing.frontmatter.yaml"),
+      "pi marketing: google_analytics/gtm MCP enabled")
+check('"mcp__gtm__*": allow' in text("data/pi/policy/agents/marketing.md") and
+      '"mcp__google_analytics__*": allow' in text("data/pi/policy/agents/marketing.md"),
+      "pi marketing: google_analytics/gtm MCP policy allows present")
+
+# Google Analytics + GTM MCP configs: pinned endpoints / commands.
+opencode_servers = strip_jsonc_lines(raw_oc)["mcp"]["servers"]
+check(opencode_servers["gtm"]["type"] == "remote" and opencode_servers["gtm"]["url"] == "https://mcp.gtmeditor.com",
+      "opencode MCP: gtm server url is pinned")
+check(opencode_servers["google_analytics"]["type"] == "local" and opencode_servers["google_analytics"]["command"][0] == "pipx"
+      and opencode_servers["google_analytics"]["command"][1:] == ["run", "analytics-mcp"],
+      "opencode MCP: google_analytics server command is pipx run analytics-mcp")
+
+pi_servers = json.loads(raw_pi)["mcpServers"]
+check(pi_servers["gtm"]["url"] == "https://mcp.gtmeditor.com", "pi MCP: gtm server url is pinned")
+check(pi_servers["google_analytics"]["command"] == "pipx" and pi_servers["google_analytics"]["args"] == ["run", "analytics-mcp"],
+      "pi MCP: google_analytics server command is pipx run analytics-mcp")
 
 passed = sum(results)
 print(f"{passed}/{len(results)} checks passed" if all(results)
