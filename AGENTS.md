@@ -1,6 +1,6 @@
 # Docker Compose Lab — Agent Guide
 
-Self-hosted home-lab: 11 Docker Compose services on a single Linux host, orchestrated by `manager.sh`. Each service is a subdirectory with its own `docker-compose.yml`, gitignored `.env`, and `.env.example` template. Pure YAML + shell — no test suite, CI, linter, or codegen. Verify `manager.sh`/compose changes with the global dry-run flag: `./manager.sh -n <command>`.
+Self-hosted home-lab: 12 Docker Compose services on a single Linux host, orchestrated by `manager.sh`. Each service is a subdirectory with its own `docker-compose.yml`, gitignored `.env`, and `.env.example` template. Pure YAML + shell — no test suite, CI, linter, or codegen. Verify `manager.sh`/compose changes with the global dry-run flag: `./manager.sh -n <command>`.
 
 ## Boot Order (matters)
 
@@ -44,7 +44,7 @@ Examples: `./manager.sh update-all --filter '^auto|cloud$'` (regex is unanchored
 
 ## Services & Profiles
 
-Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `proxy`, `monitoring`, `passwords`, `containers`, `cloud`, `docs`, `automation`, `gallery`, `ai-agent`, `dev-agent`. Not every directory is a service — `llm/` is data-only and `networks.yml` is unused (networks live in `manager.sh`).
+Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `proxy`, `monitoring`, `passwords`, `containers`, `cloud`, `docs`, `automation`, `gallery`, `ai-agent`, `dev-agent`, `gtm-mcp`. Not every directory is a service — `llm/` is data-only and `networks.yml` is unused (networks live in `manager.sh`).
 
 - **`.disabled_services`** (project root, gitignored) — one service per line; comments/blank lines ignored. Disabled services can still be targeted explicitly: `./manager.sh start <svc>`.
 - `./manager.sh profile <name>` **overwrites** `.disabled_services` with a copy of `.profiles/<name>` (not a merge).
@@ -53,7 +53,7 @@ Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `p
   - `default` — everyday stack; disables `monitoring` and `automation`, includes `dev-agent`
   - `dev` — disables `monitoring`, `cloud`, `docs`, `gallery`
   - `media` — disables `passwords` and `ai-agent`
-  - `no-ai` — disables `ai-agent` and `dev-agent`
+  - `no-ai` — disables `ai-agent`, `dev-agent` and `gtm-mcp`
   - `full` — all services enabled (empty file)
 
 ## Conventions
@@ -80,7 +80,7 @@ Services are exactly the dirs in `SERVICES_ALL` in `manager.sh`: `databases`, `p
 
 ## Locally Built Images
 
-`dev-agent` and `docs` have `build:` sections (local tags like `diplab/dev-agent:local`):
+`dev-agent`, `docs` and `gtm-mcp` have `build:` sections (local tags like `diplab/dev-agent:local`):
 - `./manager.sh build <svc>` to build/rebuild.
 - `./manager.sh update <svc>` detects `build:` and rebuilds instead of pulling.
 

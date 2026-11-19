@@ -1,0 +1,76 @@
+# gtm-mcp: self-hosted Google Tag Manager MCP server.
+#
+# Upstream: github.com/paolobietolini/gtm-mcp-server (BSD-3-Clause).
+# Replaces the public https://mcp.gtmeditor.com instance, which shuts down on
+# 2026-11-30 and is the only hosted instance upstream offers.
+#
+# S2S (service-account) mode: the server calls the GTM API as a Google service
+# account, and every MCP client must present SERVICE_ACCOUNT_API_KEY as a
+# bearer token. No OAuth, no browser login, so it works headless and survives
+# restarts. Started by `./manager.sh start gtm-mcp` (or with all services).
+#
+# Consumer: the dev-agent `marketing` role (`mcp:gtm` in pi, `gtm_*` tools in
+# opencode), which reaches it as http://gtm-mcp:8080/ over the `internal`
+# network.
+
+services:
+  gtm-mcp:
+    build:
+      context: .
+      args:
+        # Upstream release to wrap, WITHOUT the leading `v`.
+        GTM_MCP_VERSION: "${GTM_MCP_VERSION:-1.13.0}"
+    image: diplab/gtm-mcp:local
+    container_name: gtm-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Only used by the OAuth metadata endpoints, which s2s mode does not
+      # serve; it must still be a valid URL. Override when the service is
+      # reached through a proxy or a different hostname.
+      - BASE_URL=${GTM_MCP_BASE_URL:-http://gtm-mcp:8080}
+      - PORT=8080
+      # Shared secret every MCP client must send as
+      # `Authorization: Bearer <key>`. Required: with an empty key and no
+      # service-account credentials the server would exit(1) at startup
+      # ("s2s_mode_failed"), and an unauthenticated MCP endpoint on the
+      # internal network would be worse than a stopped container. Compose
+      # therefore refuses to create it until this is set in gtm-mcp/.env.
+      - SERVICE_ACCOUNT_API_KEY=${GTM_MCP_API_KEY:?set GTM_MCP_API_KEY in gtm-mcp/.env, see .env.example}
+      # Service-account key JSON, single line. Leave empty when credentials
+      # come from a mounted file via GOOGLE_APPLICATION_CREDENTIALS
+      # (uncomment the volume below in that case).
+      - GOOGLE_SERVICE_ACCOUNT_KEY_JSON=${GTM_MCP_SERVICE_ACCOUNT_JSON:-}
+      # Tool families advertised over MCP. The default upstream surface is 64
+      # tools and ~78 KB of schemas, which the client cannot trim, so this is
+      # deliberately narrow: inspect the workspace and edit entities. Versioning
+      # and publishing stay out (add `version-admin` to enable
+      # create_version / publish_version); account and container
+      # administration stay out too.
+      - GTM_TOOL_GROUPS=${GTM_MCP_TOOL_GROUPS:-accounts,workspaces,tags,triggers,variables,folders}
+      - LOG_LEVEL=${GTM_MCP_LOG_LEVEL:-info}
+      # Read-only alternative to GOOGLE_SERVICE_ACCOUNT_KEY_JSON.
+      # - GOOGLE_APPLICATION_CREDENTIALS=/run/gtm-mcp/sa.json
+    # volumes:
+    #   # Uncomment together with GOOGLE_APPLICATION_CREDENTIALS above; the
+    #   # file must exist before the first start or Docker creates a
+    #   # directory in its place.
+    #   - ./data/sa.json:/run/gtm-mcp/sa.json:ro
+
+    networks:
+      - internal
+
+    security_opt:
+      - no-new-privileges:true
+
+    # No ports: only containers on the `internal` network talk to it.
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  internal:
+    external: true

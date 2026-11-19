@@ -148,12 +148,15 @@ for name, gh, auth in (
           f"{name} MCP: github server reads GH_TOKEN from the environment")
     check(gh["headers"]["X-MCP-Toolsets"] == "context,repos,issues,pull_requests",
           f"{name} MCP: github toolsets pinned")
+# No literal secrets in either MCP config (GitHub token, Google API keys).
 for name, raw in (("opencode", raw_oc), ("pi", raw_pi)):
-    prefixes = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_")
-    check(not any(prefix in raw for prefix in prefixes), f"{name} MCP: no literal GitHub token")
+    prefixes = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "AIza")
+    check(not any(prefix in raw for prefix in prefixes), f"{name} MCP: no literal token")
 
-# Google Analytics + GTM MCP servers: same deny-by-default posture, both enabled
-# for the marketing agent only.
+# Google Analytics + GTM MCP servers: deny-by-default, marketing only.
+# GTM is the self-hosted gtm-mcp service (shared bearer secret); Google
+# Analytics is the pipx-installed analytics-mcp, shipped disabled until Google
+# credentials exist.
 check('{ "action": "gtm_*", "resource": "*", "effect": "deny" }' in oc,
       "opencode: gtm_* denied by default")
 check('{ "action": "google_analytics_*", "resource": "*", "effect": "deny" }' in oc,
@@ -168,6 +171,8 @@ for agent in ("architect", "coder", "planner", "orchestrator", "reviewer", "supp
         check("gtm_*" not in fm and "google_analytics_*" not in fm,
               f"opencode {agent}: no marketing MCP tools")
 
+# pi: only gtm is in marketing's tools line - google_analytics is disabled and
+# pi refuses to launch a child whose tools list an unconnected server.
 for agent in ("architect", "planner", "explore", "orchestrator", "reviewer", "tester", "writer"):
     check("mcp:gtm" not in text(f"agents/pi/{agent}.frontmatter.yaml") and
           "mcp:google_analytics" not in text(f"agents/pi/{agent}.frontmatter.yaml"),
@@ -175,25 +180,41 @@ for agent in ("architect", "planner", "explore", "orchestrator", "reviewer", "te
     check("mcp__gtm__" not in text(f"data/pi/policy/agents/{agent}.md") and
           "mcp__google_analytics__" not in text(f"data/pi/policy/agents/{agent}.md"),
           f"pi {agent}: no google_analytics/gtm MCP policy")
-check("mcp:gtm" in text("agents/pi/marketing.frontmatter.yaml") and
-      "mcp:google_analytics" in text("agents/pi/marketing.frontmatter.yaml"),
-      "pi marketing: google_analytics/gtm MCP enabled")
+check("mcp:google_analytics" not in text("agents/pi/marketing.frontmatter.yaml"),
+      "pi marketing: google_analytics not in the tools line while disabled")
+check("mcp:gtm" in text("agents/pi/marketing.frontmatter.yaml"),
+      "pi marketing: gtm MCP enabled")
 check('"mcp__gtm__*": allow' in text("data/pi/policy/agents/marketing.md") and
       '"mcp__google_analytics__*": allow' in text("data/pi/policy/agents/marketing.md"),
-      "pi marketing: google_analytics/gtm MCP policy allows present")
+      "pi marketing: gtm/google_analytics MCP policy allows present")
 
-# Google Analytics + GTM MCP configs: pinned endpoints / commands.
+# Google Analytics + GTM MCP configs: pinned endpoints, bearer secret, and
+# analytics disabled in both CLIs until credentials exist.
 opencode_servers = strip_jsonc_lines(raw_oc)["mcp"]["servers"]
-check(opencode_servers["gtm"]["type"] == "remote" and opencode_servers["gtm"]["url"] == "https://mcp.gtmeditor.com",
-      "opencode MCP: gtm server url is pinned")
-check(opencode_servers["google_analytics"]["type"] == "local" and opencode_servers["google_analytics"]["command"][0] == "pipx"
-      and opencode_servers["google_analytics"]["command"][1:] == ["run", "analytics-mcp"],
-      "opencode MCP: google_analytics server command is pipx run analytics-mcp")
+check(opencode_servers["gtm"]["type"] == "remote" and opencode_servers["gtm"]["url"] == "http://gtm-mcp:8080/",
+      "opencode MCP: gtm server url is the self-hosted service")
+check(opencode_servers["gtm"]["headers"]["Authorization"] == "Bearer {env:GTM_MCP_API_KEY}",
+      "opencode MCP: gtm server reads GTM_MCP_API_KEY from the environment")
+check(opencode_servers["gtm"].get("oauth") is False,
+      "opencode MCP: gtm server does not fall back to OAuth")
+check(opencode_servers["google_analytics"]["type"] == "local"
+      and opencode_servers["google_analytics"]["command"] == ["analytics-mcp"]
+      and opencode_servers["google_analytics"].get("disabled") is True,
+      "opencode MCP: google_analytics is the pipx shim, disabled until credentials exist")
 
 pi_servers = json.loads(raw_pi)["mcpServers"]
-check(pi_servers["gtm"]["url"] == "https://mcp.gtmeditor.com", "pi MCP: gtm server url is pinned")
-check(pi_servers["google_analytics"]["command"] == "pipx" and pi_servers["google_analytics"]["args"] == ["run", "analytics-mcp"],
-      "pi MCP: google_analytics server command is pipx run analytics-mcp")
+check(pi_servers["gtm"]["url"] == "http://gtm-mcp:8080/",
+      "pi MCP: gtm server url is the self-hosted service")
+check(pi_servers["gtm"]["headers"]["Authorization"] == "Bearer ${GTM_MCP_API_KEY}",
+      "pi MCP: gtm server reads GTM_MCP_API_KEY from the environment")
+check(pi_servers["google_analytics"]["command"] == "analytics-mcp"
+      and pi_servers["google_analytics"].get("enabled") is False,
+      "pi MCP: google_analytics is the pipx shim, disabled until credentials exist")
+
+# No literal secrets in either MCP config.
+for name, raw in (("opencode", raw_oc), ("pi", raw_pi)):
+    prefixes = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "AIza")
+    check(not any(prefix in raw for prefix in prefixes), f"{name} MCP: no literal token")
 
 passed = sum(results)
 print(f"{passed}/{len(results)} checks passed" if all(results)

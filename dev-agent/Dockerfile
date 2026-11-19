@@ -50,12 +50,18 @@ ARG GIT_AUTHOR_EMAIL=dev-agent@diplab.local
 # directly; python3-yaml would pull it in as a dependency anyway, but the
 # base block names its tools outright rather than leaning on transitive
 # pulls.
+#
+# pipx + python3-venv: the Google Analytics MCP server (`analytics-mcp` on
+# PyPI) is a Python app, and pipx is its documented install method. The
+# package is installed below into ~/.local/bin so the `analytics-mcp` shim
+# survives `./manager.sh update dev-agent`; without pipx in the image the
+# `google_analytics` MCP entry could only ever fail to start.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates git openssh-client tmux unzip xz-utils \
         chromium libglu1-mesa libgtk-3-dev mesa-utils clang cmake \
         ninja-build pkg-config \
         postgresql-client default-mysql-client redis-tools \
-        python3 python3-yaml \
+        python3 python3-yaml python3-venv pipx \
         sudo \
     && rm -rf /var/lib/apt/lists/*
 
@@ -222,6 +228,21 @@ RUN for tool in psql mysql mariadb redis-cli; do \
     done
 
 ENV PATH="/home/develop/.local/bin:${PATH}"
+
+# Google Analytics MCP server (`analytics-mcp`, see
+# data/shared/mcp/opencode.jsonc -> google_analytics). Installed with pipx as
+# the develop user so the shim lands in ~/.local/bin, which is on PATH above:
+# the MCP entry then runs `analytics-mcp` directly instead of resolving the
+# package on every start.
+#
+# Pinned like the other CLIs: a `pipx run` at runtime would fetch whatever
+# PyPI serves that day. The MCP entry is disabled by default (see the shared
+# mcp config) because the server also needs Google credentials -
+# GOOGLE_APPLICATION_CREDENTIALS or a service account - which are per-install
+# secrets and not part of this image.
+ARG ANALYTICS_MCP_VERSION=1.1.0
+RUN pipx install "analytics-mcp==${ANALYTICS_MCP_VERSION}" \
+    && test -x /home/develop/.local/bin/analytics-mcp
 
 # opencode - the first agent CLI in this box, not the only one.
 # Add more CLI installs here later without touching anything above.

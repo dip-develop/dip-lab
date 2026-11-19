@@ -21,14 +21,15 @@
       }
     },
     "gtm": {
-      "url": "https://mcp.gtmeditor.com"
+      "url": "http://gtm-mcp:8080/",
+      "headers": {
+        "Authorization": "Bearer ${GTM_MCP_API_KEY}"
+      }
     },
     "google_analytics": {
-      "command": "pipx",
-      "args": [
-        "run",
-        "analytics-mcp"
-      ]
+      "command": "analytics-mcp",
+      "args": [],
+      "enabled": false
     }
   }
 }

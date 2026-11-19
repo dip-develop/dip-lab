@@ -4,3 +4,5 @@
 # any LLM gateway or agent runtime running.
 ai-agent
 dev-agent
+# gtm-mcp serves dev-agent only, so it goes with it.
+gtm-mcp
