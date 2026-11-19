@@ -32,7 +32,8 @@ services:
       - BASE_URL=${GTM_MCP_BASE_URL:-http://gtm-mcp:8080}
       - PORT=8080
       # Shared secret every MCP client must send as
-      # `Authorization: Bearer <key>`. Required: with an empty key and no
+      # `Authorization: Bearer <key>`, sourced from GTM_MCP_API_KEY in .env.
+      # Required: with an empty key and no
       # service-account credentials the server would exit(1) at startup
       # ("s2s_mode_failed"), and an unauthenticated MCP endpoint on the
       # internal network would be worse than a stopped container. Compose

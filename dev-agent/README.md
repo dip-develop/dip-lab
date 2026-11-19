@@ -389,8 +389,9 @@ Wiring:
   `https://mcp.gtmeditor.com` instance it replaces is shut down on 2026-11-30.
   It runs in service-account mode: the container authenticates to the GTM API
   as a Google service account, and every MCP client must send the shared
-  secret as `Authorization: Bearer`. Set `SERVICE_ACCOUNT_API_KEY` in
-  `gtm-mcp/.env` and the same value as `GTM_MCP_API_KEY` in `dev-agent/.env`
+  secret as `Authorization: Bearer`. Set `GTM_MCP_API_KEY` in `gtm-mcp/.env`
+  (the server reads it as `SERVICE_ACCOUNT_API_KEY`) and the same value as
+  `GTM_MCP_API_KEY` in `dev-agent/.env`
   (the server answers 401 to anything else; `compose` refuses to start it
   without a key rather than serving MCP unauthenticated). The advertised tool
   groups are narrowed to `accounts,workspaces,tags,triggers,variables,folders`
