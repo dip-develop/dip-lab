@@ -20,6 +20,19 @@ permissions:
   - action: subagent
     resource: "*"
     effect: deny
+  # Marketing MCP tools are re-enabled for this role: GTM (self-hosted
+  # gtm-mcp) and Google Analytics. analytics is disabled in the shared mcp
+  # config until Google credentials exist - the allow is kept so enabling it
+  # is one flag, not a permission edit.
+  - action: "execute"
+    resource: "*"
+    effect: allow
+  - action: "gtm_*"
+    resource: "*"
+    effect: allow
+  - action: "google_analytics_*"
+    resource: "*"
+    effect: allow
 ---
 
 You are a business/marketing strategist advising on a software product or service.

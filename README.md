@@ -20,6 +20,7 @@ proxy.
 | `gallery/` | Immich server + ML (photo gallery) |
 | `ai-agent/` | Hermes AI agent + dashboard |
 | `dev-agent/` | Developer workstation container: Flutter SDK + opencode CLI (in `default` profile) |
+| `gtm-mcp/` | Self-hosted Google Tag Manager MCP server for the dev-agent marketing role |
 
 ## Quick start
 
@@ -156,16 +157,16 @@ enable):
   app services. Use for the very first start, or a host that only
   runs infrastructure.
 - `default` — everyday stack: `core` + `passwords` + `ai-agent` +
-  `cloud` + `docs` + `gallery` + `dev-agent` (9 services).
+  `cloud` + `docs` + `gallery` + `dev-agent` + `gtm-mcp` (10 services).
   Monitoring and automation are situational and are not included.
 - `media` — `default` + `monitoring` + `automation` (Prometheus,
-  Grafana, Loki, Promtail, cAdvisor, n8n). 9 services.
+  Grafana, Loki, Promtail, cAdvisor, n8n). 10 services.
 - `dev` — `default` + `automation`. Active development without the
-  heavyweight media services (7 services).
-- `no-ai` — everything except `ai-agent` and `dev-agent` (9 services).
+  heavyweight media services (8 services).
+- `no-ai` — everything except `ai-agent`, `dev-agent` and `gtm-mcp` (9 services).
   Use on a host where you don't want any LLM gateway or agent
   runtime.
-- `full` — everything enabled (11 services).
+- `full` — everything enabled (12 services).
 
 `dev-agent` is included in `default`, `media`, `dev`, and `full`. It
 is excluded from `core` (no app services) and `no-ai` (per the

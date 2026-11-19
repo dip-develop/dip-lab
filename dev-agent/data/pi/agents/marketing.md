@@ -2,7 +2,7 @@
 name: marketing
 description: "Business strategy: positioning, pricing, outreach. Edits only notes/marketing/**. Use for marketing and business questions, not code."
 defaultContext: fresh
-tools: read, grep, find, ls, edit, write
+tools: read, grep, find, ls, edit, write, mcp:gtm
 extensions: /home/develop/.pi/agent/extensions/pi-permission-system/index.ts
 inheritProjectContext: false
 inheritGlobalContext: false

@@ -269,16 +269,18 @@ it applies to every role. To pin a role to a different model, add a
 `model:` line to that agent's frontmatter. Use the `provider/model` ID that
 `/models` shows.
 
-| Agent | Mode | Can launch | Reads code | Edits | Shell | MCP docs |
+| Agent | Mode | Can launch | Reads code | Edits | Shell | MCP tools |
 |---|---|---|---|---|---|---|
 | `orchestrator` | primary (default) | planner, coder, tester, reviewer, architect, explore | no (delegates) | ask | status and PR read commands, git | no |
-| `planner` | subagent | none | yes | no | no | yes |
-| `architect` | subagent | none | yes | no | no | yes |
+| `planner` | subagent | none | yes | no | no | docs (`dart`, `jaspr`, `serverpod`) |
+| `architect` | subagent | none | yes | no | no | docs (`dart`, `jaspr`, `serverpod`) |
 | `explore` | built-in subagent | none | yes | no | no | no |
-| `coder` | subagent | tester, reviewer | yes | yes | yes | yes |
+| `coder` | subagent | tester, reviewer | yes | yes | yes | docs + `github` |
 | `tester` | subagent | none | yes | no | test and lint commands | no |
 | `reviewer` | subagent | none | yes | no | read-only git and lint | no |
-| `supper` | all | itself | yes | yes | yes (guards kept) | yes |
+| `supper` | all | itself | yes | yes | yes (guards kept) | docs + `github` |
+| `marketing` | primary | none | yes | notes/marketing only | no | docs (`dart`, `jaspr`) + `gtm` |
+| `writer` | primary | none | yes | *.md/*.txt only | ask | no |
 
 How the rules combine: the shared `permissions` list in `opencode.jsonc`
 applies to every agent first. Each agent's own `permissions` are appended
@@ -291,9 +293,10 @@ yourself, type its name with `@` in the chat, for example `@planner` or
 `@explore`. The orchestrator launches the rest.
 
 MCP tools are off by default. Each server's tools are named
-`<server>_<tool>`, and the Code Mode dispatcher is `execute`. Only the agents
-listed above re-enable them. Check the tool list of a session if you change
-this.
+`<server>_<tool>`, and the Code Mode dispatcher is `execute`. The table above
+lists, per agent, which servers are re-enabled; pi expresses the same thing as
+`mcp:<server>` entries in the agent's `tools:` line. Check the tool list of a
+session if you change this.
 
 Delegation has a cost. Each subagent call starts a fresh session with its own
 instructions and tool definitions, and every model turn is billed. Use
@@ -379,6 +382,38 @@ Wiring:
   coder and supper cannot start until `GH_TOKEN` is set. A child can also fail
   to launch if the server has not finished connecting: wait until pi reports
   it connected, then retry once.
+- `gtm` is the Google Tag Manager MCP, self-hosted as the `gtm-mcp` service
+  in this repo (`http://gtm-mcp:8080/`, Streamable HTTP). Upstream
+  (github.com/paolobietolini/gtm-mcp-server) publishes no image, so
+  `gtm-mcp/Dockerfile` wraps its checksum-verified release binary; the public
+  `https://mcp.gtmeditor.com` instance it replaces is shut down on 2026-11-30.
+  It runs in service-account mode: the container authenticates to the GTM API
+  as a Google service account, and every MCP client must send the shared
+  secret as `Authorization: Bearer`. Set `GTM_MCP_API_KEY` in `gtm-mcp/.env`
+  (the server reads it as `SERVICE_ACCOUNT_API_KEY`) and the same value as
+  `GTM_MCP_API_KEY` in `dev-agent/.env`
+  (the server answers 401 to anything else; `compose` refuses to start it
+  without a key rather than serving MCP unauthenticated). The advertised tool
+  groups are narrowed to `accounts,workspaces,tags,triggers,variables,folders`
+  because the client cannot trim the schema list - the full surface is 64
+  tools and ~78 KB - and versioning/publishing stay out; add `version-admin`
+  to `GTM_MCP_TOOL_GROUPS` when a release needs to go live. Start it with
+  `./manager.sh start gtm-mcp` (or `./manager.sh start` for the whole stack) -
+  it is a separate service, so `start dev-agent` alone leaves it down. Under
+  pi, `marketing` lists `mcp:gtm` in its `tools:` line, so the child cannot be
+  launched while the server is unreachable - check `./manager.sh status gtm-mcp`
+  first if a marketing run fails to start.
+- `google_analytics` is the Google Analytics MCP (`analytics-mcp`, stdio,
+  installed into the image with pipx). It ships **disabled**: the server needs
+  Google credentials that are per-install secrets, so it stays off until
+  `GOOGLE_APPLICATION_CREDENTIALS` points at a key file (mount it - see the
+  commented volume in `docker-compose.yml`) or `gcloud auth application-default
+  login` has been run inside the container. Enable it by setting
+  `disabled: false` in `data/shared/mcp/opencode.jsonc` (and
+  `enabled: true` plus the `mcp:google_analytics` entry in
+  `agents/pi/marketing.frontmatter.yaml` for pi). The allow rules are already
+  in place for `marketing`. Analytics is read-only unless the server is
+  started with `--allow-write`.
 
 Agents are written once and rendered for each tool:
 

@@ -133,6 +133,12 @@ services:
       # re-index after every image update.
       - dart-server:/home/develop/.dartServer
       - dart-tool:/home/develop/.dart-tool
+      # Google Analytics MCP: mount the service-account / ADC key file and
+      # point GOOGLE_APPLICATION_CREDENTIALS at it (dev-agent/.env). The file
+      # must exist before the container starts, or Docker creates a directory
+      # in its place. Leave commented when credentials come from
+      # `gcloud auth application-default login` inside the container instead.
+      # - ./data/google-sa.json:/run/google-analytics/sa.json:ro
 
     environment:
       # Git identity for commits made from inside the container.
@@ -175,6 +181,17 @@ services:
       # you prefer - that login then lasts only for the container's
       # lifetime.
       - GH_TOKEN=${GH_TOKEN:-}
+      # Shared secret for the self-hosted GTM MCP server (gtm-mcp/).
+      # Must be the same value as gtm-mcp/.env SERVICE_ACCOUNT_API_KEY; the
+      # server rejects every request without it, so an empty value here
+      # leaves the `gtm_*` tools unusable (401) but breaks nothing else.
+      - GTM_MCP_API_KEY=${GTM_MCP_API_KEY:-}
+      # Google credentials for the `google_analytics` MCP server
+      # (analytics-mcp reads Application Default Credentials). Path inside the
+      # container; point it at a mounted key file (see the commented volume
+      # below) or leave empty and run `gcloud auth application-default login`
+      # inside the container. The MCP entry is disabled until this resolves.
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
       # Isolated test-DB creds. The container can ONLY create/drop
       # databases whose name starts with `dev_test_` (enforced at the
       # server side by databases/init.sql + mysql-init.sql). See

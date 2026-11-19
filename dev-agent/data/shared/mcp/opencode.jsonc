@@ -31,6 +31,22 @@
         },
         "oauth": false,
         "disabled": false
+      },
+      "gtm": {
+        "type": "remote",
+        "url": "http://gtm-mcp:8080/",
+        "headers": {
+          "Authorization": "Bearer {env:GTM_MCP_API_KEY}"
+        },
+        "oauth": false,
+        "disabled": false
+      },
+      "google_analytics": {
+        "type": "local",
+        "command": [
+          "analytics-mcp"
+        ],
+        "disabled": true
       }
     }
   }

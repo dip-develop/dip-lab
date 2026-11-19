@@ -22,6 +22,7 @@ SERVICES_ALL=(
     "gallery"
     "ai-agent"
     "dev-agent"
+    "gtm-mcp"
 )
 
 DRY_RUN=false
