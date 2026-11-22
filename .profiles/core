@@ -10,3 +10,5 @@ cloud
 docs
 gallery
 dev-agent
+# gtm-mcp is the GTM MCP server for the dev-agent marketing role.
+gtm-mcp

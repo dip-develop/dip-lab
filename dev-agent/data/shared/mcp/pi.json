@@ -19,6 +19,17 @@
         "Authorization": "Bearer ${GH_TOKEN}",
         "X-MCP-Toolsets": "context,repos,issues,pull_requests"
       }
+    },
+    "gtm": {
+      "url": "http://gtm-mcp:8080/",
+      "headers": {
+        "Authorization": "Bearer ${GTM_MCP_API_KEY}"
+      }
+    },
+    "google_analytics": {
+      "command": "analytics-mcp",
+      "args": [],
+      "enabled": false
     }
   }
 }

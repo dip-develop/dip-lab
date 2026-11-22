@@ -15,7 +15,11 @@ permission:
     "edit": deny
     "write": deny
     "subagent": deny
-    "mcp": deny
+    "mcp": allow
+    "mcp__gtm__*": allow
+    # google_analytics ships disabled (no credentials in the image); the allow
+    # is kept so enabling the server needs one flag, not a permission edit.
+    "mcp__google_analytics__*": allow
     "edit:notes/marketing/**": allow
     "write:notes/marketing/**": allow
     "web_search": allow
