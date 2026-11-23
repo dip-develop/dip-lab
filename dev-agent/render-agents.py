@@ -16,7 +16,13 @@ the top-level `permission:` line. Everything above it goes to the agent file; th
 block goes to the policy directory that PI_PERMISSION_SYSTEM_POLICY_AGENT_DIR points at.
 The orchestrator is never a child: it has no agent file, only the policy file and APPEND_SYSTEM.md.
 
-Placeholders in bodies ({{NAME}}) are replaced per tool. Run from anywhere:
+Placeholders in bodies ({{NAME}}) are replaced per tool.
+
+Agents listed in POLICY_AGENTS also get data/shared/agents/_policy.md appended
+to their body: the shared code-style, testing and verification-scope rules.
+One file instead of four copies of the same text.
+
+Run from anywhere:
   python3 dev-agent/render-agents.py
 """
 import glob
@@ -25,6 +31,9 @@ import re
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 MAIN_SESSION_AGENTS = {"orchestrator"}
+# Agents that get the shared policy block appended to their body.
+POLICY_AGENTS = {"coder", "supper", "tester", "reviewer"}
+POLICY_FILE = "data/shared/agents/_policy.md"
 PERMISSION_LINE = re.compile(r"^permission:", re.M)
 
 TARGETS = {
@@ -101,6 +110,8 @@ def main():
             name = os.path.basename(fm_path)[: -len(".frontmatter.yaml")]
             frontmatter = read(fm_path)
             body = fill(read(os.path.join(ROOT, "data/shared/agents", name + ".md")), cfg["vars"], name)
+            if name in POLICY_AGENTS:
+                body = body.rstrip("\n") + "\n\n" + read(os.path.join(ROOT, POLICY_FILE)).strip() + "\n"
             if tool == "opencode":
                 render_opencode(name, frontmatter, body)
             else:

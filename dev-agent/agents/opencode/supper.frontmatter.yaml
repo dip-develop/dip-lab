@@ -38,6 +38,42 @@ permissions:
   - action: shell
     resource: "*"
     effect: allow
+  # This agent is allow-by-default, so the allows below only document what it
+  # may do; the one rule that matters is the "npm publish" deny after the npm
+  # allow - publishing is a release action, not an implementation step.
+  - action: shell
+    resource: "mv *"
+    effect: allow
+  - action: shell
+    resource: "chmod +x *"
+    effect: allow
+  - action: shell
+    resource: "chmod u+x *"
+    effect: allow
+  - action: shell
+    resource: "touch *"
+    effect: allow
+  - action: shell
+    resource: "tee *"
+    effect: allow
+  # Node toolchain: the image ships Node 24 + npm (Dockerfile), and jaspr /
+  # Flutter web projects are built with it. Without these every npm/npx call
+  # asked. Same trust level as sudo apt-get above.
+  - action: shell
+    resource: "npm *"
+    effect: allow
+  - action: shell
+    resource: "npm publish*"
+    effect: deny
+  - action: shell
+    resource: "npx *"
+    effect: allow
+  - action: shell
+    resource: "node *"
+    effect: allow
+  - action: shell
+    resource: "python3 *"
+    effect: allow
   # Safety guards (kept even in autonomous mode): protected branches,
   # force-pushes, branch deletions, secrets, destructive history ops.
   - action: shell
@@ -211,6 +247,13 @@ permissions:
     effect: deny
   - action: shell
     resource: "grep *.env*"
+    effect: deny
+  # tee/mv write a .env like cp/sed -i already can; keep the guard in sync.
+  - action: shell
+    resource: "tee *.env*"
+    effect: deny
+  - action: shell
+    resource: "mv *.env*"
     effect: deny
   - action: shell
     resource: "printenv*"

@@ -55,6 +55,19 @@ permission:
     "diff *": allow
     "mkdir *": allow
     "cp *": allow
+    "mv *": allow
+    "mv *.env*": deny
+    "chmod +x *": allow
+    "chmod u+x *": allow
+    "touch *": allow
+    "tee *": allow
+    "tee *.env*": deny
+    # Node toolchain (image ships Node 24 + npm); publishing stays out.
+    "npm *": allow
+    "npm publish*": deny
+    "npx *": allow
+    "node *": allow
+    "python3 *": allow
     "printf *": allow
     "echo *": allow
     "sleep*": allow

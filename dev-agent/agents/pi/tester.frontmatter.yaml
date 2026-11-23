@@ -1,5 +1,5 @@
 name: tester
-description: "Verification. Runs tests, lint and build and reports results; no edits. Use after each batch of edits."
+description: "Verification. Runs the checks a batch needs and reports results; no edits. Use when a batch changed logic."
 advertise: true
 defaultContext: fresh
 tools: read, grep, find, ls, bash
@@ -35,6 +35,15 @@ permission:
     "wc *": allow
     "sort *": allow
     "diff *": allow
+    # File plumbing for fixtures and temp dirs (the tester never edits code).
+    "mkdir *": allow
+    "cp *": allow
+    "mv *": allow
+    "mv *.env*": deny
+    "chmod +x *": allow
+    "touch *": allow
+    "tee *": allow
+    "tee *.env*": deny
     "echo *": allow
     "printf *": allow
     "sleep*": allow

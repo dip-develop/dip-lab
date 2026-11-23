@@ -1,6 +1,6 @@
 ---
 name: dart-add-unit-test
-description: Write and organize unit tests for functions, methods, and classes using `package:test`. Use when creating new logic or fixing bugs to ensure code remains correct and regression-free.
+description: Write and organize unit tests for functions, methods, and classes using `package:test`. Use only when the new logic has real branching, edge cases or error paths, or to add a regression test for a bug fix - not for trivial code.
 metadata:
   model: models/gemini-3.1-pro-preview
   last_modified: Mon, 03 Aug 2026 21:51:24 GMT
@@ -39,9 +39,30 @@ Select the appropriate test runner based on the project type and test location.
 * If working on a Flutter project, execute tests using the `flutter test` command.
 * If running integration tests, explicitly specify the directory path, as the default runner ignores it: `dart test integration_test` or `flutter test integration_test`.
 
+## When NOT to write a test
+
+Do not add tests for code that cannot fail in an interesting way. Writing them
+costs review time and adds maintenance without catching anything.
+
+Skip:
+
+- getters, setters, simple field assignments, `toString` on a DTO;
+- data classes, generated code (`*.g.dart`, `*.freezed.dart`), migrations;
+- one-line delegations, config, wiring, and constant definitions;
+- a test that would only re-read the implementation (`expect(x, x)`).
+
+Cover, in this order of priority:
+
+1. a bug fix - one regression test that fails before the fix;
+2. logic with real branching, loops, or error paths (parsing, state machines,
+   money/date math, retry and fallback logic);
+3. edge cases of a public API whose contract is not obvious from the signature.
+
+Prefer extending the existing test file for the unit over adding a new one.
+
 ## Test Implementation Workflow
 
-Follow this sequential workflow when implementing new test suites. Copy the checklist to track your progress.
+Follow this sequential workflow when a test is warranted (see "When NOT to write a test"). Copy the checklist to track your progress.
 
 ### Task Progress
 - [ ] 1. Create the test file in the `test/` directory, ensuring the `_test.dart` suffix.

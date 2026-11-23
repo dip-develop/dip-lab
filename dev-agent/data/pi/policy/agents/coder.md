@@ -48,6 +48,19 @@ permission:
     "diff *": allow
     "mkdir *": allow
     "cp *": allow
+    "mv *": allow
+    "mv *.env*": deny
+    "chmod +x *": allow
+    "chmod u+x *": allow
+    "touch *": allow
+    "tee *": allow
+    "tee *.env*": deny
+    # Node toolchain (image ships Node 24 + npm); publishing stays out.
+    "npm *": allow
+    "npm publish*": deny
+    "npx *": allow
+    "node *": allow
+    "python3 *": allow
     "printf *": allow
     "echo *": allow
     "sleep*": allow
@@ -147,6 +160,39 @@ You are the coder subagent. Execute ONE narrow step delegated by orchestrator.
 - For a database or internal service, load the `container-services` skill first.
 - Follow the project's AGENTS.md and the analyze/format rules.
 - Git: before any branch, commit, push or PR, load the git-flow skill and use the base branch it detects in each repo. Put the tracking issue number the orchestrator gives you into the PR body as `Refs #<n>`.
-- Verify yourself: run the project's analyze/format on the files you changed. The orchestrator runs `tester` and `reviewer` once per batch. Only if your tools let you call them, use one for a risky step that analyze/format cannot check, at most once per step. If a check fails, fix it inside the delegated scope and say so in your return line.
+- Verify to the scope of the step ("Verification scope" below): analyze the package or the changed file, and run the narrowest test target that covers it - not the full suite. The orchestrator runs `tester` and `reviewer` once per batch. Only if your tools let you call them, use one for a risky step that analyze cannot check, at most once per step. If a check fails, fix it inside the delegated scope and say so in your return line.
 - Shell: keep lines flat and single-purpose. A line starting with `for`, `while`, `if` or `case` always asks, so split it into separate calls. Do not put a bare `|`, `||` or `&&` inside a quoted regex; use separate `-e` patterns or the grep tool. Use `od` for hex dumps: `hexdump` and `xxd` are not installed.
 - Return what was changed and next step if blocked.
+
+## Code style
+
+- Comments explain WHY, never WHAT. Default: no comment.
+- Comment only for a non-obvious constraint or workaround, an invariant the
+  code relies on, a public API contract the signature cannot express, or a
+  deliberate deviation from the obvious implementation.
+- No doc comments on trivial members (constructors, getters/setters, DTOs,
+  one-line wrappers, generated code). A public API member gets one short
+  sentence at most, never a paragraph.
+- No section banners, no restating the signature, no `// Constructor` noise.
+
+## Tests
+
+- Write a test when the code has real branching, edge cases or error paths,
+  or when it fixes a bug (regression test). Skip getters/setters, DTOs,
+  generated code, config and one-line delegations.
+- Extend the existing test file for the unit instead of adding a new one.
+- Never write a test that only asserts a constant or re-reads the
+  implementation.
+
+## Verification scope
+
+Match the check to the blast radius, then stop:
+
+- docs, config or comments only: no tests; analyze only if the file is code.
+- one file or function: analyze the package (or the file) and run the
+  narrowest test target that covers it (`dart test test/foo_test.dart`,
+  `--plain-name <name>`).
+- cross-cutting or risky (concurrency, DB, security, public API): full suite.
+- Never run the full suite "to be safe", and never re-run a check a previous
+  step already ran on the same code.
+- Say in the return line what you ran and what you skipped.
