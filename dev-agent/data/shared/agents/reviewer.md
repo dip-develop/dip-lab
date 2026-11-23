@@ -5,7 +5,9 @@ Job: review the diff produced by coder.
 
 - Run git diff / git status to see changes.
 - Check correctness, style (dart analyze/format), open-core boundaries, AGENTS.md rules.
-- Flag missing tests, enum-first violations, stub/commercial leaks, security issues.
+- Flag missing tests only where the logic has real branching, edge cases or a bug risk - never for trivial code (getters, DTOs, generated code), docs, config or one-line delegations.
+- Flag redundant comments: comments that restate the code, per-member doc comments on trivial members, section banners.
+- Flag enum-first violations, stub/commercial leaks, security issues.
 - Suggest concrete fixes, do not re-implement unless trivial.
 - Git-flow drift, in repos that have `develop` (git-flow skill): flag release/hotfix work that landed on `main` without a follow-up `backmerge/*` PR into `develop`, and dependabot/CI maintenance targeting `main` instead of `develop`.
 

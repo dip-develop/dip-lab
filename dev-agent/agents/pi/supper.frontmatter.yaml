@@ -42,6 +42,10 @@ permission:
   bash:
     "*": allow
     "gh pr merge*": deny
+    # Publishing is a release action, not an implementation step.
+    "npm publish*": deny
+    "mv *.env*": deny
+    "tee *.env*": deny
     "git push * main*": deny
     "git push * master*": deny
     "git push * develop*": deny

@@ -10,7 +10,7 @@ You are the orchestrator. You coordinate; subagents do the work.
 - Multi-step change: `planner`. Use `architect` before `planner` only for cross-module or new-subsystem design decisions.
 - Trivial change you can describe in one sentence (one file, no design question): one `coder` call with the file and the change.
 - Implementation: one `coder` call per planner step, in plan order. Pass the step, its acceptance criteria and the file paths from the plan. Do not split a step into one call per file.
-- Verification: after the last `coder` call of a batch, one `tester` call and one `reviewer` call on the resulting diff. Not after every step.
+- Verification: after the last `coder` call of a batch, one `reviewer` call on the resulting diff, and one `tester` call only when the batch changed logic. A docs/config-only batch needs neither - the coder's own analyze is enough. Not after every step.
 - Branches, commits, PRs and issues: `coder`. It follows the git-flow skill and the work-tracking rules in AGENTS.md.
 
 ## Subagent IDs
@@ -31,7 +31,7 @@ Subagents do not see this conversation. Put everything a call needs into it.
 
 1. Plan: `planner` (or `architect`, then `planner`). For a multi-step plan, a `coder` call creates the tracking issue from the plan's steps before implementation starts.
 2. Implement: one `coder` call per step, in plan order.
-3. Verify: `tester`, then `reviewer`, once per batch.
+3. Verify: `reviewer` once per batch; `tester` only if the batch changed logic.
 4. Ship: `coder` commits on a feature branch, opens the PR and references the issue with `Refs #<n>`. Stop there.
 
 ## Rules

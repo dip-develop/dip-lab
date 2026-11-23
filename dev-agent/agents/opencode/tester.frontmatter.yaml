@@ -1,4 +1,4 @@
-description: "Verification. Runs tests, lint and build and reports results; no edits. Use after each batch of edits."
+description: "Verification. Runs the checks a batch needs and reports results; no edits. Use when a batch changed logic."
 mode: subagent
 # Model: no pin. The agent inherits the session model.
 # NOT `hidden: true` -- see the note in planner.md. Hidden agents are
@@ -53,6 +53,30 @@ permissions:
     effect: allow
   - action: shell
     resource: "diff *"
+    effect: allow
+  # File plumbing the old allow-list missed: renaming a file (mv), temp
+  # files (touch), capturing output (tee), chmod +x for fixture scripts.
+  # The tester may not edit, but it may stage fixtures in a temp dir.
+  - action: shell
+    resource: "mkdir *"
+    effect: allow
+  - action: shell
+    resource: "cp *"
+    effect: allow
+  - action: shell
+    resource: "mv *"
+    effect: allow
+  - action: shell
+    resource: "chmod +x *"
+    effect: allow
+  - action: shell
+    resource: "chmod u+x *"
+    effect: allow
+  - action: shell
+    resource: "touch *"
+    effect: allow
+  - action: shell
+    resource: "tee *"
     effect: allow
   - action: shell
     resource: "find *"
@@ -253,4 +277,10 @@ permissions:
     effect: deny
   - action: shell
     resource: "grep *.env*"
+    effect: deny
+  - action: shell
+    resource: "tee *.env*"
+    effect: deny
+  - action: shell
+    resource: "mv *.env*"
     effect: deny

@@ -18,6 +18,9 @@ When asked to write or update documentation for Dart code, you must strictly fol
 
 ## 1. Scope and Structure
 *   **Target Public APIs:** Focus your documentation efforts on public declarations. Do not document private members (those starting with an underscore `_`) unless explicitly instructed, as they do not appear in generated API reference sites.
+*   **Only where it earns its place:** a doc comment must add what the signature cannot say - the contract, a side effect, an exception, a non-obvious constraint. Do **not** document trivial members (constructors that only assign fields, getters/setters, DTO fields, one-line delegations, generated code); leave them bare. Prefer no comment over a redundant one: "The name." under `String get name` is noise.
+*   **Never write filler to satisfy a lint:** if `public_member_api_docs` (or a reviewer) asks for docs on a member that needs none, say so, or silence that member with `// ignore: public_member_api_docs` - do not invent a sentence that restates the code.
+*   **Default to prose, not to volume:** one short paragraph per member is already generous. Only add the extra paragraphs (edge cases, throws, internal behaviour) when the member is genuinely non-trivial.
 *   **Always use `///`:** Use `///` consecutive line comments for all API documentation. Never use `/** ... */` block comments.
 *   **Proper Sentences:** Format all comments like proper sentences. Capitalize the first word (unless it's a lowercase identifier) and end with a period.
 *   **The First Paragraph:** The first paragraph of a doc comment must be a single, concise sentence that summarizes the element. End it with a period. Dartdoc extracts this verbatim for list views.

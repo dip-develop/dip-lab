@@ -216,6 +216,73 @@ for name, raw in (("opencode", raw_oc), ("pi", raw_pi)):
     prefixes = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "AIza")
     check(not any(prefix in raw for prefix in prefixes), f"{name} MCP: no literal token")
 
+# Shared policy block (code style / tests / verification scope) is appended to
+# the four working roles and nowhere else.
+policy = text("data/shared/agents/_policy.md")
+for section in ("## Code style", "## Tests", "## Verification scope"):
+    check(section in policy, f"policy: has {section}")
+for agent in ("coder", "supper", "tester", "reviewer"):
+    body = text(f"data/config/agents/{agent}.md")
+    check("## Verification scope" in body and "Default: no comment" in body,
+          f"opencode {agent}: policy block appended")
+for agent in ("planner", "architect", "orchestrator", "marketing", "writer", "explore"):
+    path = f"data/config/agents/{agent}.md"
+    if os.path.exists(os.path.join(DEV, path)):
+        check("## Verification scope" not in text(path),
+              f"opencode {agent}: no policy block")
+
+# Prompts: verification is scoped, tests are risk-based, comments are not mandatory.
+check("real branching" in text("data/shared/agents/reviewer.md"),
+      "reviewer: tests are requested only for real branching")
+check("Flag missing tests," not in text("data/shared/agents/reviewer.md"),
+      "reviewer: blanket missing-tests demand is gone")
+check("docs/config-only batch needs neither" in text("data/shared/agents/orchestrator.md"),
+      "orchestrator: docs/config batches skip tester")
+check("narrowest test target" in text("data/shared/agents/tester.md")
+      and "narrowest test target" in text("data/shared/agents/coder.md"),
+      "coder/tester: verification is scoped to the narrowest target")
+check("Do not document private members" in text("data/shared/skills/dart-write-documentation/SKILL.md")
+      and "Prefer no comment over a redundant one" in text("data/shared/skills/dart-write-documentation/SKILL.md"),
+      "skill: doc comments are opt-in, not per member")
+check("## When NOT to write a test" in text("data/shared/skills/dart-add-unit-test/SKILL.md"),
+      "skill: unit tests have an explicit skip list")
+
+# Permissions: the commands that used to ask on every use are allowed for the
+# roles that can already write files; publishing stays denied.
+def rules_for(agent):
+    raw = open(os.path.join(DEV, f"agents/opencode/{agent}.frontmatter.yaml"), encoding="utf-8").read()
+    return re.findall(r'- action: shell\s*\n\s*resource: "([^"]+)"\s*\n\s*effect: (\w+)', raw)
+
+for agent in ("coder", "supper"):
+    rules = rules_for(agent)
+    effects = {}
+    for resource, effect in rules:
+        effects[resource] = effect
+    for resource in ("mv *", "chmod +x *", "touch *", "tee *", "npm *", "npx *", "node *", "python3 *"):
+        check(effects.get(resource) == "allow", f"opencode {agent}: {resource} allowed")
+    check(effects.get("npm publish*") == "deny", f"opencode {agent}: npm publish denied")
+    check(effects.get("mv *.env*") == "deny" and effects.get("tee *.env*") == "deny",
+          f"opencode {agent}: .env writes via mv/tee denied")
+
+tester_rules = dict(rules_for("tester"))
+for resource in ("mkdir *", "cp *", "mv *", "touch *", "tee *"):
+    check(tester_rules.get(resource) == "allow", f"opencode tester: {resource} allowed")
+check(tester_rules.get("mv *.env*") == "deny" and tester_rules.get("tee *.env*") == "deny",
+      "opencode tester: .env writes via mv/tee denied")
+
+# pi mirror: same commands in the bash allow/deny maps.
+pi_coder = text("agents/pi/coder.frontmatter.yaml")
+for entry in ('"mv *": allow', '"npm *": allow', '"npm publish*": deny', '"python3 *": allow', '"tee *.env*": deny'):
+    check(entry in pi_coder, f"pi coder: {entry}")
+pi_tester = text("agents/pi/tester.frontmatter.yaml")
+for entry in ('"mkdir *": allow', '"mv *": allow', '"tee *.env*": deny'):
+    check(entry in pi_tester, f"pi tester: {entry}")
+
+# Reviewer stays read-only: none of the new commands leak into it.
+reviewer_fm = text("agents/opencode/reviewer.frontmatter.yaml")
+for resource in ("mv *", "npm *", "python3 *", "tee *"):
+    check(resource not in reviewer_fm, f"opencode reviewer: no {resource}")
+
 passed = sum(results)
 print(f"{passed}/{len(results)} checks passed" if all(results)
       else f"{passed}/{len(results)} checks passed, {len(results) - passed} failed")

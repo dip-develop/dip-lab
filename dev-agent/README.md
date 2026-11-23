@@ -298,6 +298,12 @@ lists, per agent, which servers are re-enabled; pi expresses the same thing as
 `mcp:<server>` entries in the agent's `tools:` line. Check the tool list of a
 session if you change this.
 
+Comment, test and verification policy lives in one place:
+`data/shared/agents/_policy.md`, appended to `coder`, `supper`, `tester` and
+`reviewer`. It says comments explain why (default: none), tests are for real
+branching and bug fixes only, and verification is sized to the blast radius -
+analyze plus the narrowest test target, not the full suite by default.
+
 Delegation has a cost. Each subagent call starts a fresh session with its own
 instructions and tool definitions, and every model turn is billed. Use
 subagents for work that would otherwise fill the orchestrator's context: broad
@@ -423,6 +429,11 @@ Agents are written once and rendered for each tool:
 2. Edit the tool frontmatter in `agents/opencode/<name>.frontmatter.yaml` or
    `agents/pi/<name>.frontmatter.yaml`.
 3. Run `python3 dev-agent/render-agents.py`. It writes `data/config/agents/` (opencode), `data/pi/agents/` (pi child agents), `data/pi/policy/agents/` (pi permissions) and `data/pi/APPEND_SYSTEM.md` (pi main session). Commit the generated files too. Do not edit them.
+
+`data/shared/agents/_policy.md` is appended to the bodies of `coder`, `supper`,
+`tester` and `reviewer` (`POLICY_AGENTS` in `render-agents.py`). It holds the
+shared rules on comments, tests and verification scope - edit that one file
+instead of repeating the text in four bodies.
 
 Using pi: `docker exec -it dev-agent tmux attach -t dev`, then `pi`. The orchestrator is the main session. Its prompt comes from `data/pi/APPEND_SYSTEM.md`, generated from the orchestrator prompt and tagged as the active agent. pi has no agent switcher: the container's pi is the orchestrator.
 
