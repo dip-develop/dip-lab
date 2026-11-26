@@ -29,7 +29,9 @@ Triage this repo's open issues and close only the verifiably fixed ones:
      the repo's flow base (`develop` where it exists, `main` where it does not)
      for feature/bugfix/chore PRs, and `main` for a hotfix or release PR, which
      is why both bases can matter in one repo. A squash-merged PR head sha is not
-     an ancestor (safe false negative); merge commits are the policy anyway.
+     an ancestor: treat that as a safe false negative and confirm the fix from
+     the PR's merge state or the file content on the base instead of closing on
+     the sha alone.
 4. The governing rule, and it MUST hold (see "Work tracking" in `AGENTS.md`): never close an issue whose implementing PR has not merged.
    GitHub's `Closes #N` is inert for merges into non-default branches, so a
    develop-based PR neither auto-closes its issue nor puts the fix on `main`.

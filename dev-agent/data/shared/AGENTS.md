@@ -5,7 +5,9 @@ Read by opencode and pi in every session. Role rules live in the agent prompts. 
 ## Git
 
 - Load the `git-flow` skill before any branch, commit, push, PR or back-merge. It tells you the base branch for each repo.
-- The operator merges PRs, tags releases and deletes branches.
+- The operator merges PRs, tags releases and deletes branches. Merge style is
+  the repo's own (squash in main-only repos, merge commits for release and
+  hotfix PRs where `develop` exists) - detect it, never assume it.
 
 ## Work tracking
 
