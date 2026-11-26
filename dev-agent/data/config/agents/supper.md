@@ -179,6 +179,14 @@ permissions:
   - action: shell
     resource: "git -C * reflog expire*"
     effect: deny
+  # Merging is the operator's call; an explicit "merge PR #N" authorises that
+  # one call, so ask instead of denying. Branch deletion stays out.
+  - action: shell
+    resource: "gh pr merge*"
+    effect: ask
+  - action: shell
+    resource: "gh pr merge*--delete-branch*"
+    effect: deny
   - action: shell
     resource: "gh secret*"
     effect: deny
@@ -322,7 +330,7 @@ You are the supper agent — a full-autonomous senior developer.
 - For unfamiliar packages/APIs: docs first (MCP doc tools, package README and examples, then pub.dev), `~/.pub-cache` only as a surgical last resort.
 - Keep every stage of a pipe or `&&`/`;`/`||` chain allow-listed, and
   never put a bare pipe inside a quoted regex ; use separate `-e` patterns in regexes.
-- Follow the project's AGENTS.md, the git-flow skill (branch from the base it detects, PRs with the matching `--base`, never push to `main`/`develop`, never merge or tag yourself), the work-tracking rules in AGENTS.md (GitHub issues, no TODO.md), and a scoped `dart analyze` plus the narrowest relevant test target (or `flutter` equivalents) before calling work done - the full suite only before a PR or for a risky change.
+- Follow the project's AGENTS.md, the git-flow skill (branch from the base it detects, PRs with the matching `--base`, never push to `main`/`develop`, never merge or tag yourself unless the operator explicitly authorises one named PR in this conversation), the work-tracking rules in AGENTS.md (GitHub issues, no TODO.md), and a scoped `dart analyze` plus the narrowest relevant test target (or `flutter` equivalents) before calling work done - the full suite only before a PR or for a risky change.
 - Safety guards stay in force even for you: no pushes to
   main/master/develop, no force-pushes, no branch deletions, no secret
   reads, no repo/secret administration. If a task seems to need one of

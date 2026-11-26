@@ -412,8 +412,15 @@ permissions:
   - action: "shell"
     resource: "git ls-remote*"
     effect: allow
+  # Merging is the operator's call (AGENTS.md), but an explicit
+  # "merge PR #N" in the conversation is a one-off authorisation: ask, so the
+  # operator approves that single call. Deleting the head branch stays denied -
+  # branch deletion is never part of the authorisation.
   - action: shell
     resource: "gh pr merge*"
+    effect: ask
+  - action: shell
+    resource: "gh pr merge*--delete-branch*"
     effect: deny
   - action: shell
     resource: "gh secret*"

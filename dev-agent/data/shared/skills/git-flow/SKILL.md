@@ -36,7 +36,7 @@ Squash is the norm in main-only repos and it is safe here: with no `develop` the
 2. `git push -u origin <branch>`.
 3. `gh pr create --base <base>`. Always pass `--base`: without it, `gh` targets the default branch, which is often wrong here.
 4. PR body: a summary, why, a test plan, and `Refs #<n>` for the tracking issue (see AGENTS.md, Work tracking).
-5. Stop after the PR is open and report its URL. Do not merge.
+5. Stop after the PR is open and report its URL. Do not merge it - unless the operator explicitly authorises that PR in this conversation (section 6).
 
 ## 5. Drift and back-merge (repos with `develop` only)
 
@@ -49,6 +49,6 @@ Releases and hotfixes in a repo with `develop` MUST be merge commits, never squa
 ## 6. Never
 
 - Commit to, push to, or open a PR from `main` or `develop` directly.
-- Merge, tag, delete branches, or force-push. Those are operator actions.
+- Merge, tag, delete branches, or force-push. Those are operator actions, with one exception: when the operator explicitly authorises one specific PR in this conversation ("merge PR #N", "merge it"), merge that PR and nothing else. If the authorisation is ambiguous, or it arrives as a general "you may merge", ask which PR first. Never delete the head branch as part of a merge.
 - Create `develop` in a repo that does not have it.
 - Rebase, re-open or re-merge a branch whose PR is already merged. After a squash merge its commits are not ancestors of the base, so `git log <base>..HEAD` still lists them and a second PR would duplicate the change; check `gh pr list --state merged --head <branch>` first.

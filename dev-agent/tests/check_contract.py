@@ -299,6 +299,33 @@ check("already merged" in text("data/shared/commands/review.md"),
 check("Merge style is" in text("data/shared/AGENTS.md"),
       "AGENTS.md: merge style is the repo's own")
 
+# Merging: operator-only by default, one explicit authorisation per PR.
+check("explicitly authorises that one PR" in text("data/shared/AGENTS.md"),
+      "AGENTS.md: a merge needs an explicit per-PR authorisation")
+check("explicitly authorises one specific PR" in gitflow
+      and "Do not merge it - unless" in gitflow,
+      "git-flow: merge exception is explicit and per PR")
+check(re.search(r"Do not merge it unless the\s+operator explicitly authorises", text("data/shared/commands/pr.md")),
+      "pr: no merge without explicit authorisation")
+check("explicitly authorises that PR" in text("data/shared/agents/coder.md"),
+      "coder: merge only on explicit authorisation")
+check("explicitly authorises one named PR" in text("data/shared/agents/supper.md"),
+      "supper: merge only on explicit authorisation")
+
+for agent in ("coder", "supper"):
+    effects = dict(rules_for(agent))
+    check(effects.get("gh pr merge*") == "ask",
+          f"opencode {agent}: gh pr merge asks instead of denying")
+    check(effects.get("gh pr merge*--delete-branch*") == "deny",
+          f"opencode {agent}: gh pr merge --delete-branch denied")
+for agent in ("coder", "supper"):
+    pol = text(f"agents/pi/{agent}.frontmatter.yaml")
+    check('"gh pr merge*": ask' in pol, f"pi {agent}: gh pr merge asks")
+    check('"gh pr merge*--delete-branch*": deny' in pol,
+          f"pi {agent}: gh pr merge --delete-branch denied")
+check("gh pr merge" not in text("agents/opencode/orchestrator.frontmatter.yaml"),
+      "opencode orchestrator: cannot merge at all")
+
 # Reviewer stays read-only: none of the new commands leak into it.
 reviewer_fm = text("agents/opencode/reviewer.frontmatter.yaml")
 for resource in ("mv *", "npm *", "python3 *", "tee *"):

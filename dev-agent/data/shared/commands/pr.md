@@ -19,6 +19,9 @@ Open a pull request for the current work:
 5. `gh pr create --base <base from step 4>` with a title matching the main
    change and a body that summarizes what/why and lists a test plan.
 
-Stop after creating the PR and report its URL. Do not merge.
+Stop after creating the PR and report its URL. Do not merge it unless the
+operator explicitly authorises that PR in this conversation ("merge PR #N") -
+then merge it with the repo's merge style, or ask first when the wording is
+ambiguous. Never delete the head branch as part of a merge.
 
 Optional extra PR description notes: $ARGUMENTS
