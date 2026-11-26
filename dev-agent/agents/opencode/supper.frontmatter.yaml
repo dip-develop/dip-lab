@@ -178,6 +178,14 @@ permissions:
   - action: shell
     resource: "git -C * reflog expire*"
     effect: deny
+  # Merging is the operator's call; an explicit "merge PR #N" authorises that
+  # one call, so ask instead of denying. Branch deletion stays out.
+  - action: shell
+    resource: "gh pr merge*"
+    effect: ask
+  - action: shell
+    resource: "gh pr merge*--delete-branch*"
+    effect: deny
   - action: shell
     resource: "gh secret*"
     effect: deny

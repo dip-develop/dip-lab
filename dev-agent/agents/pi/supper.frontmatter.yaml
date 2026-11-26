@@ -41,7 +41,9 @@ permission:
     "mcp__github__fork_repository": deny
   bash:
     "*": allow
-    "gh pr merge*": deny
+    # The operator authorises a merge per PR; ask, and never delete the branch.
+    "gh pr merge*": ask
+    "gh pr merge*--delete-branch*": deny
     # Publishing is a release action, not an implementation step.
     "npm publish*": deny
     "mv *.env*": deny

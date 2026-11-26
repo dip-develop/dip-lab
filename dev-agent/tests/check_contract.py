@@ -278,6 +278,54 @@ pi_tester = text("agents/pi/tester.frontmatter.yaml")
 for entry in ('"mkdir *": allow', '"mv *": allow', '"tee *.env*": deny'):
     check(entry in pi_tester, f"pi tester: {entry}")
 
+# Merge style: squash is detected, not assumed, and only dangerous with develop.
+gitflow = text("data/shared/skills/git-flow/SKILL.md")
+check("Squash is the norm in main-only repos" in gitflow,
+      "git-flow: squash is documented as safe without develop")
+check("Detect the repo's merge style" in gitflow,
+      "git-flow: merge style is detected, not assumed")
+check("MUST be merge commits, never squash" in gitflow,
+      "git-flow: release/hotfix PRs stay merge commits")
+check("already merged" in gitflow and "gh pr list --state merged --head" in gitflow,
+      "git-flow: merged branches are not re-merged")
+check("squash-merges" in text("data/shared/commands/pr.md"),
+      "pr: squash repos put the substance in the PR title and body")
+check("Feature PRs may be squashed" in text("data/shared/commands/backmerge-check.md"),
+      "backmerge-check: squash is only a problem with develop")
+check("merge commits are the policy anyway" not in text("data/shared/commands/triage-issues.md"),
+      "triage-issues: no blanket merge-commit claim")
+check("already merged" in text("data/shared/commands/review.md"),
+      "review: already-merged branches are not re-reviewed as pending")
+check("Merge style is" in text("data/shared/AGENTS.md"),
+      "AGENTS.md: merge style is the repo's own")
+
+# Merging: operator-only by default, one explicit authorisation per PR.
+check("explicitly authorises that one PR" in text("data/shared/AGENTS.md"),
+      "AGENTS.md: a merge needs an explicit per-PR authorisation")
+check("explicitly authorises one specific PR" in gitflow
+      and "Do not merge it - unless" in gitflow,
+      "git-flow: merge exception is explicit and per PR")
+check(re.search(r"Do not merge it unless the\s+operator explicitly authorises", text("data/shared/commands/pr.md")),
+      "pr: no merge without explicit authorisation")
+check("explicitly authorises that PR" in text("data/shared/agents/coder.md"),
+      "coder: merge only on explicit authorisation")
+check("explicitly authorises one named PR" in text("data/shared/agents/supper.md"),
+      "supper: merge only on explicit authorisation")
+
+for agent in ("coder", "supper"):
+    effects = dict(rules_for(agent))
+    check(effects.get("gh pr merge*") == "ask",
+          f"opencode {agent}: gh pr merge asks instead of denying")
+    check(effects.get("gh pr merge*--delete-branch*") == "deny",
+          f"opencode {agent}: gh pr merge --delete-branch denied")
+for agent in ("coder", "supper"):
+    pol = text(f"agents/pi/{agent}.frontmatter.yaml")
+    check('"gh pr merge*": ask' in pol, f"pi {agent}: gh pr merge asks")
+    check('"gh pr merge*--delete-branch*": deny' in pol,
+          f"pi {agent}: gh pr merge --delete-branch denied")
+check("gh pr merge" not in text("agents/opencode/orchestrator.frontmatter.yaml"),
+      "opencode orchestrator: cannot merge at all")
+
 # Reviewer stays read-only: none of the new commands leak into it.
 reviewer_fm = text("agents/opencode/reviewer.frontmatter.yaml")
 for resource in ("mv *", "npm *", "python3 *", "tee *"):
