@@ -278,6 +278,27 @@ pi_tester = text("agents/pi/tester.frontmatter.yaml")
 for entry in ('"mkdir *": allow', '"mv *": allow', '"tee *.env*": deny'):
     check(entry in pi_tester, f"pi tester: {entry}")
 
+# Merge style: squash is detected, not assumed, and only dangerous with develop.
+gitflow = text("data/shared/skills/git-flow/SKILL.md")
+check("Squash is the norm in main-only repos" in gitflow,
+      "git-flow: squash is documented as safe without develop")
+check("Detect the repo's merge style" in gitflow,
+      "git-flow: merge style is detected, not assumed")
+check("MUST be merge commits, never squash" in gitflow,
+      "git-flow: release/hotfix PRs stay merge commits")
+check("already merged" in gitflow and "gh pr list --state merged --head" in gitflow,
+      "git-flow: merged branches are not re-merged")
+check("squash-merges" in text("data/shared/commands/pr.md"),
+      "pr: squash repos put the substance in the PR title and body")
+check("Feature PRs may be squashed" in text("data/shared/commands/backmerge-check.md"),
+      "backmerge-check: squash is only a problem with develop")
+check("merge commits are the policy anyway" not in text("data/shared/commands/triage-issues.md"),
+      "triage-issues: no blanket merge-commit claim")
+check("already merged" in text("data/shared/commands/review.md"),
+      "review: already-merged branches are not re-reviewed as pending")
+check("Merge style is" in text("data/shared/AGENTS.md"),
+      "AGENTS.md: merge style is the repo's own")
+
 # Reviewer stays read-only: none of the new commands leak into it.
 reviewer_fm = text("agents/opencode/reviewer.frontmatter.yaml")
 for resource in ("mv *", "npm *", "python3 *", "tee *"):

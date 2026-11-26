@@ -12,6 +12,11 @@ run `git branch -a` (a fresh clone has no local branches, so remote-only
 base for `feature/*`, `bugfix/*` and `chore/*` as well as `hotfix/*` and
 `release/*`. Never create `develop` just to compute a merge-base.
 
+If the branch's PR is already merged (`gh pr list --state merged --head
+<branch>`), say so and review only what is new on top of the merge — after a
+squash merge the old commits are not ancestors, so a plain diff against the
+merge-base would re-report the merged change as pending.
+
 Check for correctness, style consistency, and accidentally committed
 secrets. Report findings by severity (blocker / should-fix / nit) with
 file:line references. Read-only: do not modify files.

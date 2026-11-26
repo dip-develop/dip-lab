@@ -70,9 +70,11 @@ appears at all, so a normal run needs no external approval.
    - title: `chore: back-merge main into develop (<version>)`
    This command does NOT create a branch, push, or open a PR — use `/pr` for
    that once the operator approves.
-8. Remind the operator: merges into `main` (release/hotfix PRs) must use merge
-   commits, never squash — squashing rewrites `main`'s history and turns every
-   later back-merge into a conflict to resolve by hand.
+8. Remind the operator: in a repo with `develop`, release and hotfix PRs into
+   `main` must use merge commits, never squash — squashing rewrites `main`'s
+   history and turns every later back-merge into a conflict to resolve by hand.
+   Feature PRs may be squashed when that is the repo's style, and a single-branch
+   repo has no back-merge to break.
 9. Report a table: repo | drift | status (OK / N/A single-branch / back-merge PR
    already open / back-merge proposed / skipped).
 
