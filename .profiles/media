@@ -8,3 +8,5 @@
 # dev-agent is included here too (it ships with `default`).
 passwords
 ai-agent
+# mail server (opens port 25); enable explicitly
+email

@@ -10,3 +10,5 @@ monitoring
 cloud
 docs
 gallery
+# mail server (opens port 25); enable explicitly
+email

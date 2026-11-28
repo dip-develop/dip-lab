@@ -8,7 +8,7 @@ _manager_completions() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     local commands="start stop restart update update-all build logs exec status setup perm profile backup restore clean stop-all full-cleanup help"
-    local services="databases proxy monitoring passwords containers cloud docs automation gallery ai-agent dev-agents"
+    local services="databases proxy monitoring passwords containers cloud docs automation gallery ai-agent dev-agent email"
 
     # Dynamically list profile names from .profiles/ directory
     local profiles
