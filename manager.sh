@@ -23,6 +23,7 @@ SERVICES_ALL=(
     "ai-agent"
     "dev-agent"
     "gtm-mcp"
+    "email"
 )
 
 DRY_RUN=false
@@ -194,6 +195,10 @@ fix_permissions() {
     da_gid=${da_gid:-1000}
     mkdir -p "$SCRIPT_DIR/dev-agent/data/projects" "$SCRIPT_DIR/dev-agent/data/config"
     chown -R "$da_uid:$da_gid" "$SCRIPT_DIR/dev-agent/data/projects" "$SCRIPT_DIR/dev-agent/data/config" 2>/dev/null || true
+
+    # email (stalwart image) runs as uid/gid 2000
+    mkdir -p "$SCRIPT_DIR/email/data/etc" "$SCRIPT_DIR/email/data/data"
+    chown -R 2000:2000 "$SCRIPT_DIR/email/data" 2>/dev/null || true
 
     log ok "Permissions fixed"
 }

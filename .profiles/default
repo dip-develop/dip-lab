@@ -14,3 +14,5 @@
 # profile.
 monitoring
 automation
+# mail server (opens port 25); enable explicitly
+email

@@ -1,6 +1,6 @@
 # DIP-Lab
 
-A self-hosted home-lab stack of 11 services orchestrated by a single
+A self-hosted home-lab stack of 13 services orchestrated by a single
 `manager.sh` script. Targeted at a single Linux host (12 GB RAM, 100 GB
 NVMe, optional object-storage mount) running behind a Traefik reverse
 proxy.
@@ -21,6 +21,7 @@ proxy.
 | `ai-agent/` | Hermes AI agent + dashboard |
 | `dev-agent/` | Developer workstation container: Flutter SDK + opencode CLI (in `default` profile) |
 | `gtm-mcp/` | Self-hosted Google Tag Manager MCP server for the dev-agent marketing role |
+| `email/` | Mail server (SMTP/IMAP), ports 25/465/993/995/4190 |
 
 ## Quick start
 
@@ -46,8 +47,8 @@ cp proxy/.env.example proxy/.env
 
 ## Service ports (defaults)
 
-All services bind to `0.0.0.0` on the host; Traefik is the only one
-exposed externally (80, 443).
+All services bind to `0.0.0.0` on the host; Traefik (80, 443) and
+Email's mail ports are the externally exposed services.
 
 | Service | Host port | Purpose |
 |---|---|---|
@@ -59,6 +60,7 @@ exposed externally (80, 443).
 | Gallery (Immich) | 2283 | Photo gallery |
 | Hermes API / Dashboard | 18789 / 18790 | AI agent |
 | Grafana / Prometheus | 3000 / 9090 | Monitoring |
+| Email | 25, 465, 993, 995, 4190, 8080 (loopback) | Mail (SMTP/IMAP/POP3/Sieve) + setup wizard; WebUI/HTTPS via Traefik |
 | Traefik | 80, 443 | Reverse proxy (external) |
 
 The `dev-agent` container exposes `opencode serve` on
@@ -93,6 +95,11 @@ Docker network (`postgres:5432`, `mysql:3306`, `redis:6379`).
 
 Services that need DB access attach to both `internal` and `database`.
 Others attach only to `internal`.
+
+`email` (mail server) publishes its mail ports (25/465/993/995/4190)
+directly on the host over TCP — not via Traefik — while its HTTPS/WebUI
+is fronted by Traefik over the `web` network. It attaches to `internal`
++ `web` only (no `database`).
 
 ## Management
 
@@ -163,15 +170,20 @@ enable):
   Grafana, Loki, Promtail, cAdvisor, n8n). 10 services.
 - `dev` — `default` + `automation`. Active development without the
   heavyweight media services (8 services).
-- `no-ai` — everything except `ai-agent`, `dev-agent` and `gtm-mcp` (9 services).
+- `no-ai` — everything except `ai-agent`, `dev-agent` and `gtm-mcp` (10 services).
   Use on a host where you don't want any LLM gateway or agent
   runtime.
-- `full` — everything enabled (12 services).
+- `full` — everything enabled (13 services).
 
 `dev-agent` is included in `default`, `media`, `dev`, and `full`. It
 is excluded from `core` (no app services) and `no-ai` (per the
 profile's intent). On a host with <8 GB RAM, disable it with
 `./manager.sh profile disable dev-agent`.
+
+`email` (mail server) is disabled by default in `core`, `default`,
+`dev` and `media` because it opens port 25 on the host; it is included
+in `no-ai` and `full`. Enable it explicitly with
+`./manager.sh profile enable email`.
 
 ### Object storage
 
